@@ -1,9 +1,16 @@
-function component() {
-    let element = document.createElement('div');
+import { loadImg } from './utils/loadImg';
+import { loopFnc } from './utils/loop';
+import { GameField, GameFieldConfig } from './models/gameField';
 
-    element.innerHTML = 'Hello - here is startup project.';
-
-    return element;
+async function init() {
+    // load
+    const config: GameFieldConfig = {
+        assets: null,
+    };
+    GameField.init(config);
+    loopFnc(() => {
+        GameField.render();
+    });
 }
+init();
 
-document.body.appendChild(component());
