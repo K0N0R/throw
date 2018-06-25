@@ -8,9 +8,14 @@ interface MapPartCollision {
     bottom?: boolean;  
 }
 
+export interface CollisionInfo {
+    changed: boolean;
+    pos: IPos
+}
+
 interface MapElement {
     areaFnc: (x: number, y: number) => boolean;
-    collisionFnc: (x: number, y: number, shift: number) => { changed: boolean, pos: IPos };
+    collisionFnc: (x: number, y: number, shift: number) => CollisionInfo;
     renderFnc: () => void;
 }
 
@@ -33,6 +38,14 @@ export class GameMap {
         this.mapElements.forEach(e => {
             e.renderFnc();
         });
+    }
+
+    public static checkCollision(pos: IPos, shift: number): CollisionInfo {
+        for(let i = 0; i < this.mapElements.length; i++) {
+            if (this.mapElements[i].areaFnc(pos.x, pos.y)) {
+                return this.mapElements[i].collisionFnc(pos.x, pos.y, shift);
+            }
+        }
     }
 
     public static createMap(): void {
@@ -64,8 +77,8 @@ export class GameMap {
             this.getMapPart(800, 200, 100, 200, { left: true }), //25
             this.getMapPart(900, 200, 100, 200, { bottom: true}), //26
             this.getMapPart(800, 400, 100, 300, { left: true, right: true}), //27
-            this.getMapPart(900, 400, 100, 400, { top: true, left: true}), //28
-            this.getMapPart(1000, 0, 200, 800, { top: true, right: true}), //29
+            this.getMapPart(900, 400, 100, 400, { top: true, left: true, bottom: true}), //28
+            this.getMapPart(1000, 0, 200, 800, { top: true, right: true, bottom: true}), //29
         ];
         mapParts.forEach(p => {
             this.mapElements.push({
@@ -113,16 +126,29 @@ export class GameMap {
         return (initialX: number, initialY: number, shift: number = 1) => {
             let newX: number = initialX;
             let newY: number = initialY;
-            if (initialX < mapPart.pos.x) {
-                newX = mapPart.pos.x + shift;
-            } else if (initialX > (mapPart.pos.x + mapPart.size.width)) {
-                newX = mapPart.pos.x - shift;
+
+            if (mapPart.collision.left) {
+                if (initialX - shift < mapPart.pos.x) {
+                    newX = mapPart.pos.x + shift;
+                }
             }
 
-            if (initialY < mapPart.pos.y) {
-                newY = mapPart.pos.y + shift;
-            } else if (initialY > mapPart.pos.y + mapPart.size.height) {
-                newY = mapPart.pos.y + mapPart.size.height - shift;
+            if (mapPart.collision.right) {
+                if (initialX + shift > (mapPart.pos.x + mapPart.size.width)) {
+                    newX = mapPart.pos.x + mapPart.size.width - shift;
+                }
+            }
+
+            if (mapPart.collision.top) {
+                if (initialY - shift < mapPart.pos.y) {
+                    newY = mapPart.pos.y + shift;
+                }
+            }
+
+            if (mapPart.collision.bottom) {
+                if (initialY + shift > mapPart.pos.y + mapPart.size.height) {
+                    newY = mapPart.pos.y + mapPart.size.height - shift;
+                }
             }
 
             return {
