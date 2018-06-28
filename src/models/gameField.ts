@@ -2,6 +2,7 @@ import { Canvas } from './canvas';
 import { GameMap, CollisionInfo } from './gameMap';
 import { Player } from './player';
 import { KeysHandler } from './keysHandler'; 
+import { MouseHandler } from './mouseHandler';
 export interface GameFieldConfig {
     assets: any;
 }
@@ -15,6 +16,7 @@ export class GameField {
         Canvas.height = 800;
         GameMap.createMap();
         KeysHandler.bindEvents();
+        MouseHandler.bindEvents();
         this.players.push(new Player);
         // init players
         // init 
@@ -24,6 +26,7 @@ export class GameField {
     private static logic(): void {
         KeysHandler.reactOnKeys();
         this.players.forEach(p => {
+            p.logic();
             const collisionInfo = GameMap.checkCollision(p.pos, p.radius);
             if (collisionInfo && collisionInfo.changed) {
                 p.pos = collisionInfo.pos;
