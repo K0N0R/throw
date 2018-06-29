@@ -20,8 +20,14 @@ export class GameField {
         this.initialized = true;
     }
 
+    public static run() {
+        this.logic();
+        this.render();
+    }
+
     private static logic(): void {
         KeysHandler.reactOnKeys();
+
         this.players.forEach(p => {
             p.logic();
             const collisionInfo = GameMap.checkCollision(p.pos, p.radius);
@@ -31,14 +37,11 @@ export class GameField {
         });
     }
 
-    public static render() {
-        if (this.initialized) {
-            this.logic();
-            Canvas.clearCanvas();
-            GameMap.render();
-            this.players.forEach(p => {
-                p.render();
-            });
-        }
+    public static render(): void {
+        Canvas.clearCanvas();
+        GameMap.render();
+        this.players.forEach(p => {
+            p.render();
+        });
     }
 }

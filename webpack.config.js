@@ -11,7 +11,11 @@ module.exports = {
         use: 'ts-loader',
         exclude: /node_modules/
       }
-    ]
+    ],
+    loaders: [
+      {test: /\.json$/, loader: 'json'},
+      {test: /\.ts$/, loader: 'ts-loader'}
+  ],
   },
   resolve: {
     extensions: [ '.tsx', '.ts', '.js' ]

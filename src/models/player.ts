@@ -39,7 +39,8 @@ export class Player {
     }
 
     public logic() {
-        this.rotationVector = MouseHandler.getElementToMousePosVector(this.pos);
+
+        this.rotationVector = MouseHandler.getVectorToCursor(this.pos);
         this.rotationAngle = Math.atan2(this.rotationVector.y, this.rotationVector.x);
     }
 

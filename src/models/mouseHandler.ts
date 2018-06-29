@@ -75,7 +75,7 @@ export class MouseHandler {
         return this.mousePos;
     }
 
-    public static getElementToMousePosVector(elementPos?: IPos): IPos {
+    public static getVectorToCursor(elementPos?: IPos): IPos {
         const mousePosTranslatedByElement = this.getMousePos(elementPos);
         return nomalizeVector( { x: 0, y: 0 }, mousePosTranslatedByElement);
     }
