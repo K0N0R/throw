@@ -12,10 +12,6 @@ module.exports = {
         exclude: /node_modules/
       }
     ],
-    loaders: [
-      {test: /\.json$/, loader: 'json'},
-      {test: /\.ts$/, loader: 'ts-loader'}
-  ],
   },
   resolve: {
     extensions: [ '.tsx', '.ts', '.js' ]
