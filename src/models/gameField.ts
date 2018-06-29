@@ -3,21 +3,18 @@ import { GameMap, CollisionInfo } from './gameMap';
 import { Player } from './player';
 import { KeysHandler } from './keysHandler'; 
 import { MouseHandler } from './mouseHandler';
-export interface GameFieldConfig {
-    assets: any;
-}
 
 export class GameField {
     private static initialized: boolean;
     public static players: Player[] = [];
-    public static init(config: GameFieldConfig) {
+    public static init() {
         Canvas.createCanvas();
         Canvas.width = 1200;
         Canvas.height = 800;
         GameMap.createMap();
         KeysHandler.bindEvents();
         MouseHandler.bindEvents();
-        this.players.push(new Player);
+        this.players.push(new Player());
         // init players
         // init 
         this.initialized = true;

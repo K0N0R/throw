@@ -3,10 +3,11 @@ import { KeysHandler, Keys } from './keysHandler';
 import { MouseHandler } from './mouseHandler';
 import { nomalizeVector } from './../utils/vector';
 import { IPos } from './../utils/model';
+import { Assets } from './assets';
 
 export class Player {
     public pos: IPos;
-    public radius: number = 20;
+    public radius: number = 50;
     private speed: number = 7;
     private rotationAngle: number;
     private rotationVector: IPos;
@@ -43,17 +44,13 @@ export class Player {
     }
 
     public render() {
+        Canvas.ctx.save();
         Canvas.startDraw();
-        Canvas.ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = 'green';
-        Canvas.ctx.fill();
+        Canvas.ctx.translate(this.pos.x, this.pos.y);
+        Canvas.ctx.rotate(this.rotationAngle);
+        Canvas.ctx.drawImage(Assets.getAsset('player_model'), -50, -50);
         Canvas.stopDraw();
-
-        Canvas.startDraw();
-        Canvas.ctx.arc(this.pos.x, this.pos.y, 1, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = 'black';
-        Canvas.ctx.fill();
-        Canvas.stopDraw();
+        Canvas.ctx.restore();
 
         Canvas.ctx.save();
         Canvas.startDraw();
