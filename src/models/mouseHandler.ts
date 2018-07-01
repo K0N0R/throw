@@ -40,7 +40,7 @@ export class MouseHandler {
         });
     }
 
-    public static reactOnKeys(): void {
+    public static reactOnCLicks(): void {
         this.mousedownHandlers.forEach(h => {
             if (this.pressed[h.click]) {
                 h.action();

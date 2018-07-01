@@ -2,8 +2,11 @@
   "name": "blank",
   "version": "1.0.0",
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "uuid": "^3.3.2"
+  },
   "devDependencies": {
+    "@types/uuid": "^3.4.3",
     "css-loader": "^0.28.11",
     "style-loader": "^0.21.0",
     "ts-loader": "^4.4.1",
