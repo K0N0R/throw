@@ -65,7 +65,6 @@ export class Collision {
             const bottomLeft = { x: closest.pos.x - closest.shift, y: closest.pos.y + closest.shift };
             const bottomRight = { x: closest.pos.x + closest.shift, y: closest.pos.y + closest.shift };
             
-            
             if ((topLeft.x <= object.pos.x + object.shift || topRight.x >= object.pos.x - object.shift) &&
                 (topLeft.y >= object.pos.y + object.shift && topRight.y >= object.pos.y + object.shift))  {
                 // TOP
@@ -73,9 +72,9 @@ export class Collision {
                 objectCollision.horizontal = true;
                 object.pos.y = topLeft.y - object.shift;
                 object.moveVector.y *= -1;
-                console.log('-------------------', object.moveVector);
-                
+                console.log('-------------------');
             }
+
             if ((topLeft.x >= object.pos.x + object.shift && bottomLeft.x >= object.pos.x + object.shift) &&
                 (topLeft.y >= object.pos.y + object.shift || bottomLeft.y >= object.pos.y - object.shift))  {
                 // LEFT
@@ -83,8 +82,9 @@ export class Collision {
                 objectCollision.vertical = true;
                 object.pos.x = topLeft.x - object.shift;
                 object.moveVector.x *= -1;
-                console.log('-------------------', object.moveVector);
+                console.log('-------------------');
             }
+
             if ((topRight.x <= object.pos.x - object.shift && bottomRight.x <= object.pos.x - object.shift) &&
                 (topRight.y <= object.pos.y + object.shift || bottomRight.y >= object.pos.y - object.shift))  {
                 // RIGHT
@@ -92,8 +92,9 @@ export class Collision {
                 objectCollision.vertical = true;
                 object.pos.x = bottomRight.x + object.shift;
                 object.moveVector.x *= -1;
-                console.log('-------------------', object.moveVector);
+                console.log('-------------------');
             }
+
             if ((bottomLeft.x <= object.pos.x + object.shift || bottomRight.x >= object.pos.x - object.shift) &&
                 (bottomLeft.y <= object.pos.y - object.shift && bottomRight.y <= object.pos.y - object.shift))  {
                 // BOTTOM
@@ -101,9 +102,9 @@ export class Collision {
                 objectCollision.horizontal = true;
                 object.pos.y = bottomRight.y + object.shift;
                 object.moveVector.y *= -1;
-
-                console.log('-------------------', object.moveVector);
+                console.log('-------------------');
             }
+
          });
          if (!objectCollision.horizontal) {
             object.pos.x = object.pos.x + object.moveVector.x;
