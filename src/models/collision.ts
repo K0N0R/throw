@@ -82,7 +82,7 @@ export class Collision {
                 objectCollision.vertical = true;
                 object.pos.x = topLeft.x - object.shift;
                 object.moveVector.x *= -1;
-                console.log('-------------------');
+                
             }
 
             if ((topRight.x <= object.pos.x - object.shift && bottomRight.x <= object.pos.x - object.shift) &&
