@@ -9,7 +9,6 @@ export enum MouseClicks {
 
 export class MouseHandler {
     private static mousePos: IPos = { x: 0, y: 0};
-    private static mouseMoveVector: IPos = { x: 0, y: 0};
     private static pressed: any = {};
     private static mousedownHandlers: { click: MouseClicks, action: Function}[] = [];
     private static clickHandlers: { click: MouseClicks, action: Function}[] = [];
@@ -23,9 +22,13 @@ export class MouseHandler {
             this.pressed[event.which] = false;
         });
 
+        document.addEventListener('contextmenu', (event: MouseEvent) => {
+            event.preventDefault();
+        });
+
         document.addEventListener('click', (event: MouseEvent) => {
             this.clickHandlers.forEach(h => {
-                if (this.pressed[h.click]) {
+                if (event.which === h.click) {
                     h.action();
                 }
             });
@@ -35,12 +38,11 @@ export class MouseHandler {
             const canvasBoundingRect = Canvas.ele.getBoundingClientRect();
             const canvasPosition = {x: canvasBoundingRect.left + Canvas.ele.clientLeft, y: canvasBoundingRect.top + Canvas.ele.clientTop };
             const newMousePos = { x: event.x - canvasPosition.x, y: event.y - canvasPosition.y };
-            this.mouseMoveVector = getNormalizedVector(this.mousePos, newMousePos);
             this.mousePos = newMousePos;
         });
     }
 
-    public static reactOnCLicks(): void {
+    public static reactOnClicks(): void {
         this.mousedownHandlers.forEach(h => {
             if (this.pressed[h.click]) {
                 h.action();

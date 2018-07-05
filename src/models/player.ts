@@ -1,6 +1,6 @@
 import { Canvas } from './canvas';
 import { KeysHandler, Keys } from './keysHandler';
-import { MouseHandler } from './mouseHandler';
+import { MouseHandler, MouseClicks } from './mouseHandler';
 import { getNormalizedVector, calculateVectorLength, normalizeVector} from './../utils/vector';
 import { IPos, Shape, IObservable, Disposable } from './../utils/model';
 import { Assets } from './assets';
@@ -10,15 +10,16 @@ type events = 'move' | 'shoot';
 
 export const PlayerSize = 30;
 
-export class Player extends ObjectBase {
+export class Player extends ObjectBase<events> {
     private movementSpeed: number = 0.7;
     private maxSpeed: number = 6;
     private rotationAngle: number;
-    private rotationVector: IPos;
-    private observables: IObservable<events>[] = [];
+    public rotationVector: IPos;
+    public crosshairDistance: number = 2 * PlayerSize;
     public constructor(pos: IPos) {
         super(pos, Shape.Circle, PlayerSize)
         this.addMovementHandlers();
+        this.addShootHandler();
     }
 
     private addMovementHandlers(): void {
@@ -28,20 +29,10 @@ export class Player extends ObjectBase {
         KeysHandler.add(Keys.D, () => { this.keysHandlers(Keys.D); });
     }
 
-    public onPositionChanged(callback: Function): Disposable {
-        const observable = { action: callback, eventName: 'move' };
-        this.observables.push(observable);
-        return () => {
-            const idx = this.observables.indexOf(observable);
-            if (idx != -1) {
-                this.observables.splice(idx, 1);
-            }
-        };
-    }
-
-    public positionChangedActions(oldPos: IPos) {
-        const positionChanged = this.observables.filter((o) => o.eventName === 'move' );
-        positionChanged.forEach(o => o.action(this, oldPos));
+    private addShootHandler(): void {
+        MouseHandler.add(MouseClicks.Left, () => {
+            this.notify('shoot');
+        });
     }
 
     private keysHandlers(key: Keys) {
@@ -74,7 +65,7 @@ export class Player extends ObjectBase {
         const friction = 0.25;
 
         if (this.moveVector.x || this.moveVector.y) {
-            this.positionChangedActions(old);
+            this.notify('move', old);
         }
         
         if (Math.abs(this.moveVector.x) > 0.06) {
@@ -100,7 +91,7 @@ export class Player extends ObjectBase {
         Canvas.startDraw();
         Canvas.ctx.translate(this.pos.x, this.pos.y);
         Canvas.ctx.rotate(this.rotationAngle);
-        Canvas.ctx.arc(0, 0, this.size/2, 0, 2 * Math.PI, true);
+        Canvas.ctx.arc(0, 0, this.shift, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = 'green';
         Canvas.ctx.fill();
         Canvas.stopDraw();
@@ -110,7 +101,7 @@ export class Player extends ObjectBase {
         Canvas.startDraw();
         Canvas.ctx.translate(this.pos.x, this.pos.y);
         Canvas.ctx.rotate(this.rotationAngle);
-        Canvas.ctx.arc(2* this.size, 0, 1, 0, 2 * Math.PI, true);
+        Canvas.ctx.arc(this.crosshairDistance, 0, 1, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = 'black';
         Canvas.ctx.fill();
         Canvas.stopDraw();
