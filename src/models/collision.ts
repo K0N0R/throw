@@ -53,7 +53,10 @@ export class Collision {
         });
     }
     
-    private static calculateObjectRotationVector(closestObjects: ObjectBase[], object: ObjectBase, oldPosition: IPos) {  
+    private static calculateObjectRotationVector(closestObjects: ObjectBase[], object: ObjectBase, oldPosition: IPos) {
+        object.pos = oldPosition;
+        const objectCollision = { horizontal: false, vertical: false };
+        const normalizedMoveVector = normalizeVector(object.moveVector);
         closestObjects.forEach(closest => {
             //const closest = closestObjects[0];
             closest.color = 'blue';
@@ -61,14 +64,13 @@ export class Collision {
             const topRight = { x: closest.pos.x + closest.shift, y: closest.pos.y - closest.shift };
             const bottomLeft = { x: closest.pos.x - closest.shift, y: closest.pos.y + closest.shift };
             const bottomRight = { x: closest.pos.x + closest.shift, y: closest.pos.y + closest.shift };
-            const normalizedMoveVector = normalizeVector(object.moveVector);
-            object.pos = oldPosition;
+            
             
             if ((topLeft.x <= object.pos.x + object.shift || topRight.x >= object.pos.x - object.shift) &&
                 (topLeft.y >= object.pos.y + object.shift && topRight.y >= object.pos.y + object.shift))  {
                 // TOP
                 console.log('TOP WALL')
-                console.log(topLeft)
+                objectCollision.horizontal = true;
                 object.pos.y = topLeft.y - object.shift;
                 object.moveVector.y *= -1;
                 console.log('-------------------', object.moveVector);
@@ -78,7 +80,7 @@ export class Collision {
                 (topLeft.y >= object.pos.y + object.shift || bottomLeft.y >= object.pos.y - object.shift))  {
                 // LEFT
                 console.log('LEFT WALL')
-                console.log(topLeft)
+                objectCollision.vertical = true;
                 object.pos.x = topLeft.x - object.shift;
                 object.moveVector.x *= -1;
                 console.log('-------------------', object.moveVector);
@@ -87,7 +89,7 @@ export class Collision {
                 (topRight.y <= object.pos.y + object.shift || bottomRight.y >= object.pos.y - object.shift))  {
                 // RIGHT
                 console.log('RIGHT WALL')
-                console.log(bottomRight)
+                objectCollision.vertical = true;
                 object.pos.x = bottomRight.x + object.shift;
                 object.moveVector.x *= -1;
                 console.log('-------------------', object.moveVector);
@@ -96,12 +98,21 @@ export class Collision {
                 (bottomLeft.y <= object.pos.y - object.shift && bottomRight.y <= object.pos.y - object.shift))  {
                 // BOTTOM
                 console.log('BOTTOM WALL')
-                console.log(bottomRight)
+                objectCollision.horizontal = true;
                 object.pos.y = bottomRight.y + object.shift;
                 object.moveVector.y *= -1;
+
                 console.log('-------------------', object.moveVector);
             }
          });
+         if (!objectCollision.horizontal) {
+            object.pos.x = object.pos.x + object.moveVector.x;
+         }
+         if (!objectCollision.vertical) {
+            object.pos.y = object.pos.y + object.moveVector.y;
+            
+         }
+        
 
     }
 }
