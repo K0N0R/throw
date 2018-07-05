@@ -1,5 +1,5 @@
 import { IPos } from './../utils/model';
-import { nomalizeVector } from './../utils/vector';
+import { getNormalizedVector } from './../utils/vector';
 import { Canvas } from './canvas';
 export enum MouseClicks {
     Left = 1,
@@ -35,7 +35,7 @@ export class MouseHandler {
             const canvasBoundingRect = Canvas.ele.getBoundingClientRect();
             const canvasPosition = {x: canvasBoundingRect.left + Canvas.ele.clientLeft, y: canvasBoundingRect.top + Canvas.ele.clientTop };
             const newMousePos = { x: event.x - canvasPosition.x, y: event.y - canvasPosition.y };
-            this.mouseMoveVector = nomalizeVector(this.mousePos, newMousePos);
+            this.mouseMoveVector = getNormalizedVector(this.mousePos, newMousePos);
             this.mousePos = newMousePos;
         });
     }
@@ -77,6 +77,6 @@ export class MouseHandler {
 
     public static getVectorToCursor(elementPos?: IPos): IPos {
         const mousePosTranslatedByElement = this.getMousePos(elementPos);
-        return nomalizeVector( { x: 0, y: 0 }, mousePosTranslatedByElement);
+        return getNormalizedVector( { x: 0, y: 0 }, mousePosTranslatedByElement);
     }
 }

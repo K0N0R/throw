@@ -13,4 +13,5 @@ export class ObjectBase {
         this.size = size;
         this.shift = this.size/2;
     }
+    public color: string;
 }

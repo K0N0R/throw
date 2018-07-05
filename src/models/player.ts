@@ -1,7 +1,7 @@
 import { Canvas } from './canvas';
 import { KeysHandler, Keys } from './keysHandler';
 import { MouseHandler } from './mouseHandler';
-import { nomalizeVector, clone } from './../utils/vector';
+import { getNormalizedVector, calculateVectorLength, normalizeVector} from './../utils/vector';
 import { IPos, Shape, IObservable, Disposable } from './../utils/model';
 import { Assets } from './assets';
 import { ObjectBase } from './objectBase';
@@ -11,7 +11,8 @@ type events = 'move' | 'shoot';
 export const PlayerSize = 30;
 
 export class Player extends ObjectBase {
-    private movementSpeed: number = 3.4;
+    private movementSpeed: number = 0.7;
+    private maxSpeed: number = 6;
     private rotationAngle: number;
     private rotationVector: IPos;
     private observables: IObservable<events>[] = [];
@@ -45,27 +46,32 @@ export class Player extends ObjectBase {
 
     private keysHandlers(key: Keys) {
         if(key == Keys.W) {
-            this.moveVector.y = -this.movementSpeed;
+            this.moveVector.y = this.moveVector.y -= this.movementSpeed
         }
         if(key == Keys.S) {
-            this.moveVector.y = this.movementSpeed;
+            this.moveVector.y = this.moveVector.y += this.movementSpeed;
         }
         if (key == Keys.A) {
-            this.moveVector.x = -this.movementSpeed;
+            this.moveVector.x = this.moveVector.x -= this.movementSpeed;
         }
         if(key == Keys.D) {
-            this.moveVector.x = this.movementSpeed;
+            this.moveVector.x = this.moveVector.x += this.movementSpeed;
         }
         if (key == Keys.Shift) {
         }
-        
+        const movmentLength = calculateVectorLength(this.moveVector);
+        if (movmentLength > this.maxSpeed) {
+            const normalizedMoveVector = normalizeVector(this.moveVector);
+            this.moveVector.x = normalizedMoveVector.x * this.maxSpeed;
+            this.moveVector.y = normalizedMoveVector.y * this.maxSpeed;
+        }
     }
 
     private movement() {
         const old = { x: this.pos.x, y: this.pos.y };
         this.pos.x += this.moveVector.x;
         this.pos.y += this.moveVector.y;
-        const friction = 0.08;
+        const friction = 0.25;
 
         if (this.moveVector.x || this.moveVector.y) {
             this.positionChangedActions(old);
