@@ -72,7 +72,6 @@ export class Collision {
                 objectCollision.horizontal = true;
                 object.pos.y = topLeft.y - object.shift;
                 object.moveVector.y *= -1;
-                
             }
 
             if ((topLeft.x >= object.pos.x + object.shift && bottomLeft.x >= object.pos.x + object.shift) &&
@@ -82,7 +81,6 @@ export class Collision {
                 objectCollision.vertical = true;
                 object.pos.x = topLeft.x - object.shift;
                 object.moveVector.x *= -1;
-                
             }
 
             if ((topRight.x <= object.pos.x - object.shift && bottomRight.x <= object.pos.x - object.shift) &&
@@ -92,7 +90,6 @@ export class Collision {
                 objectCollision.vertical = true;
                 object.pos.x = bottomRight.x + object.shift;
                 object.moveVector.x *= -1;
-                console.log('-------------------');
             }
 
             if ((bottomLeft.x <= object.pos.x + object.shift || bottomRight.x >= object.pos.x - object.shift) &&
@@ -102,7 +99,6 @@ export class Collision {
                 objectCollision.horizontal = true;
                 object.pos.y = bottomRight.y + object.shift;
                 object.moveVector.y *= -1;
-                console.log('-------------------');
             }
 
          });
