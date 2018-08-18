@@ -1,6 +1,7 @@
 import { IPos } from './../utils/model';
 import { getNormalizedVector } from './../utils/vector';
 import { Canvas } from './canvas';
+import { Camera } from './camera';
 export enum MouseClicks {
     Left = 1,
     Middle = 2,
@@ -37,7 +38,8 @@ export class MouseHandler {
         document.addEventListener('mousemove', (event: MouseEvent) => {
             const canvasBoundingRect = Canvas.ele.getBoundingClientRect();
             const canvasPosition = {x: canvasBoundingRect.left + Canvas.ele.clientLeft, y: canvasBoundingRect.top + Canvas.ele.clientTop };
-            const newMousePos = { x: event.x - canvasPosition.x, y: event.y - canvasPosition.y };
+            const cameraPosition = Camera.pos;
+            const newMousePos = { x: event.x - canvasPosition.x + cameraPosition.x, y: event.y - canvasPosition.y + cameraPosition.y };
             this.mousePos = newMousePos;
         });
     }

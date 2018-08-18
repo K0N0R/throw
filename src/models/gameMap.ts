@@ -68,7 +68,7 @@ export class GameMap {
     private static generateBrick(): Brick {
         const generatedY = Math.abs(Math.round(Math.random() * (this.mapNet.length - 1)));
         const generatedX = Math.abs(Math.round(Math.random() * (this.mapNet[0].length - 1)));
-        const brickPos = this.mapNet[generatedX][generatedY];
+        const brickPos = this.mapNet[generatedY][generatedX];
         if (!this.bricks.filter(b => { b.pos.x === brickPos.x && b.pos.y === brickPos.y })[0]) {
             return new Brick({x: brickPos.x, y: brickPos.y});
         } else {

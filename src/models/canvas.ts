@@ -11,7 +11,7 @@ export class Canvas {
     }
 
     public static get height(): number {
-        return this.ele.width;
+        return this.ele.height;
     }
 
     public static set height(value: number) {

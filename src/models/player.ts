@@ -89,15 +89,11 @@ export class Player extends ObjectBase<events> {
     }
 
     public render(): void {
-        Canvas.ctx.save();
         Canvas.startDraw();
-        Canvas.ctx.translate(this.pos.x, this.pos.y);
-        Canvas.ctx.rotate(this.rotationAngle);
-        Canvas.ctx.arc(0, 0, this.shift, 0, 2 * Math.PI, true);
+        Canvas.ctx.arc(this.pos.x, this.pos.y, this.shift, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = 'green';
         Canvas.ctx.fill();
         Canvas.stopDraw();
-        Canvas.ctx.restore();
 
         Canvas.ctx.save();
         Canvas.startDraw();

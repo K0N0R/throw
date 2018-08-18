@@ -30,8 +30,11 @@ export class GameField {
     }
 
     public static run() {
+        Canvas.clearCanvas();
+        Camera.translateStart();
         this.logic();
         this.render();
+        Camera.translateEnd();
     }
 
     private static addPlayer(main: boolean): void {
@@ -40,8 +43,11 @@ export class GameField {
         };
         const newPlayer = new Player(generatePlayerPos(), main);
         this.players.push(newPlayer);
+        if (main) Camera.pos = newPlayer.pos;
+
         const disposeMoveHandler = newPlayer.observe('move', (player: Player, oldPosition: IPos) => {
             Collision.stopOnCollision(player, oldPosition);
+            if (player.main) Camera.pos = player.pos;
         });
         const disposeShootHandler = newPlayer.observe('shoot', this.addBullet.bind(this));
     }
@@ -66,19 +72,14 @@ export class GameField {
  
         this.players.forEach(p => {
             p.logic();
-            //if (p.main) Camera.updatePos(p.pos);
         });
         
         this.bullets.forEach(b => {
             b.logic();
-        });
-
-        //Camera.logic();
-
+        });      
     }
 
     public static render(): void {
-        Canvas.clearCanvas();
         GameMap.render();
         this.players.forEach(p => {
             p.render();
