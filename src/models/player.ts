@@ -11,13 +11,15 @@ type events = 'move' | 'shoot';
 export const PlayerSize = 30;
 
 export class Player extends ObjectBase<events> {
+    public main: boolean;
     private movementSpeed: number = 0.7;
     private maxSpeed: number = 6;
     private rotationAngle: number;
     public rotationVector: IPos;
     public crosshairDistance: number = 2 * PlayerSize;
-    public constructor(pos: IPos) {
+    public constructor(pos: IPos, main: boolean) {
         super(pos, Shape.Circle, PlayerSize)
+        this.main = main;
         this.addMovementHandlers();
         this.addShootHandler();
     }

@@ -50,9 +50,9 @@ export class GameMap {
     }
 
     private static createMapNet() {
-        for (let i = 0; i < this.mapSize.height; i += BrickSize) {
+        for (let i = 0; i < this.mapSize.height * 2; i += BrickSize) {
             this.mapNet.push([]);
-            for (let k = 0; k < this.mapSize.width; k += BrickSize) {
+            for (let k = 0; k < this.mapSize.width * 2; k += BrickSize) {
                 this.mapNet[this.mapNet.length - 1].push({ x: i + BrickSize/2, y: k + BrickSize/2 });
             }
         }

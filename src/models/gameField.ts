@@ -6,26 +6,27 @@ import { Player } from './player';
 import { Bullet } from './bullet';
 import { KeysHandler } from './keysHandler'; 
 import { MouseHandler } from './mouseHandler';
+import { Camera } from './camera';
 
 export class GameField {
-    public static players: Player[] = [];
-    public static bullets: Bullet[] = [];
+    private static players: Player[] = [];
+    private static bullets: Bullet[] = [];
     public static init() {
+        KeysHandler.bindEvents();
+        MouseHandler.bindEvents();
 
         Canvas.createCanvas();
         Canvas.width = 1200;
         Canvas.height = 800;
-
+        
         GameMap.createMap();
         GameMap.bricks.forEach(b => {
             Collision.addStatic(b);
         });
-        KeysHandler.bindEvents();
-        MouseHandler.bindEvents();
-        GameMap.bricks.forEach(b => {
-            Collision.addStatic(b);
-        });
-        this.addPlayer();
+        // GameMap.bricks.forEach(b => { //FIXME: 
+        //     Collision.addStatic(b);
+        // }); 
+        this.addPlayer(true);
     }
 
     public static run() {
@@ -33,12 +34,11 @@ export class GameField {
         this.render();
     }
 
-    private static addPlayer(pos?: IPos): void {
+    private static addPlayer(main: boolean): void {
         const generatePlayerPos = () => {
             return { x: 100, y: 100};
         };
-        pos = pos || generatePlayerPos();
-        const newPlayer = new Player(pos);
+        const newPlayer = new Player(generatePlayerPos(), main);
         this.players.push(newPlayer);
         const disposeMoveHandler = newPlayer.observe('move', (player: Player, oldPosition: IPos) => {
             Collision.stopOnCollision(player, oldPosition);
@@ -63,12 +63,17 @@ export class GameField {
     private static logic(): void {
         KeysHandler.reactOnKeys();
         MouseHandler.reactOnClicks();
+ 
         this.players.forEach(p => {
             p.logic();
+            //if (p.main) Camera.updatePos(p.pos);
         });
+        
         this.bullets.forEach(b => {
             b.logic();
         });
+
+        //Camera.logic();
 
     }
 
@@ -80,7 +85,6 @@ export class GameField {
         });
         this.bullets.forEach(b => {
             b.render();
-            console.log('bullet render')
         });
     }
 }

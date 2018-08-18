@@ -16,12 +16,12 @@ export class Collision {
 
     public static checkCollision(object: ObjectBase): boolean {
         const closestObjects = this.closestObjects(object);
-        return closestObjects.shift() !== void 0;
+        return closestObjects.length > 0;
     }
 
     public static stopOnCollision(object: ObjectBase, oldPosition: IPos): void {
         const closestObjects = this.closestObjects(object);
-        if (closestObjects.shift()) {
+        if (closestObjects.length) {
             // collision happend
             this.calculateObjectRotationVector(closestObjects, object, oldPosition);
         }
@@ -69,27 +69,28 @@ export class Collision {
             const bottomLeft = { x: closest.pos.x - closest.shift, y: closest.pos.y + closest.shift };
             const bottomRight = { x: closest.pos.x + closest.shift, y: closest.pos.y + closest.shift };
 
-            if (
+            const objectTop = object.pos.y - object.shift;
+            const objectBottom = object.pos.y + object.shift;
+            const objectLeft = object.pos.x - object.shift;
+            const objectRight = object.pos.x + object.shift;
+
+            if (!objectCollision.horizontal &&
                 // TOP
-                ((topLeft.x <= object.pos.x + object.shift || topRight.x >= object.pos.x - object.shift) &&
-                    (topLeft.y >= object.pos.y + object.shift && topRight.y >= object.pos.y + object.shift))
+                (((topLeft.y >= objectBottom) && (topLeft.x <= objectRight || topRight.x >= objectLeft))
                 ||
                 // BOTTOM
-                ((bottomLeft.x <= object.pos.x + object.shift || bottomRight.x >= object.pos.x - object.shift) &&
-                    (bottomLeft.y <= object.pos.y - object.shift && bottomRight.y <= object.pos.y - object.shift))
+                ((bottomLeft.y <= objectTop) && (bottomLeft.x <= objectRight || bottomRight.x >= objectLeft)))
             ) {
                 objectCollision.horizontal = true;
                 object.moveVector.y *= -0.75;
             }
 
-            if (
+            if (!objectCollision.vertical &&
                 // LEFT
-                ((topLeft.x >= object.pos.x + object.shift && bottomLeft.x >= object.pos.x + object.shift) &&
-                    (topLeft.y >= object.pos.y + object.shift || bottomLeft.y >= object.pos.y - object.shift))
+                (((topLeft.x >= objectRight) && (topLeft.y <= objectBottom || bottomLeft.y >= objectTop))
                 ||
                 // RIGHT
-                ((topRight.x <= object.pos.x - object.shift && bottomRight.x <= object.pos.x - object.shift) &&
-                    (topRight.y <= object.pos.y + object.shift || bottomRight.y >= object.pos.y - object.shift))
+                ((topRight.x <= objectLeft) && (topRight.y <= objectBottom || bottomRight.y >= objectTop)))
             ) {
                 objectCollision.vertical = true;
                 object.moveVector.x *= -0.75;
