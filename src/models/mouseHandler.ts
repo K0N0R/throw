@@ -9,6 +9,7 @@ export enum MouseClicks {
 }
 
 export class MouseHandler {
+    private static browserMousePos: IPos = { x: 0, y: 0};
     private static mousePos: IPos = { x: 0, y: 0};
     private static pressed: any = {};
     private static mousedownHandlers: { click: MouseClicks, action: Function}[] = [];
@@ -36,12 +37,17 @@ export class MouseHandler {
         });
 
         document.addEventListener('mousemove', (event: MouseEvent) => {
-            const canvasBoundingRect = Canvas.ele.getBoundingClientRect();
-            const canvasPosition = {x: canvasBoundingRect.left + Canvas.ele.clientLeft, y: canvasBoundingRect.top + Canvas.ele.clientTop };
-            const cameraPosition = Camera.pos;
-            const newMousePos = { x: event.x - canvasPosition.x + cameraPosition.x, y: event.y - canvasPosition.y + cameraPosition.y };
-            this.mousePos = newMousePos;
+            this.browserMousePos = { x: event.x, y: event.y };
+            this.updateMousePos();
         });
+    }
+
+    public static updateMousePos(): void {
+        const canvasBoundingRect = Canvas.ele.getBoundingClientRect();
+        const canvasPosition = {x: canvasBoundingRect.left + Canvas.ele.clientLeft, y: canvasBoundingRect.top + Canvas.ele.clientTop };
+        const cameraPosition = Camera.pos;
+        const newMousePos = { x: this.browserMousePos.x - canvasPosition.x + cameraPosition.x, y: this.browserMousePos.y - canvasPosition.y + cameraPosition.y };
+        this.mousePos = newMousePos;
     }
 
     public static reactOnClicks(): void {

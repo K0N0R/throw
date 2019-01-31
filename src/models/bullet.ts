@@ -1,22 +1,22 @@
 import { IPos, Shape, IObservable, Disposable } from './../utils/model';
 import { Canvas } from './canvas';
 import { ObjectBase } from "./objectBase";
+import { EventManager } from './eventManager';
 
 type events = 'move';
 
-export class Bullet extends ObjectBase<events> {
+export class Bullet extends ObjectBase {
     public constructor(pos: IPos, moveVector: IPos) {
         super(pos, Shape.Circle, 2)
         this.moveVector = moveVector;
     }
 
     public logic() {
-        const old = { x: this.pos.x, y: this.pos.y };
         this.pos.x += this.moveVector.x;
         this.pos.y += this.moveVector.y;
 
         if (this.moveVector.x || this.moveVector.y) {
-            this.notify('move', old);
+            EventManager.notify('bullet::move', this);
         }
     }
 

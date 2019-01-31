@@ -1,27 +1,24 @@
 import { Canvas } from './canvas';
 import { KeysHandler, Keys } from './keysHandler';
 import { MouseHandler, MouseClicks } from './mouseHandler';
-import { getNormalizedVector, calculateVectorLength, normalizeVector} from './../utils/vector';
-import { IPos, Shape, IObservable, Disposable } from './../utils/model';
-import { Assets } from './assets';
+import { calculateVectorLength, normalizeVector} from './../utils/vector';
+import { IPos, Shape,  } from './../utils/model';
+import { EventManager } from './eventManager'; 
 import { ObjectBase } from './objectBase';
-
-type events = 'move' | 'shoot';
 
 export const PlayerSize = 30;
 
-export class Player extends ObjectBase<events> {
-    public main: boolean;
+export class Player extends ObjectBase {
     private movementSpeed: number = 0.7;
     private maxSpeed: number = 6;
     private rotationAngle: number;
     public rotationVector: IPos;
     public crosshairDistance: number = 2 * PlayerSize;
-    public constructor(pos: IPos, main: boolean) {
+    public constructor(pos: IPos) {
         super(pos, Shape.Circle, PlayerSize)
-        this.main = main;
         this.addMovementHandlers();
         this.addShootHandler();
+
     }
 
     private addMovementHandlers(): void {
@@ -33,7 +30,7 @@ export class Player extends ObjectBase<events> {
 
     private addShootHandler(): void {
         MouseHandler.add(MouseClicks.Left, () => {
-            this.notify('shoot');
+            EventManager.notify('player::shoot', this);
         });
     }
 
@@ -61,14 +58,12 @@ export class Player extends ObjectBase<events> {
     }
 
     private movement() {
-        const old = { x: this.pos.x, y: this.pos.y };
+        if (this.moveVector.x || this.moveVector.y) {
+            EventManager.notify('player::move', this);
+        }
         this.pos.x += this.moveVector.x;
         this.pos.y += this.moveVector.y;
         const friction = 0.25;
-
-        if (this.moveVector.x || this.moveVector.y) {
-            this.notify('move', old);
-        }
         
         if (Math.abs(this.moveVector.x) > 0.06) {
             this.moveVector.x -= this.moveVector.x * friction;        

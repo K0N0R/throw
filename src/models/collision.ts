@@ -14,20 +14,12 @@ export class Collision {
         };
     }
 
-    public static checkCollision(object: ObjectBase): boolean {
-        const closestObjects = this.closestObjects(object);
-        return closestObjects.length > 0;
+    public static checkCollision(object: { pos: IPos, shift: number }): boolean {
+        const collisions = this.findCollisions(object);
+        return collisions.length > 0;
     }
 
-    public static stopOnCollision(object: ObjectBase, oldPosition: IPos): void {
-        const closestObjects = this.closestObjects(object);
-        if (closestObjects.length) {
-            // collision happend
-            this.calculateObjectRotationVector(closestObjects, object, oldPosition);
-        }
-    }
-
-    private static closestObjects(object: ObjectBase) {
+    public static findCollisions(object: { pos: IPos, shift: number }) {
         return this.staticObjects.filter(staticObject => {
             switch (staticObject.shape) {
                 case Shape.Circle:
@@ -59,8 +51,7 @@ export class Collision {
         });
     }
 
-    private static calculateObjectRotationVector(closestObjects: ObjectBase[], object: ObjectBase, oldPosition: IPos) {
-        object.pos = oldPosition;
+    public static findAvailableDirections(closestObjects: ObjectBase[], object: { pos: IPos, shift: number }): { horizontal: boolean; vertical: boolean } {
         const objectCollision = { horizontal: false, vertical: false };
         closestObjects.forEach(closest => {
 
@@ -77,31 +68,23 @@ export class Collision {
             if (!objectCollision.horizontal &&
                 // TOP
                 (((topLeft.y >= objectBottom) && (topLeft.x <= objectRight || topRight.x >= objectLeft))
-                ||
-                // BOTTOM
-                ((bottomLeft.y <= objectTop) && (bottomLeft.x <= objectRight || bottomRight.x >= objectLeft)))
+                    ||
+                    // BOTTOM
+                    ((bottomLeft.y <= objectTop) && (bottomLeft.x <= objectRight || bottomRight.x >= objectLeft)))
             ) {
                 objectCollision.horizontal = true;
-                object.moveVector.y *= -0.75;
             }
 
             if (!objectCollision.vertical &&
                 // LEFT
                 (((topLeft.x >= objectRight) && (topLeft.y <= objectBottom || bottomLeft.y >= objectTop))
-                ||
-                // RIGHT
-                ((topRight.x <= objectLeft) && (topRight.y <= objectBottom || bottomRight.y >= objectTop)))
+                    ||
+                    // RIGHT
+                    ((topRight.x <= objectLeft) && (topRight.y <= objectBottom || bottomRight.y >= objectTop)))
             ) {
                 objectCollision.vertical = true;
-                object.moveVector.x *= -0.75;
             }
         });
-
-        if (!objectCollision.horizontal) {
-            object.pos.x = object.pos.x + object.moveVector.x;
-        }
-        if (!objectCollision.vertical) {
-            object.pos.y = object.pos.y + object.moveVector.y;
-        }
+        return objectCollision;
     }
 }

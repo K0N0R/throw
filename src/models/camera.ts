@@ -1,16 +1,15 @@
 import { IPos } from './../utils/model';
 import { Canvas } from './canvas';
+import { EventManager } from './eventManager'; 
 export class Camera {
-    private static _pos: IPos;
-    public static get pos(): IPos {
-        return this._pos;
-    };
+    public static pos: IPos;
 
-    public static set pos(pos: IPos) {
-        this._pos = {
+    public static updatePos(pos: IPos) {
+        this.pos = {
             x: pos.x -  Canvas.width/2,
             y: pos.y - Canvas.height/2
-        } 
+        }
+        EventManager.notify('camera::move');
     }
 
     public static translateStart() {
