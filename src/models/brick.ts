@@ -12,8 +12,9 @@ export class Brick extends ObjectBase {
     }
 
     public render(): void {
+        const boundingRect = this.getBoundingRect();
         Canvas.startDraw();
-        Canvas.ctx.rect(this.pos.x - this.shift, this.pos.y - this.shift, this.size, this.size);
+        Canvas.ctx.rect(boundingRect.left, boundingRect.top, this.size, this.size);
         Canvas.ctx.fillStyle = this.color;
         Canvas.ctx.fill();
         Canvas.ctx.lineWidth = 1;

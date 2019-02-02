@@ -1,13 +1,13 @@
-import { IPos } from './../utils/model';
 import { Canvas } from './canvas';
 import { Collision } from './collision';
-import { GameMap, CollisionInfo } from './gameMap';
+import { GameMap } from './gameMap';
 import { Player } from './player';
 import { Bullet } from './bullet';
 import { KeysHandler } from './keysHandler';
 import { MouseHandler } from './mouseHandler';
 import { Camera } from './camera';
 import { EventManager } from './eventManager';
+import { ObjectBase } from './objectBase';
 
 export class GameField {
     private static players: Player[] = [];
@@ -43,23 +43,18 @@ export class GameField {
         EventManager.add({
             event: 'player::move',
             handler: (player: Player) => {
-                const tempPlayer = {
-                    shift: player.shift,
-                    pos: {
-                        x: player.pos.x + player.moveVector.x,
-                        y: player.pos.y + player.moveVector.y
-                    }
-                }
-                const closestObjects = Collision.findCollisions(tempPlayer);
-                if (closestObjects.length > 0) {
-                    const collisionSides = Collision.findAvailableDirections(closestObjects, player);
-                    if (collisionSides.horizontal) {
-                        player.moveVector.y = 0;
-                    }
+                const predictObject = new ObjectBase({
+                    x: player.pos.x + player.moveVector.x,
+                    y: player.pos.y + player.moveVector.y
+                }, player.shape, player.size);
 
-                    if (collisionSides.vertical) {
-                        player.moveVector.x = 0;
-                    }
+                const collisionSides = Collision.checkSideOfCollision(predictObject, player);
+                if (collisionSides.horizontal) {
+                    player.moveVector.y = 0;
+                }
+
+                if (collisionSides.vertical) {
+                    player.moveVector.x = 0;
                 }
 
                 Camera.updatePos(player.pos);
@@ -69,7 +64,7 @@ export class GameField {
         EventManager.add({
             event: 'player::shoot',
             handler: (player: Player) => {
-                const bulletPos = { x: player.pos.x + player.rotationVector.x * player.shift, y: player.pos.y + player.rotationVector.y * player.shift };
+                const bulletPos = { x: player.pos.x + player.rotationVector.x * player.radius, y: player.pos.y + player.rotationVector.y * player.radius };
                 const newBullet = new Bullet(bulletPos, { x: player.rotationVector.x * 10, y: player.rotationVector.y * 10 });
                 this.bullets.push(newBullet);
             }
@@ -78,14 +73,11 @@ export class GameField {
         EventManager.add({
             event: 'bullet::move',
             handler: (bullet: Bullet) => {
-                const tempBullet = {
-                    shift: bullet.shift,
-                    pos: {
-                        x: bullet.pos.x + bullet.moveVector.x,
-                        y: bullet.pos.y + bullet.moveVector.y
-                    }
-                }
-                if (Collision.checkCollision(tempBullet)) {
+                const predictObject = new ObjectBase({
+                    x: bullet.pos.x + bullet.moveVector.x,
+                    y: bullet.pos.y + bullet.moveVector.y
+                }, bullet.shape, bullet.size);
+                if (Collision.checkCollision(predictObject)) {
                     const idx = this.bullets.indexOf(bullet);
                     if (idx !== -1) {
                         this.bullets.splice(idx, 1);

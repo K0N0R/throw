@@ -2,6 +2,11 @@ import { IPos, Shape, Disposable } from './../utils/model';
 import { getDistance } from './../utils/vector';
 import { ObjectBase } from './objectBase';
 
+export interface CollisionSide {
+    horizontal: boolean;
+    vertical: boolean
+}
+
 export class Collision {
     private static staticObjects: ObjectBase[] = [];
     private static movableObjects: ObjectBase[] = [];
@@ -14,17 +19,14 @@ export class Collision {
         };
     }
 
-    public static checkCollision(object: { pos: IPos, shift: number }): boolean {
-        const collisions = this.findCollisions(object);
-        return collisions.length > 0;
-    }
-
-    public static findCollisions(object: { pos: IPos, shift: number }) {
+    public static findCollisions(object: ObjectBase) {
+        const objBRect = object.getBoundingRect();
         return this.staticObjects.filter(staticObject => {
+            const staticBRect = staticObject.getBoundingRect();
             switch (staticObject.shape) {
                 case Shape.Circle:
                     const distance: number = getDistance(object.pos, staticObject.pos);
-                    if (distance <= object.shift + staticObject.shift) {
+                    if (distance <= object.radius + staticObject.radius) {
                         staticObject.color = 'blue';
                         return staticObject;
                     }
@@ -32,14 +34,12 @@ export class Collision {
                 case Shape.Square:
                     //TOP/DOWN
                     let insideHorizontal: boolean;
-                    if (!(object.pos.x - object.shift >= staticObject.pos.x + staticObject.shift ||
-                        object.pos.x + object.shift <= staticObject.pos.x - staticObject.shift)) {
+                    if (!(objBRect.left >= staticBRect.right || objBRect.right <= staticBRect.left)) {
                         insideHorizontal = true;
                     }
 
                     let insideVertical: boolean;
-                    if (!(object.pos.y - object.shift >= staticObject.pos.y + staticObject.shift ||
-                        object.pos.y + object.shift <= staticObject.pos.y - staticObject.shift)) {
+                    if (!(objBRect.top >= staticBRect.bottom || objBRect.bottom <= staticBRect.top)) {
                         insideVertical = true;
                     }
                     if (insideHorizontal && insideVertical) {
@@ -51,40 +51,50 @@ export class Collision {
         });
     }
 
-    public static findAvailableDirections(closestObjects: ObjectBase[], object: { pos: IPos, shift: number }): { horizontal: boolean; vertical: boolean } {
-        const objectCollision = { horizontal: false, vertical: false };
-        closestObjects.forEach(closest => {
+    public static checkCollision(object: ObjectBase): boolean {
+        const collisions = this.findCollisions(object);
+        return collisions.length > 0;
+    }
 
-            const topLeft = { x: closest.pos.x - closest.shift, y: closest.pos.y - closest.shift };
-            const topRight = { x: closest.pos.x + closest.shift, y: closest.pos.y - closest.shift };
-            const bottomLeft = { x: closest.pos.x - closest.shift, y: closest.pos.y + closest.shift };
-            const bottomRight = { x: closest.pos.x + closest.shift, y: closest.pos.y + closest.shift };
+    public static checkSideOfCollision(predict: ObjectBase, original: ObjectBase): CollisionSide {
+        const collisions = this.findCollisions(predict);
+        if (collisions.length > 0) {
+            return this.findCollisionSides(collisions, original);
+        } else {
+            return {
+                horizontal: false,
+                vertical: false
+            }
+        }
+    }
 
-            const objectTop = object.pos.y - object.shift;
-            const objectBottom = object.pos.y + object.shift;
-            const objectLeft = object.pos.x - object.shift;
-            const objectRight = object.pos.x + object.shift;
+    public static findCollisionSides(collisions: ObjectBase[], object: ObjectBase): CollisionSide {
+        const collisionSides = { horizontal: false, vertical: false };
+        collisions.forEach(collisionObj => {
 
-            if (!objectCollision.horizontal &&
+            const collisionAngl = collisionObj.getAngles();
+            const objBRect = object.getBoundingRect();
+
+            if (!collisionSides.horizontal &&
                 // TOP
-                (((topLeft.y >= objectBottom) && (topLeft.x <= objectRight || topRight.x >= objectLeft))
+                (((collisionAngl.topLeft.y >= objBRect.bottom) && (collisionAngl.topLeft.x <= objBRect.right || collisionAngl.topRight.x >= objBRect.left))
                     ||
                     // BOTTOM
-                    ((bottomLeft.y <= objectTop) && (bottomLeft.x <= objectRight || bottomRight.x >= objectLeft)))
+                    ((collisionAngl.bottomLeft.y <= objBRect.top) && (collisionAngl.bottomLeft.x <= objBRect.right || collisionAngl.bottomRight.x >= objBRect.left)))
             ) {
-                objectCollision.horizontal = true;
+                collisionSides.horizontal = true;
             }
 
-            if (!objectCollision.vertical &&
+            if (!collisionSides.vertical &&
                 // LEFT
-                (((topLeft.x >= objectRight) && (topLeft.y <= objectBottom || bottomLeft.y >= objectTop))
+                (((collisionAngl.topLeft.x >= objBRect.right) && (collisionAngl.topLeft.y <= objBRect.bottom || collisionAngl.bottomLeft.y >= objBRect.top))
                     ||
                     // RIGHT
-                    ((topRight.x <= objectLeft) && (topRight.y <= objectBottom || bottomRight.y >= objectTop)))
+                    ((collisionAngl.topRight.x <= objBRect.left) && (collisionAngl.topRight.y <= objBRect.bottom || collisionAngl.bottomRight.y >= objBRect.top)))
             ) {
-                objectCollision.vertical = true;
+                collisionSides.vertical = true;
             }
         });
-        return objectCollision;
+        return collisionSides;
     }
 }

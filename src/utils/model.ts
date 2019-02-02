@@ -13,9 +13,13 @@ export enum Shape {
     Square
 }
 
-export interface IObservable<EventNameType> {
-    eventName: EventNameType | string;
-    action: Function;
+export interface IBoundingRect {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+    width: number;
+    height: number;
 }
 
 export type Disposable = (() => void);

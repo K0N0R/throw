@@ -1,9 +1,7 @@
-import { IPos, Shape, IObservable, Disposable } from './../utils/model';
+import { IPos, Shape } from './../utils/model';
 import { Canvas } from './canvas';
 import { ObjectBase } from "./objectBase";
 import { EventManager } from './eventManager';
-
-type events = 'move';
 
 export class Bullet extends ObjectBase {
     public constructor(pos: IPos, moveVector: IPos) {

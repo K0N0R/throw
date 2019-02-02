@@ -2,36 +2,6 @@ import { Canvas } from './canvas';
 import { Brick, BrickSize } from './brick';
 import { IPos, ISize } from './../utils/model';
 
-interface MapPartCollision {
-    top?: boolean;
-    left?: boolean;
-    right?: boolean;
-    bottom?: boolean;  
-}
-
-export interface CollisionInfo {
-    changed: boolean;
-    pos: IPos
-}
-
-interface MapElement {
-    areaFnc: (x: number, y: number) => boolean;
-    collisionFnc: (x: number, y: number, shift: number) => CollisionInfo;
-    renderFnc: () => void;
-}
-
-interface MapPart {
-    pos: IPos;
-    size: ISize,
-    corner: {
-        leftTop: IPos,
-        leftBottom: IPos,
-        rightTop: IPos,
-        rightBottom: IPos
-    }
-    collision: MapPartCollision
-}
-
 export class GameMap {
     private static mapSize: ISize
     private static mapNet: (IPos[])[] = [];

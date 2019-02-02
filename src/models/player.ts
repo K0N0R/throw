@@ -36,7 +36,7 @@ export class Player extends ObjectBase {
 
     private keysHandlers(key: Keys) {
         if(key == Keys.W) {
-            this.moveVector.y = this.moveVector.y -= this.movementSpeed
+            this.moveVector.y = this.moveVector.y -= this.movementSpeed;
         }
         if(key == Keys.S) {
             this.moveVector.y = this.moveVector.y += this.movementSpeed;
@@ -85,7 +85,7 @@ export class Player extends ObjectBase {
 
     public render(): void {
         Canvas.startDraw();
-        Canvas.ctx.arc(this.pos.x, this.pos.y, this.shift, 0, 2 * Math.PI, true);
+        Canvas.ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = 'green';
         Canvas.ctx.fill();
         Canvas.stopDraw();
