@@ -1,3 +1,7 @@
 node_modules/
 dist/
 package-lock.json
+.vs/throw/v16/.suo
+.vs/throw/config/applicationhost.config
+.vs/slnx.sqlite
+.vs/ProjectSettings.json

@@ -5,7 +5,7 @@ import { EventManager } from './eventManager';
 
 export class Bullet extends ObjectBase {
     public constructor(pos: IPos, moveVector: IPos) {
-        super(pos, Shape.Circle, 2)
+        super(pos, Shape.Circle, 6)
         this.moveVector = moveVector;
     }
 

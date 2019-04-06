@@ -1,16 +1,16 @@
 import { Canvas } from './canvas';
 import { KeysHandler, Keys } from './keysHandler';
 import { MouseHandler, MouseClicks } from './mouseHandler';
-import { calculateVectorLength, normalizeVector} from './../utils/vector';
-import { IPos, Shape,  } from './../utils/model';
-import { EventManager } from './eventManager'; 
+import { calculateVectorLength, normalizeVector } from './../utils/vector';
+import { IPos, Shape, } from './../utils/model';
+import { EventManager } from './eventManager';
 import { ObjectBase } from './objectBase';
 
 export const PlayerSize = 30;
 
 export class Player extends ObjectBase {
-    private movementSpeed: number = 0.7;
-    private maxSpeed: number = 6;
+    public movementSpeed: number = 0.7;
+    public maxSpeed: number = 6;
     private rotationAngle: number;
     public rotationVector: IPos;
     public crosshairDistance: number = 2 * PlayerSize;
@@ -26,6 +26,7 @@ export class Player extends ObjectBase {
         KeysHandler.add(Keys.S, () => { this.keysHandlers(Keys.S); });
         KeysHandler.add(Keys.A, () => { this.keysHandlers(Keys.A); });
         KeysHandler.add(Keys.D, () => { this.keysHandlers(Keys.D); });
+        KeysHandler.add(Keys.Shift, () => { this.keysHandlers(Keys.Shift); });
     }
 
     private addShootHandler(): void {
@@ -35,20 +36,27 @@ export class Player extends ObjectBase {
     }
 
     private keysHandlers(key: Keys) {
-        if(key == Keys.W) {
+        if (key == Keys.W) {
             this.moveVector.y = this.moveVector.y -= this.movementSpeed;
         }
-        if(key == Keys.S) {
+        if (key == Keys.S) {
             this.moveVector.y = this.moveVector.y += this.movementSpeed;
         }
         if (key == Keys.A) {
             this.moveVector.x = this.moveVector.x -= this.movementSpeed;
         }
-        if(key == Keys.D) {
+        if (key == Keys.D) {
             this.moveVector.x = this.moveVector.x += this.movementSpeed;
         }
         if (key == Keys.Shift) {
+            this.movementSpeed = 1;
+            this.maxSpeed = 10;
         }
+        else {
+            this.movementSpeed = 0.7;
+            this.maxSpeed = 6;
+        }
+
         const movmentLength = calculateVectorLength(this.moveVector);
         if (movmentLength > this.maxSpeed) {
             const normalizedMoveVector = normalizeVector(this.moveVector);
@@ -64,16 +72,16 @@ export class Player extends ObjectBase {
         this.pos.x += this.moveVector.x;
         this.pos.y += this.moveVector.y;
         const friction = 0.25;
-        
+
         if (Math.abs(this.moveVector.x) > 0.06) {
-            this.moveVector.x -= this.moveVector.x * friction;        
+            this.moveVector.x -= this.moveVector.x * friction;
         } else {
             this.moveVector.x = 0;
         }
         if (Math.abs(this.moveVector.y) > 0.06) {
             this.moveVector.y -= this.moveVector.y * friction;
         } else {
-            this.moveVector.y = 0; 
+            this.moveVector.y = 0;
         }
     }
 
@@ -101,4 +109,3 @@ export class Player extends ObjectBase {
         Canvas.ctx.restore();
     }
 }
-
