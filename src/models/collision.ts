@@ -1,6 +1,7 @@
 import { IPos, Shape, Disposable } from './../utils/model';
 import { getDistance } from './../utils/vector';
 import { ObjectBase } from './objectBase';
+import { CollisionSide } from './collision';
 
 export interface CollisionSide {
     horizontal: boolean;
@@ -23,6 +24,7 @@ export class Collision {
         const objBRect = object.getBoundingRect();
         return this.staticObjects.filter(staticObject => {
             const staticBRect = staticObject.getBoundingRect();
+            const staticPoints = staticObject.getPoints();
             switch (staticObject.shape) {
                 case Shape.Circle:
                     const distance: number = getDistance(object.pos, staticObject.pos);
@@ -96,5 +98,27 @@ export class Collision {
             }
         });
         return collisionSides;
+    }
+
+    public static checkCollisionForPoints(predictObject: ObjectBase) {
+        const getStaticPointSide = (points: IPos[]): boolean => {
+            for (let i = 0; i < points.length; i++) {
+                const distance: number = getDistance(predictObject.pos, points[i]);
+                if (distance < predictObject.radius) {
+                    return true;
+                }
+            }
+        }
+        const collisionSide: any = { top: false, bottom: false, left: false, right: false };
+        for(let i = 0; i< this.staticObjects.length; i++) {
+            const staticObj = this.staticObjects[i];
+            const staticPoints: any = staticObj.getPoints();
+            for (const key in staticPoints) {
+                const sideCollision = getStaticPointSide(staticPoints[key]);
+                collisionSide[key] = sideCollision != null ? sideCollision : collisionSide[key];
+            }
+        };
+
+        return collisionSide;
     }
 }

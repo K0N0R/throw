@@ -8,7 +8,7 @@ export class Brick extends ObjectBase {
 
     public constructor(pos: IPos) {
         super(pos, Shape.Square, BrickSize);
-        this.color = 'white'
+        this.color = 'black'
     }
 
     public render(): void {
@@ -17,9 +17,9 @@ export class Brick extends ObjectBase {
         Canvas.ctx.rect(boundingRect.left, boundingRect.top, this.size, this.size);
         Canvas.ctx.fillStyle = this.color;
         Canvas.ctx.fill();
-        Canvas.ctx.lineWidth = 1;
-        Canvas.ctx.strokeStyle = 'black';
-        Canvas.ctx.stroke();
+        //Canvas.ctx.lineWidth = 1;
+        //Canvas.ctx.strokeStyle = 'black';
+        //Canvas.ctx.stroke();
         Canvas.stopDraw();
     }
 }

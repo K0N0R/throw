@@ -35,5 +35,27 @@ export class ObjectBase {
             bottomRight: { x: this.pos.x + this.radius, y: this.pos.y + this.radius }
         }
     }
+
+    public getPoints(): { top: IPos[], bottom: IPos[], left: IPos[], right: IPos[] } {
+        const BRect = this.getBoundingRect();
+        const friction = this.size / 20; // 10 is amount of points per side
+        return {
+            top: this.getPointsForSide(BRect.left, friction, { y: BRect.top }),
+            left: this.getPointsForSide(BRect.top, friction, { x: BRect.left }),
+            bottom: this.getPointsForSide(BRect.left, friction, { y: BRect.bottom }),
+            right: this.getPointsForSide(BRect.top, friction, { x: BRect.right })
+        }
+    }
+
+    private getPointsForSide(start: number, friction: number, constant: { x?: number; y?: number}): IPos[] {
+        const points = [];
+        for (let i = start; i <= start + this.size; i+=friction) {
+            points.push({
+                x: constant.x ? constant.x : i,
+                y: constant.y ? constant.y : i,
+            });
+        }
+        return points;
+    }
 }
 
