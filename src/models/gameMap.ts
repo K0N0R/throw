@@ -5,7 +5,7 @@ import { IPos, ISize } from './../utils/model';
 export class GameMap {
     private static mapSize: ISize
     private static mapNet: (IPos[])[] = [];
-    private static bricksAmount: number = 500;
+    private static bricksAmount: number = 325;
     public static bricks: Brick[] = [];
 
     public static createMap(): void {

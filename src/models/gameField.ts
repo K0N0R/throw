@@ -21,9 +21,6 @@ export class GameField {
         Canvas.height = 800;
 
         GameMap.createMap();
-        GameMap.bricks.forEach(b => {
-            Collision.addStatic(b);
-        });
 
         const newPlayer = new Player({ x: 100, y: 100 });
         this.players.push(newPlayer);
@@ -48,16 +45,7 @@ export class GameField {
                     y: player.pos.y + player.moveVector.y
                 }, player.shape, player.size);
 
-                // const collisionSides = Collision.checkSideOfCollision(predictObject, player);
-                // if (collisionSides.horizontal) {
-                //     player.moveVector.y = 0;
-                // }
-
-                // if (collisionSides.vertical) {
-                //     player.moveVector.x = 0;
-                // }
-
-                const collisionSides = Collision.checkCollisionForPoints(predictObject);
+                const collisionSides = Collision.checkCollisionForSegments(predictObject);
                 if (collisionSides.top || collisionSides.bottom) {
                     player.moveVector.y = 0;
                 }
@@ -65,11 +53,28 @@ export class GameField {
                 if (collisionSides.left || collisionSides.right) {
                     player.moveVector.x = 0;
                 }
-                console.log(`left: ${collisionSides.left}`)
-                console.log(`right: ${collisionSides.right}`)
-                console.log(`top: ${collisionSides.top}`)
-                console.log(`bottom: ${collisionSides.bottom}`)
-                console.log('-------------------------------')
+
+                // const predictXObject = new ObjectBase({
+                //     x: player.pos.x + player.moveVector.x,
+                //     y: player.pos.y
+                // }, player.shape, player.size);
+
+                // const xCollisionSides = Collision.checkCollisionForSegments(predictXObject);
+                // if (xCollisionSides.left || xCollisionSides.right) {
+                //     player.moveVector.x = 0;
+                // }
+
+                // const predictYObject = new ObjectBase({
+                //     x: player.pos.x,
+                //     y: player.pos.y  + player.moveVector.y
+                // }, player.shape, player.size);
+
+                // const yCollisionSides = Collision.checkCollisionForSegments(predictYObject);
+                // if (yCollisionSides.top || yCollisionSides.bottom) {
+                //     player.moveVector.y = 0;
+                // }
+
+
                 Camera.updatePos(player.pos);
             }
         });

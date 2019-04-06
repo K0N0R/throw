@@ -3,6 +3,11 @@ export interface IPos {
     y: number;
 }
 
+export interface ISegment {
+    start: IPos;
+    end: IPos;
+}
+
 export interface ISize {
     width: number;
     height: number;

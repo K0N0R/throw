@@ -2,7 +2,7 @@ import { IPos, ISize, Shape } from './../utils/model';
 import { Canvas } from './canvas';
 import { ObjectBase } from './objectBase';
 
-export const BrickSize = 20;
+export const BrickSize = 40;
 
 export class Brick extends ObjectBase {
 

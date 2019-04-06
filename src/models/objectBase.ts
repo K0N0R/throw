@@ -36,26 +36,14 @@ export class ObjectBase {
         }
     }
 
-    public getPoints(): { top: IPos[], bottom: IPos[], left: IPos[], right: IPos[] } {
+    public getSegments(): { top: { start: IPos, end: IPos }, bottom: { start: IPos, end: IPos }, left: { start: IPos, end: IPos }, right: { start: IPos, end: IPos } } {
         const BRect = this.getBoundingRect();
-        const friction = this.size / 20; // 10 is amount of points per side
         return {
-            top: this.getPointsForSide(BRect.left, friction, { y: BRect.top }),
-            left: this.getPointsForSide(BRect.top, friction, { x: BRect.left }),
-            bottom: this.getPointsForSide(BRect.left, friction, { y: BRect.bottom }),
-            right: this.getPointsForSide(BRect.top, friction, { x: BRect.right })
+            top: { start: { x: BRect.left, y: BRect.top }, end: { x: BRect.right, y: BRect.top } },
+            left: { start: { x: BRect.left, y: BRect.top }, end: { x: BRect.left, y: BRect.bottom } },
+            bottom: { start: { x: BRect.left, y: BRect.bottom }, end: { x: BRect.right, y: BRect.bottom } },
+            right: { start: { x: BRect.right, y: BRect.top }, end: { x: BRect.right, y: BRect.bottom } },
         }
-    }
-
-    private getPointsForSide(start: number, friction: number, constant: { x?: number; y?: number}): IPos[] {
-        const points = [];
-        for (let i = start; i <= start + this.size; i+=friction) {
-            points.push({
-                x: constant.x ? constant.x : i,
-                y: constant.y ? constant.y : i,
-            });
-        }
-        return points;
     }
 }
 
