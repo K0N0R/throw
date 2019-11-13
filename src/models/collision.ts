@@ -55,7 +55,7 @@ export class Collision {
                 case Shape.Circle:
                     const distance: number = getDistance(object.pos, staticObject.pos);
                     if (distance <= object.radius + staticObject.radius) {
-                        staticObject.color = '#333';
+                        staticObject.color = 'white';
                         return staticObject;
                     }
                     break;
@@ -71,7 +71,7 @@ export class Collision {
                         insideVertical = true;
                     }
                     if (insideHorizontal && insideVertical) {
-                        staticObject.color = 'blue';
+                        staticObject.color = 'white';
                         return staticObject;
                     }
                     break;

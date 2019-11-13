@@ -24,7 +24,7 @@ export class GameField {
 
         GameMap.createMap();
 
-        const newPlayer = new Player({ x: 100, y: 100 });
+        const newPlayer = new Player({ x: GameMap.size.width/2, y: GameMap.size.height/2 });
         this.players.push(newPlayer);
         Camera.updatePos(newPlayer.pos);
 
