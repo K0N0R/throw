@@ -1,6 +1,6 @@
 import { Canvas } from './canvas';
 import { Collision } from './collision';
-import { GameMap } from './gameMap';
+import { GameMap, IMapScale } from './gameMap';
 import { Player } from './player';
 import { Bullet } from './bullet';
 import { KeysHandler } from './keysHandler';
@@ -20,9 +20,9 @@ export class GameField {
         Canvas.width = 1200;
         Canvas.height = 800;
 
-        GameMap.createMap();
+        GameMap.createMap(IMapScale.Small);
 
-        const newPlayer = new Player({ x: 100, y: 100 });
+        const newPlayer = new Player({ x: 600, y: 400 });
         this.players.push(newPlayer);
         Camera.updatePos(newPlayer.pos);
 
@@ -45,7 +45,7 @@ export class GameField {
                     y: player.pos.y + player.moveVector.y
                 }, player.shape, player.size);
 
-                const collisionSides = Collision.checkCollisionForSegments(predictObject);
+                const collisionSides = Collision.checkMapCollision(predictObject);
                 if (collisionSides.top || collisionSides.bottom) {
                     player.moveVector.y = 0;
                 }
@@ -95,12 +95,12 @@ export class GameField {
                     x: bullet.pos.x + bullet.moveVector.x,
                     y: bullet.pos.y + bullet.moveVector.y
                 }, bullet.shape, bullet.size);
-                if (Collision.checkCollision(predictObject)) {
-                    const idx = this.bullets.indexOf(bullet);
-                    if (idx !== -1) {
-                        this.bullets.splice(idx, 1);
-                    }
-                }
+                // if (Collision.checkCollision(predictObject)) {
+                //     const idx = this.bullets.indexOf(bullet);
+                //     if (idx !== -1) {
+                //         this.bullets.splice(idx, 1);
+                //     }
+                // }
             }
         });
     }
