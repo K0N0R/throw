@@ -10,7 +10,7 @@ export const PlayerSize = 30;
 
 export class Player extends ObjectBase {
     public movementSpeed: number = 0.7;
-    public maxSpeed: number = 6;
+    public maxSpeed: number = 15;
     private rotationAngle: number;
     public rotationVector: IPos;
     public crosshairDistance: number = 2 * PlayerSize;
@@ -50,11 +50,11 @@ export class Player extends ObjectBase {
         }
         if (key == Keys.Shift) {
             this.movementSpeed = 1;
-            this.maxSpeed = 10;
+            this.maxSpeed = 50;
         }
         else {
             this.movementSpeed = 0.7;
-            this.maxSpeed = 6;
+            this.maxSpeed = 30;
         }
 
         const movmentLength = calculateVectorLength(this.moveVector);
@@ -71,7 +71,7 @@ export class Player extends ObjectBase {
         }
         this.pos.x += this.moveVector.x;
         this.pos.y += this.moveVector.y;
-        const friction = 0.25;
+        const friction = 0.05;
 
         if (Math.abs(this.moveVector.x) > 0.06) {
             this.moveVector.x -= this.moveVector.x * friction;
@@ -94,8 +94,11 @@ export class Player extends ObjectBase {
     public render(): void {
         Canvas.startDraw();
         Canvas.ctx.arc(this.pos.x, this.pos.y, this.radius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = 'green';
-        Canvas.ctx.fill();
+        Canvas.ctx.fillStyle = '#414977';
+        Canvas.ctx.strokeStyle = '#333';
+        Canvas.ctx.lineWidth = 5;
+        //Canvas.ctx.fill();
+        //Canvas.ctx.stroke();
         Canvas.stopDraw();
 
         Canvas.ctx.save();
@@ -104,7 +107,7 @@ export class Player extends ObjectBase {
         Canvas.ctx.rotate(this.rotationAngle);
         Canvas.ctx.arc(this.crosshairDistance, 0, 1, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = 'black';
-        Canvas.ctx.fill();
+        //Canvas.ctx.fill();
         Canvas.stopDraw();
         Canvas.ctx.restore();
     }

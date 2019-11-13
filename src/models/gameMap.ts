@@ -1,65 +1,62 @@
 import { Canvas } from './canvas';
-import { Brick, BrickSize } from './brick';
+import { Circle } from './circle';
 import { IPos, ISize } from './../utils/model';
+import { ObjectBase } from './objectBase';
+import { Camera } from './camera';
+import { normalizeVector } from './../utils/vector';
 
 export class GameMap {
-    private static mapSize: ISize
-    private static mapNet: (IPos[])[] = [];
-    private static bricksAmount: number = 325;
-    public static bricks: Brick[] = [];
+    public static size: ISize
+    private static amount: number = 1250;
+    public static circles: Circle[] = [];
+    private static colors = [
+        '#b0b8b2',
+        '#ded3c0',
+        '#c2d2ca',
+        '#45969B',
+        '#eef2f0'
+    ]
 
     public static createMap(): void {
-        this.mapSize = {
+        this.size = {
             width: Canvas.width,
             height: Canvas.height
         }
-        this.createMapNet();
-        this.addBricks();
-        this.sortBricks();
-        
+        this.addCircles();  
     }
 
-    private static createMapNet() {
-        for (let i = 0; i < this.mapSize.height * 2; i += BrickSize) {
-            this.mapNet.push([]);
-            for (let k = 0; k < this.mapSize.width * 2; k += BrickSize) {
-                this.mapNet[this.mapNet.length - 1].push({ x: i + BrickSize/2, y: k + BrickSize/2 });
-            }
+    private static addCircles(): void {
+        for (let i = 0; i < this.amount; i++) {
+            const generatedBrick = this.generateCircle();
+            this.circles.push(generatedBrick);
         }
     }
 
-    private static addBricks(): void {
-        for (let i = 0; i < this.bricksAmount; i++) {
-            const generatedBrick = this.generateBrick();
-            this.bricks.push(generatedBrick);
-        }
+    private static generateCircle(): Circle {
+        const posY = Math.round(Math.random() * this.size.height);
+        const posX = Math.round(Math.random() * this.size.width);
+        const pos = { x: posX, y: posY};
+
+        const vectorY = -1 + Math.random() * 1;
+        const vectorX = -1 + Math.random() * 2;
+        const moveVector = normalizeVector({ x: vectorX, y: vectorY});
+        moveVector.x *= 2;
+        moveVector.y *= 2;
+
+        const color = this.colors[Math.round(Math.random() * (this.colors.length - 1) )];
+
+        return new Circle(pos, color, moveVector)
     }
 
-    private static generateBrick(): Brick {
-        const generatedY = Math.abs(Math.round(Math.random() * (this.mapNet.length - 1)));
-        const generatedX = Math.abs(Math.round(Math.random() * (this.mapNet[0].length - 1)));
-        const brickPos = this.mapNet[generatedY][generatedX];
-        if (!this.bricks.filter(b => { b.pos.x === brickPos.x && b.pos.y === brickPos.y })[0]) {
-            return new Brick({x: brickPos.x, y: brickPos.y});
-        } else {
-            return this.generateBrick();
-        }
-    }
-
-    private static sortBricks(): void {
-        this.bricks.sort((a: Brick, b: Brick) => {
-            if( a.pos.x > b.pos.x) {
-               return a.pos.x - b.pos.x;
-            } 
-            if(a.pos.y > b.pos.y) {
-               return a.pos.y - b.pos.y;
-            }
+    public static logic(): void {
+        this.circles.forEach((object: Circle) => {
+            object.logic();
         });
     }
 
     public static render(): void {
-        this.bricks.forEach((brick: Brick) => {
-            brick.render();
+        this.circles.forEach((object: Circle) => {
+            object.render();
         });
     }
 }

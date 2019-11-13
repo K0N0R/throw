@@ -3,6 +3,7 @@ import { getDistance, getDistanceToSegment } from './../utils/vector';
 import { ObjectBase } from './objectBase';
 import { CollisionSide } from './collision';
 import { GameMap } from './gameMap';
+import { Canvas } from './canvas';
 
 export interface CollisionSide {
     top: boolean;
@@ -13,8 +14,37 @@ export interface CollisionSide {
 
 export class Collision {
 
+    public static mapCollision(object: ObjectBase): CollisionSide {
+        const objBRect = object.getBoundingRect();
+
+        const collision: CollisionSide = {
+            top: false,
+            bottom: false,
+            left: false,
+            right: false,
+        };
+
+        if (objBRect.right >= GameMap.size.width) {
+            collision.right = true;
+        }
+
+        if (objBRect.left <= 0) {
+            collision.left = true;
+        }
+
+        if (objBRect.bottom >= GameMap.size.height) {
+            collision.bottom = true;
+        }
+        
+        if (objBRect.top <= 0) {
+            collision.top = true;
+        }
+
+        return collision;
+    }
+
     public static getStatic(): ObjectBase[] {
-        return GameMap.bricks;
+        return GameMap.circles;
     }
 
     public static checkCollision(object: ObjectBase): boolean {
@@ -25,7 +55,7 @@ export class Collision {
                 case Shape.Circle:
                     const distance: number = getDistance(object.pos, staticObject.pos);
                     if (distance <= object.radius + staticObject.radius) {
-                        staticObject.color = 'blue';
+                        staticObject.color = '#333';
                         return staticObject;
                     }
                     break;

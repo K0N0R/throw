@@ -8,6 +8,8 @@ import { MouseHandler } from './mouseHandler';
 import { Camera } from './camera';
 import { EventManager } from './eventManager';
 import { ObjectBase } from './objectBase';
+import { Circle } from './circle';
+import { getDistance } from '../utils/vector';
 
 export class GameField {
     private static players: Player[] = [];
@@ -38,6 +40,30 @@ export class GameField {
         });
 
         EventManager.add({
+            event: 'circle::move',
+            handler: (circle: Circle) => {
+                const predictObject = new ObjectBase({
+                    x: circle.pos.x + circle.moveVector.x,
+                    y: circle.pos.y + circle.moveVector.y
+                }, circle.shape, circle.size);
+
+                const sides = Collision.mapCollision(predictObject);
+                if (sides.top || sides.bottom) {
+                    circle.moveVector.y *= -1;
+                }
+                if (sides.left || sides.right) {
+                    circle.moveVector.x *= -1;
+                }
+
+                if (getDistance(circle.pos, this.players[0].pos) < 80) {
+                    circle.grow();
+                } else {
+                    circle.shrink();
+                }
+            }
+        })
+
+        EventManager.add({
             event: 'player::move',
             handler: (player: Player) => {
                 const predictObject = new ObjectBase({
@@ -45,13 +71,12 @@ export class GameField {
                     y: player.pos.y + player.moveVector.y
                 }, player.shape, player.size);
 
-                const collisionSides = Collision.checkCollisionForSegments(predictObject);
-                if (collisionSides.top || collisionSides.bottom) {
-                    player.moveVector.y = 0;
+                const sides = Collision.mapCollision(predictObject);
+                if (sides.top || sides.bottom) {
+                    player.moveVector.y *= -1;
                 }
-
-                if (collisionSides.left || collisionSides.right) {
-                    player.moveVector.x = 0;
+                if (sides.left || sides.right) {
+                    player.moveVector.x *= -1;
                 }
 
                 // const predictXObject = new ObjectBase({
@@ -117,6 +142,7 @@ export class GameField {
         KeysHandler.reactOnKeys();
         MouseHandler.reactOnClicks();
 
+        GameMap.logic();
         this.players.forEach(p => p.logic());
         this.bullets.forEach(b => b.logic());
     }
