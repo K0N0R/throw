@@ -18,12 +18,28 @@ export class Circle extends ObjectBase {
         this.moveVector = moveVector;
     }
 
-    public grow(): void {
-        this.radiusResize = 1;
+    private relativeRadiusResizeObject: ObjectBase = null;
+    
+    public removeEffect(object: ObjectBase): void {
+        if (object.removed && this.relativeRadiusResizeObject === object) {
+            this.relativeRadiusResizeObject = null;
+        }
     }
 
-    public shrink(): void {
-        this.radiusResize = -1;
+    public grow(object: ObjectBase): void {
+        this.radiusResize = 1;
+        this.relativeRadiusResizeObject = object;
+    }
+
+    public fastGrow(object: ObjectBase): void {
+        this.radiusResize = 1.5;
+        this.relativeRadiusResizeObject = object;
+    }
+
+    public shrink(object: ObjectBase): void {
+        if (!this.relativeRadiusResizeObject || this.relativeRadiusResizeObject === object) {
+            this.radiusResize = -1;
+        }       
     }
 
     public logic(): void {
@@ -46,6 +62,7 @@ export class Circle extends ObjectBase {
             if (this.radius <= this.minRadius) {
                 this.radiusResize = 0;
                 this.radius = this.minRadius;
+                this.relativeRadiusResizeObject = null;
             } else {
                 this.radius += this.radiusResize;
             }

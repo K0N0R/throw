@@ -37,11 +37,11 @@ export class GameMap {
         const posX = Math.round(Math.random() * this.size.width);
         const pos = { x: posX, y: posY};
 
-        const vectorY = -1 + Math.random() * 1;
+        const vectorY = -1 + Math.random() * 2;
         const vectorX = -1 + Math.random() * 2;
         const moveVector = normalizeVector({ x: vectorX, y: vectorY});
-        moveVector.x *= 2;
-        moveVector.y *= 2;
+        moveVector.x *= 1.5;
+        moveVector.y *= 1.5;
 
         const color = this.colors[Math.round(Math.random() * (this.colors.length - 1) )];
 

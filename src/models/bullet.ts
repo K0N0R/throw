@@ -21,8 +21,8 @@ export class Bullet extends ObjectBase {
     public render() {
         Canvas.ctx.save();
         Canvas.startDraw();
-        Canvas.ctx.arc(this.pos.x, this.pos.y, this.size/2, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = 'black';
+        Canvas.ctx.arc(this.pos.x, this.pos.y, this.size, 0, 2 * Math.PI, true);
+        Canvas.ctx.fillStyle = 'white';
         Canvas.ctx.fill();
         Canvas.stopDraw();
         Canvas.ctx.restore();

@@ -55,10 +55,10 @@ export class GameField {
                     circle.moveVector.x *= -1;
                 }
 
-                if (getDistance(circle.pos, this.players[0].pos) < 80) {
-                    circle.grow();
+                if (getDistance(circle.pos, this.players[0].pos) < 60) {
+                    circle.grow(this.players[0]);
                 } else {
-                    circle.shrink();
+                    circle.shrink(this.players[0]);
                 }
             }
         })
@@ -116,16 +116,29 @@ export class GameField {
         EventManager.add({
             event: 'bullet::move',
             handler: (bullet: Bullet) => {
-                const predictObject = new ObjectBase({
-                    x: bullet.pos.x + bullet.moveVector.x,
-                    y: bullet.pos.y + bullet.moveVector.y
-                }, bullet.shape, bullet.size);
-                if (Collision.checkCollision(predictObject)) {
+                const sides = Collision.mapCollision(bullet);
+
+                if (sides.top || sides.bottom || sides.left || sides.right) {
+                    bullet.removed = true;
                     const idx = this.bullets.indexOf(bullet);
                     if (idx !== -1) {
                         this.bullets.splice(idx, 1);
                     }
                 }
+                if (bullet.removed) {
+                    GameMap.circles.forEach((circle: Circle) => circle.removeEffect(bullet));
+                } else {
+                    GameMap.circles.forEach((circle: Circle) => {
+
+                        if (getDistance(circle.pos, bullet.pos) < 40) {
+                            circle.fastGrow(bullet);
+                        } else {
+                            circle.shrink(bullet); 
+                        }
+                    });
+                }
+
+
             }
         });
     }
