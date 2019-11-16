@@ -130,7 +130,7 @@ export class Map {
             pos.x + this.cornerRadius,
             pos.y,
             this.cornerRadius);
-        Canvas.ctx.lineWidth = 2;
+        Canvas.ctx.lineWidth = 5;
         Canvas.ctx.strokeStyle = '#B7B9A0';
         Canvas.ctx.stroke();
         Canvas.ctx.fillStyle ='#e5e3c2';

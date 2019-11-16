@@ -118,7 +118,7 @@ export class Player  {
         Canvas.ctx.fillStyle = '#a7874d';
         Canvas.ctx.fill();
         Canvas.ctx.strokeStyle = '#7f4b34';
-        Canvas.ctx.lineWidth = 1;
+        Canvas.ctx.lineWidth = 5;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
