@@ -133,6 +133,8 @@ export class Map {
         Canvas.ctx.lineWidth = 2;
         Canvas.ctx.strokeStyle = '#B7B9A0';
         Canvas.ctx.stroke();
+        Canvas.ctx.fillStyle ='#e5e3c2';
+        Canvas.ctx.fill();
         Canvas.stopDraw();
         Canvas.ctx.restore();
     }

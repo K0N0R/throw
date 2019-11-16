@@ -112,7 +112,7 @@ export class GameField {
     public static render(): void {
         Canvas.clearCanvas();
 
-        this.player.render();
         this.map.render();
+        this.player.render();
     }
 }
