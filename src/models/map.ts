@@ -30,7 +30,7 @@ export class Map {
 
         this.cornerRadius = this.size.width / 15;
         this.cornersShape = new p2.Convex({
-            vertices: this.getPoints(),
+            vertices: this.getCornerPoints(),
         });
         this.cornersShape.material = material;
         this.body.addShape(this.cornersShape);
@@ -65,7 +65,7 @@ export class Map {
         this.body.addShape(this.rightShape, [this.size.width + this.borderThick/2, this.cornerRadius + this.rightShape.height/2]);
     }
 
-    private getPoints(pos = { x: 0, y: 0 }, render = false): any {
+    private getCornerPoints(pos = { x: 0, y: 0 }, render = false): any {
         const cornerPointsAmmount = 16;
         const cornerPI = Math.PI / 2 / cornerPointsAmmount;
         const getCornerPoints = (pos: IPos, angle: number): ([number, number])[] => {
@@ -100,41 +100,38 @@ export class Map {
         };
         Canvas.ctx.save();
         Canvas.startDraw();
-        Canvas.ctx.moveTo(this.body.position[0], this.body.position[1] + this.cornerRadius);
 
-        this.getPoints(pos, true).forEach((v: any) => {
-            Canvas.ctx.lineTo(v[0], v[1]);
-        });
-        // Canvas.ctx.moveTo(pos.x + cornerRadius, pos.y);
-        // Canvas.ctx.lineTo(pos.x + this.size.width - cornerRadius, pos.y);
-        // Canvas.ctx.arcTo(
-        //     pos.x + this.size.width,
-        //     pos.y,
-        //     pos.x + this.size.width,
-        //     pos.y + cornerRadius,
-        //     cornerRadius);
-        // Canvas.ctx.lineTo(pos.x + this.size.width, pos.y + this.size.height - cornerRadius);
-        // Canvas.ctx.arcTo(aw
-        //     pos.x + this.size.width,
-        //     pos.y + this.size.height,
-        //     pos.x + this.size.width - cornerRadius,
-        //     pos.y + this.size.height,
-        //     cornerRadius);
-        // Canvas.ctx.lineTo(pos.x + cornerRadius, pos.y + this.size.height);
-        // Canvas.ctx.arcTo(
-        //     pos.x,
-        //     pos.y + this.size.height,a
-        //     pos.x,
-        //     pos.y + this.size.height - cornerRadius,
-        //     cornerRadius);
-        // Canvas.ctx.lineTo(pos.x, pos.y + cornerRadius);
-        // Canvas.ctx.arcTo(
-        //     pos.x,
-        //     pos.y,
-        //     pos.x + cornerRadius,
-        //     pos.y,
-        //     cornerRadius);
+        Canvas.ctx.moveTo(pos.x + this.cornerRadius, pos.y);
+        Canvas.ctx.lineTo(pos.x + this.size.width - this.cornerRadius, pos.y);
+        Canvas.ctx.arcTo(
+            pos.x + this.size.width,
+            pos.y,
+            pos.x + this.size.width,
+            pos.y + this.cornerRadius,
+            this.cornerRadius);
+        Canvas.ctx.lineTo(pos.x + this.size.width, pos.y + this.size.height - this.cornerRadius);
+        Canvas.ctx.arcTo(
+            pos.x + this.size.width,
+            pos.y + this.size.height,
+            pos.x + this.size.width - this.cornerRadius,
+            pos.y + this.size.height,
+            this.cornerRadius);
+        Canvas.ctx.lineTo(pos.x + this.cornerRadius, pos.y + this.size.height);
+        Canvas.ctx.arcTo(
+            pos.x,
+            pos.y + this.size.height,
+            pos.x,
+            pos.y + this.size.height - this.cornerRadius,
+            this.cornerRadius);
+        Canvas.ctx.lineTo(pos.x, pos.y + this.cornerRadius);
+        Canvas.ctx.arcTo(
+            pos.x,
+            pos.y,
+            pos.x + this.cornerRadius,
+            pos.y,
+            this.cornerRadius);
         Canvas.ctx.lineWidth = 2;
+        Canvas.ctx.strokeStyle = '#B7B9A0';
         Canvas.ctx.stroke();
         Canvas.stopDraw();
         Canvas.ctx.restore();
