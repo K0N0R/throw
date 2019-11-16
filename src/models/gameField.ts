@@ -8,12 +8,14 @@ import { Camera } from './../../dist/src/models/camera';
 import { EventManager } from './eventManager';
 import { Dictionary } from './../utils/model';
 import { Map } from './map';
+import { Ball } from './ball';
+import { getNormalizedVector } from './../utils/vector';
 
 
 export class GameField {
 
     private static step = {
-        fixedTime: 1/60,
+        fixedTime: 1 / 60,
         lastTime: 0,
         max: 10,
     };
@@ -23,6 +25,9 @@ export class GameField {
 
     private static map: Map;
     private static player: Player;
+    private static ball: Ball;
+
+    private static events: (() => void)[] = [];
 
     public static init() {
         this.initHandlers();
@@ -42,27 +47,54 @@ export class GameField {
 
     private static initWorld(): void {
         this.world = new p2.World({
-            gravity:[0, 0]
+            gravity: [0, 0]
         });
         this.initMaterials();
         this.map = new Map(this.material.map);
-        this.player = new Player([Canvas.size.width/2, Canvas.size.height/2], this.material.player);
-        this.world.addBody(this.player.body);
         this.world.addBody(this.map.body);
+
+        this.player = new Player([Canvas.size.width / 2, Canvas.size.height / 2], this.material.player);
+        this.world.addBody(this.player.body);
+
+        this.ball = new Ball([Canvas.size.width / 2 - 50, Canvas.size.height / 2], this.material.ball);
+        this.world.addBody(this.ball.body);
     }
 
     private static initMaterials(): void {
         this.material.map = new p2.Material();
         this.material.player = new p2.Material();
-        this.contactMaterial.mapPlayerMat = new p2.ContactMaterial(this.material.map, this.material.player, {
+        this.material.ball = new p2.Material();
+        this.contactMaterial.mapPlayer = new p2.ContactMaterial(this.material.map, this.material.player, {
             friction: 1
         });
-        this.world.addContactMaterial(this.contactMaterial.mapPlayerMat);
+        this.contactMaterial.mapBall = new p2.ContactMaterial(this.material.map, this.material.ball, {
+            friction: 0
+        });
+        this.contactMaterial.playerBall = new p2.ContactMaterial(this.material.player, this.material.ball, {
+            friction: 1
+        });
+        this.world.addContactMaterial(this.contactMaterial.mapBall);
+        this.world.addContactMaterial(this.contactMaterial.playerBall);
+        this.world.addContactMaterial(this.contactMaterial.mapPlayer);
     }
 
     private static initEventManager(): void {
-        this.world.on('beginContact', function (evt: any) {
-            console.log(evt);
+        this.world.on('beginContact', (evt: any) => {
+            if ((evt.bodyA === this.player.body || evt.bodyB === this.player.body)
+                &&
+                (evt.bodyA === this.ball.body || evt.bodyB === this.ball.body)) {
+                if (this.player.shooting) {
+                    this.events.push(() => {
+                        const shootingVector = getNormalizedVector(
+                            { x: this.player.body.position[0], y: this.player.body.position[1] },
+                            { x: this.ball.body.position[0], y: this.ball.body.position[1] }
+                        );
+                        this.ball.body.velocity[0] += shootingVector.x* 100;
+                        this.ball.body.velocity[1] += shootingVector.y* 100;
+                    });
+
+                }
+            }
         });
 
         // this.world.on('postStep', function(event: any){
@@ -75,12 +107,6 @@ export class GameField {
         //     if(event.target)
         //     {
         //         console.log(event.target);
-        //     }
-        // });
-        // EventManager.add({
-        //     event: 'player::move',
-        //     handler: (player: Player) => {
-        //         Camera.updatePos(player.body.position);
         //     }
         // });
     }
@@ -107,6 +133,10 @@ export class GameField {
     private static logic(): void {
         KeysHandler.reactOnKeys();
         MouseHandler.reactOnClicks();
+        if (this.events.length) {
+            this.events.forEach(event=> event());
+        }
+        this.events.length = 0;
     }
 
     public static render(): void {
@@ -114,5 +144,6 @@ export class GameField {
 
         this.map.render();
         this.player.render();
+        this.ball.render();
     }
 }

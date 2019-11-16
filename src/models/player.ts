@@ -14,14 +14,12 @@ export class Player  {
     public body: p2.Body;
     private shape: p2.Circle;
 
-    public movementSpeed: number = 2;
-    public maxSpeed: number = 40;
-    private rotationAngle: number;
-    public rotationVector: IPos;
-    public crosshairDistance: number = 60;
+    public shooting: boolean;
+    public movementSpeed: number;
+    public maxSpeed: number;
 
     public constructor(position: [number, number], material: p2.Material ) {
-        const radius = 30;
+        const radius = 25;
         const mass = 2;
 
         this.body = new p2.Body({
@@ -35,47 +33,47 @@ export class Player  {
         });
         this.shape.material = material;
         this.body.addShape(this.shape);
-        this.body.damping = 0.1;
+        this.body.damping = 0.4;
 
+        this.resetMovmentSpeed();
         this.addMovementHandlers();
-        this.addShootHandler();
 
     }
 
     private addMovementHandlers(): void {
-        KeysHandler.add(Keys.W, () => { this.keysHandlers(Keys.W); });
-        KeysHandler.add(Keys.S, () => { this.keysHandlers(Keys.S); });
-        KeysHandler.add(Keys.A, () => { this.keysHandlers(Keys.A); });
-        KeysHandler.add(Keys.D, () => { this.keysHandlers(Keys.D); });
-        KeysHandler.add(Keys.Shift, () => { this.keysHandlers(Keys.Shift); });
+        KeysHandler.add(Keys.Up, (pressed: boolean) => { if(pressed) this.movementKeysHandler(Keys.Up); });
+        KeysHandler.add(Keys.Down, (pressed: boolean) => { if(pressed) this.movementKeysHandler(Keys.Down); });
+        KeysHandler.add(Keys.Left, (pressed: boolean) => { if(pressed) this.movementKeysHandler(Keys.Left); });
+        KeysHandler.add(Keys.Right, (pressed: boolean) => { if(pressed) this.movementKeysHandler(Keys.Right); });
+        KeysHandler.add(Keys.Shift, (pressed: boolean) => {  this.sprintKeyHandler(pressed); });
+        KeysHandler.add(Keys.X, (pressed: boolean) => { this.shootingKeyHandler(pressed); });
     }
 
-    private addShootHandler(): void {
-        MouseHandler.add(MouseClicks.Left, () => {
-            EventManager.notify('player::shoot', this);
-        });
+    private shootingKeyHandler(pressed: boolean): void {
+        this.shooting = pressed;
     }
 
-    private keysHandlers(key: Keys) {
-        if (key == Keys.W) {
+    private sprintKeyHandler(pressed: boolean): void {
+        if (pressed) {
+            this.movementSpeed = 4;
+            this.maxSpeed = 35;
+        } else {
+            this.resetMovmentSpeed();
+        }
+    }
+
+    private movementKeysHandler(key: Keys): void {
+        if (key == Keys.Up) {
             this.body.velocity[1] -= this.movementSpeed;
         }
-        if (key == Keys.S) {
+        if (key == Keys.Down) {
             this.body.velocity[1] += this.movementSpeed;
         }
-        if (key == Keys.A) {
+        if (key == Keys.Left) {
             this.body.velocity[0] -= this.movementSpeed;
         }
-        if (key == Keys.D) {
+        if (key == Keys.Right) {
             this.body.velocity[0] += this.movementSpeed;
-        }
-        if (key == Keys.Shift) {
-            this.movementSpeed = 1;
-            this.maxSpeed = 10;
-        }
-        else {
-            this.movementSpeed = 5;
-            this.maxSpeed = 40;
         }
 
         const moveVector = { x: this.body.velocity[0], y: this.body.velocity[1] };
@@ -87,29 +85,13 @@ export class Player  {
         }
     }
 
-    private movement() {
-        if (this.body.velocity[0] || this.body.velocity[1]) {
-            EventManager.notify('player::move', this);
-        }
-
-        const friction = 0.1;
-
-        if (Math.abs(this.body.velocity[0]) > 0.06) {
-            this.body.velocity[0] -= this.body.velocity[0] * friction;
-        } else {
-            this.body.velocity[0] = 0;
-        }
-        if (Math.abs(this.body.velocity[1]) > 0.06) {
-            this.body.velocity[1] -= this.body.velocity[1] * friction;
-        } else {
-            this.body.velocity[1] = 0;
-        }
+    private resetMovmentSpeed(): void {
+        this.movementSpeed = 2;
+        this.maxSpeed = 25;
     }
 
     public logic(): void {
-        this.movement();
-        //this.rotationVector = MouseHandler.getVectorToCursor(this.pos);
-        //this.rotationAngle = Math.atan2(this.rotationVector.y, this.rotationVector.x);
+
     }
 
     public render(): void {
@@ -117,19 +99,9 @@ export class Player  {
         Canvas.ctx.arc(this.body.position[0], this.body.position[1], this.shape.radius, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = '#a7874d';
         Canvas.ctx.fill();
-        Canvas.ctx.strokeStyle = '#7f4b34';
+        Canvas.ctx.strokeStyle = this.shooting ? '#B7B9A0' : '#7f4b34';
         Canvas.ctx.lineWidth = 5;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
-
-        // Canvas.ctx.save();
-        // Canvas.startDraw();
-        // Canvas.ctx.translate(this.pos.x, this.pos.y);
-        // Canvas.ctx.rotate(this.rotationAngle);
-        // Canvas.ctx.arc(this.crosshairDistance, 0, 1, 0, 2 * Math.PI, true);
-        // Canvas.ctx.fillStyle = 'black';
-        // Canvas.ctx.fill();
-        // Canvas.stopDraw();
-        // Canvas.ctx.restore();
     }
 }

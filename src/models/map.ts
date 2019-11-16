@@ -15,8 +15,6 @@ export class Map {
     public borderThick: number;
     public size: ISize;
 
-    private color: 'green';
-
     public constructor(material: p2.Material) {
         this.size = {
             height: 750,

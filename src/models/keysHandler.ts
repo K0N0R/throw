@@ -1,9 +1,15 @@
 export enum Keys {
+    Left = 37,
+    Up = 38,
+    Right = 39,
+    Down = 40,
     W = 87,
     S = 83,
     A = 65,
     D = 68,
+    X = 88,
     Shift = 16,
+    
 }
 
 export class KeysHandler {
@@ -20,9 +26,7 @@ export class KeysHandler {
 
     public static reactOnKeys() {
         this.handlers.forEach(h => {
-            if (this.pressed[h.key]) {
-                h.action();
-            }
+            h.action(this.pressed[h.key]);
         });
     }
 
