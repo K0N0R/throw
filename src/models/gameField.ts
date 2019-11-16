@@ -1,129 +1,118 @@
+import * as p2 from 'p2';
+
 import { Canvas } from './canvas';
-import { Collision } from './collision';
-import { GameMap, IMapScale } from './gameMap';
-import { Player } from './player';
-import { Bullet } from './bullet';
 import { KeysHandler } from './keysHandler';
 import { MouseHandler } from './mouseHandler';
-import { Camera } from './camera';
+import { Player } from './player';
+import { Camera } from './../../dist/src/models/camera';
 import { EventManager } from './eventManager';
-import { ObjectBase } from './objectBase';
+import { Dictionary } from './../utils/model';
+import { Map } from './map';
+
 
 export class GameField {
-    private static players: Player[] = [];
-    private static bullets: Bullet[] = [];
+
+    private static step = {
+        fixedTime: 1/60,
+        lastTime: 0,
+        max: 10,
+    };
+    private static world: p2.World;
+    private static material: Dictionary<p2.Material> = {};
+    private static contactMaterial: Dictionary<p2.ContactMaterial> = {};
+
+    private static map: Map;
+    private static player: Player;
+
     public static init() {
+        this.initHandlers();
+        this.initCanvas();
+        this.initWorld();
+        this.initEventManager();
+    }
+
+    private static initHandlers(): void {
         KeysHandler.bindEvents();
         MouseHandler.bindEvents();
-
-        Canvas.createCanvas();
-        Canvas.width = 1200;
-        Canvas.height = 800;
-
-        GameMap.createMap(IMapScale.Small);
-
-        const newPlayer = new Player({ x: 600, y: 400 });
-        this.players.push(newPlayer);
-        Camera.updatePos(newPlayer.pos);
-
-        this.bindEvents();
     }
 
-    private static bindEvents(): void {
-        EventManager.add({
-            event: 'camera::move',
-            handler: () => {
-                MouseHandler.updateMousePos();
-            }
-        });
-
-        EventManager.add({
-            event: 'player::move',
-            handler: (player: Player) => {
-                const predictObject = new ObjectBase({
-                    x: player.pos.x + player.moveVector.x,
-                    y: player.pos.y + player.moveVector.y
-                }, player.shape, player.size);
-
-                const collisionSides = Collision.checkMapCollision(predictObject);
-                if (collisionSides.top || collisionSides.bottom) {
-                    player.moveVector.y = 0;
-                }
-
-                if (collisionSides.left || collisionSides.right) {
-                    player.moveVector.x = 0;
-                }
-
-                // const predictXObject = new ObjectBase({
-                //     x: player.pos.x + player.moveVector.x,
-                //     y: player.pos.y
-                // }, player.shape, player.size);
-
-                // const xCollisionSides = Collision.checkCollisionForSegments(predictXObject);
-                // if (xCollisionSides.left || xCollisionSides.right) {
-                //     player.moveVector.x = 0;
-                // }
-
-                // const predictYObject = new ObjectBase({
-                //     x: player.pos.x,
-                //     y: player.pos.y  + player.moveVector.y
-                // }, player.shape, player.size);
-
-                // const yCollisionSides = Collision.checkCollisionForSegments(predictYObject);
-                // if (yCollisionSides.top || yCollisionSides.bottom) {
-                //     player.moveVector.y = 0;
-                // }
-
-
-                Camera.updatePos(player.pos);
-            }
-        });
-
-        EventManager.add({
-            event: 'player::shoot',
-            handler: (player: Player) => {
-                const bulletPos = { x: player.pos.x + player.rotationVector.x * player.radius, y: player.pos.y + player.rotationVector.y * player.radius };
-                const newBullet = new Bullet(bulletPos, { x: player.rotationVector.x * 10, y: player.rotationVector.y * 10 });
-                this.bullets.push(newBullet);
-            }
-        });
-
-        EventManager.add({
-            event: 'bullet::move',
-            handler: (bullet: Bullet) => {
-                const predictObject = new ObjectBase({
-                    x: bullet.pos.x + bullet.moveVector.x,
-                    y: bullet.pos.y + bullet.moveVector.y
-                }, bullet.shape, bullet.size);
-                // if (Collision.checkCollision(predictObject)) {
-                //     const idx = this.bullets.indexOf(bullet);
-                //     if (idx !== -1) {
-                //         this.bullets.splice(idx, 1);
-                //     }
-                // }
-            }
-        });
+    private static initCanvas(): void {
+        Canvas.createCanvas({ width: 1500, height: 900 });
     }
 
-    public static run() {
-        Canvas.clearCanvas();
-        Camera.translateStart();
-        this.logic();
+    private static initWorld(): void {
+        this.world = new p2.World({
+            gravity:[0, 0]
+        });
+        this.initMaterials();
+        this.map = new Map(this.material.map);
+        this.player = new Player([Canvas.size.width/2, Canvas.size.height/2], this.material.player);
+        this.world.addBody(this.player.body);
+        this.world.addBody(this.map.body);
+    }
+
+    private static initMaterials(): void {
+        this.material.map = new p2.Material();
+        this.material.player = new p2.Material();
+        this.contactMaterial.mapPlayerMat = new p2.ContactMaterial(this.material.map, this.material.player, {
+            friction: 1
+        });
+        this.world.addContactMaterial(this.contactMaterial.mapPlayerMat);
+    }
+
+    private static initEventManager(): void {
+        this.world.on('beginContact', function (evt: any) {
+            console.log(evt);
+        });
+
+        // this.world.on('postStep', function(event: any){
+        //     // Add horizontal spring force
+        //     if(event.target.endContactEvent.shapeA)
+        //     {
+        //         console.log(event.target.endContactEvent.shapeA);
+        //     }
+
+        //     if(event.target)
+        //     {
+        //         console.log(event.target);
+        //     }
+        // });
+        // EventManager.add({
+        //     event: 'player::move',
+        //     handler: (player: Player) => {
+        //         Camera.updatePos(player.body.position);
+        //     }
+        // });
+    }
+
+    public static run(time: number) {
+        //Camera.translateStart();
+        this.worldStep(time);
+        this.logic()
         this.render();
-        Camera.translateEnd();
+
+        //Camera.translateEnd();
+    }
+
+    private static worldStep(time: number): void {
+        // Compute elapsed time since last render frame
+        const deltaTime = time - this.step.lastTime / 1000;
+
+        // Move bodies forward in time
+        this.world.step(this.step.fixedTime, deltaTime, this.step.max);
+
+        this.step.lastTime = time;
     }
 
     private static logic(): void {
         KeysHandler.reactOnKeys();
         MouseHandler.reactOnClicks();
-
-        this.players.forEach(p => p.logic());
-        this.bullets.forEach(b => b.logic());
     }
 
     public static render(): void {
-        GameMap.render();
-        this.players.forEach(p => p.render());
-        this.bullets.forEach(b => b.render());
+        Canvas.clearCanvas();
+
+        this.player.render();
+        this.map.render();
     }
 }

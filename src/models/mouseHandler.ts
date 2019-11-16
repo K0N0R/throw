@@ -43,10 +43,10 @@ export class MouseHandler {
     }
 
     public static updateMousePos(): void {
-        const canvasBoundingRect = Canvas.ele.getBoundingClientRect();
-        const canvasPosition = {x: canvasBoundingRect.left + Canvas.ele.clientLeft, y: canvasBoundingRect.top + Canvas.ele.clientTop };
+        const canvasBoundingRect = Canvas.element.getBoundingClientRect();
+        const canvasPosition = {x: canvasBoundingRect.left + Canvas.element.clientLeft, y: canvasBoundingRect.top + Canvas.element.clientTop };
         const cameraPosition = Camera.pos;
-        const newMousePos = { x: this.browserMousePos.x - canvasPosition.x + cameraPosition.x, y: this.browserMousePos.y - canvasPosition.y + cameraPosition.y };
+        const newMousePos = { x: this.browserMousePos.x - canvasPosition.x + 0, y: this.browserMousePos.y - canvasPosition.y + 0 };
         this.mousePos = newMousePos;
     }
 

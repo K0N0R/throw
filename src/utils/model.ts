@@ -29,3 +29,7 @@ export interface IBoundingRect {
 }
 
 export type Disposable = (() => void);
+
+export interface Dictionary<IValue> {
+    [param: string]: IValue;
+}

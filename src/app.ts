@@ -12,8 +12,8 @@ async function init() {
     // need to add assetsManager with just json to files
     await Assets.addAsset(AssetKind.Img, './assets/stand_right.png', 'player_model');
     GameField.init();
-    loopFnc(() => {
-        GameField.run();
+    loopFnc((time: number) => {
+        GameField.run(time);
     });
 }
 init();

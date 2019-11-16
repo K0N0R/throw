@@ -6,8 +6,8 @@ export class Camera {
 
     public static updatePos(pos: IPos) {
         this.pos = {
-            x: pos.x -  Canvas.width/2,
-            y: pos.y - Canvas.height/2
+            x: pos.x -  Canvas.size.width/2,
+            y: pos.y - Canvas.size.height/2
         }
         EventManager.notify('camera::move');
     }

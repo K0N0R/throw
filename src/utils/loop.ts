@@ -1,5 +1,8 @@
 
-export function loopFnc(action: Function) {
-    window.requestAnimationFrame(() => { loopFnc(action) });
-    action();
+export function loopFnc(action: FrameRequestCallback) {
+    window.requestAnimationFrame((time) => {
+        loopFnc(action);
+        action(time);
+    });
+ 
 }
