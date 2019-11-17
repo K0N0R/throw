@@ -122,11 +122,12 @@ export class Map {
         Canvas.ctx.strokeStyle = '#B7B9A0';
         Canvas.ctx.stroke();
         Canvas.ctx.fillStyle ='#e5e3c2';
+        Canvas.ctx.fill();
         Canvas.stopDraw();
 
         Canvas.startDraw();
 
-        Canvas.ctx.moveTo(this.pos.x + this.size.width, this.pos.y + this.size.height/2 - this.goalSize.height/2);
+        Canvas.ctx.moveTo(this.pos.x + this.size.width, this.pos.y + this.size.height/2 + this.goalSize.height/2);
         const verticesBottom = this.getBottomShapePoints(this.pos);
         verticesBottom.forEach(v => {
             Canvas.ctx.lineTo(v[0] , v[1]);
@@ -136,6 +137,7 @@ export class Map {
         Canvas.ctx.strokeStyle = '#B7B9A0';
         Canvas.ctx.stroke();
         Canvas.ctx.fillStyle ='#e5e3c2';
+        Canvas.ctx.fill();
         Canvas.stopDraw();
 
         // Canvas.startDraw();

@@ -87,6 +87,8 @@ export class RightGoal  {
         Canvas.ctx.lineWidth = 1;
         Canvas.ctx.strokeStyle = '#FAFAFA';
         Canvas.ctx.stroke();
+        Canvas.ctx.fillStyle = '#FAFAFA';
+        Canvas.ctx.fill();
         Canvas.stopDraw();
     }
 }
