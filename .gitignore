@@ -1,5 +1,6 @@
-node_modules/
-dist/
+node_modules
+dist
+.cache
 package-lock.json
 .vs/throw/v16/.suo
 .vs/throw/config/applicationhost.config
