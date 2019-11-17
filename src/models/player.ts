@@ -19,7 +19,7 @@ export class Player  {
     public maxSpeed: number;
 
     public constructor(position: [number, number], material: p2.Material ) {
-        const radius = 15;
+        const radius = 25;
         const mass = 2;
 
         this.body = new p2.Body({
@@ -33,7 +33,7 @@ export class Player  {
         });
         this.shape.material = material;
         this.body.addShape(this.shape);
-        this.body.damping = 0.4;
+        this.body.damping = 0.5;
 
         this.resetMovmentSpeed();
         this.addMovementHandlers();
@@ -56,7 +56,7 @@ export class Player  {
     private sprintKeyHandler(pressed: boolean): void {
         if (pressed) {
             this.movementSpeed = 4;
-            this.maxSpeed = 35;
+            this.maxSpeed = 45;
         } else {
             this.resetMovmentSpeed();
         }
@@ -87,7 +87,7 @@ export class Player  {
 
     private resetMovmentSpeed(): void {
         this.movementSpeed = 2;
-        this.maxSpeed = 25;
+        this.maxSpeed = 20;
     }
 
     public logic(): void {
@@ -100,7 +100,7 @@ export class Player  {
         Canvas.ctx.fillStyle = '#a7874d';
         Canvas.ctx.fill();
         Canvas.ctx.strokeStyle = this.shooting ? '#B7B9A0' : '#7f4b34';
-        Canvas.ctx.lineWidth = 5;
+        Canvas.ctx.lineWidth = 2;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
     }
