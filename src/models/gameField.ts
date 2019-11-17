@@ -51,7 +51,10 @@ export class GameField {
         });
         this.initMaterials();
         this.map = new Map(this.material.map);
-        this.world.addBody(this.map.body);
+        this.world.addBody(this.map.topBody);
+        this.world.addBody(this.map.botBody);
+        this.world.addBody(this.map.leftGoal.body);
+        this.world.addBody(this.map.rightGoal.body);
 
         this.player = new Player([Canvas.size.width / 2, Canvas.size.height / 2], this.material.player);
         this.world.addBody(this.player.body);
@@ -79,10 +82,11 @@ export class GameField {
     }
 
     private static initEventManager(): void {
+        const isContact = (evt: any, a: p2.Body, b: p2.Body): boolean => {
+               return (evt.bodyA === a || evt.bodyB === a) && (evt.bodyA === b || evt.bodyB === b);
+        };
         this.world.on('beginContact', (evt: any) => {
-            if ((evt.bodyA === this.player.body || evt.bodyB === this.player.body)
-                &&
-                (evt.bodyA === this.ball.body || evt.bodyB === this.ball.body)) {
+            if (isContact(evt, this.player.body, this.ball.body)) {
                 if (this.player.shooting) {
                     this.events.push(() => {
                         const shootingVector = getNormalizedVector(

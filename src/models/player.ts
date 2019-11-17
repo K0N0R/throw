@@ -19,7 +19,7 @@ export class Player  {
     public maxSpeed: number;
 
     public constructor(position: [number, number], material: p2.Material ) {
-        const radius = 25;
+        const radius = 15;
         const mass = 2;
 
         this.body = new p2.Body({
