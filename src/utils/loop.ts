@@ -1,8 +1,7 @@
 
-export function loopFnc(action: FrameRequestCallback) {
+export function ticker(action: FrameRequestCallback) {
     window.requestAnimationFrame((time) => {
-        loopFnc(action);
+        ticker(action);
         action(time);
     });
- 
 }
