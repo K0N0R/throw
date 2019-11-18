@@ -10,6 +10,8 @@ import { Dictionary } from '../utils/model';
 import { Map } from './map';
 import { Ball } from './ball';
 import { getNormalizedVector } from '../utils/vector';
+import { RightGoal } from './rightGoal.';
+import { LeftGoal } from './leftGoal';
 
 
 export class Game {
@@ -26,6 +28,8 @@ export class Game {
     private map: Map;
     private player: Player;
     private ball: Ball;
+    private leftGoal: LeftGoal;
+    private rightGoal: RightGoal;
 
     private events: (() => void)[] = [];
 
@@ -54,8 +58,10 @@ export class Game {
         this.world.addBody(this.map.topBody);
         this.world.addBody(this.map.botBody);
         this.world.addBody(this.map.borderBody);
-        this.world.addBody(this.map.leftGoal.body);
-        this.world.addBody(this.map.rightGoal.body);
+        this.leftGoal = new LeftGoal(this.map.goalSize, [this.map.pos.x - this.map.goalSize.width, this.map.pos.y + this.map.size.height/2 - this.map.goalSize.height/2], this.material.goal);
+        this.rightGoal = new RightGoal(this.map.goalSize, [this.map.pos.x + this.map.size.width, this.map.pos.y + this.map.size.height/2 - this.map.goalSize.height/2], this.material.goal);
+        this.world.addBody(this.leftGoal.body);
+        this.world.addBody(this.rightGoal.body);
 
         this.player = new Player([Canvas.size.width / 2, Canvas.size.height / 2], this.material.player);
         this.world.addBody(this.player.body);
@@ -68,17 +74,25 @@ export class Game {
         this.material.map = new p2.Material();
         this.material.player = new p2.Material();
         this.material.ball = new p2.Material();
+        this.material.goal = new p2.Material();
         this.contactMaterial.mapPlayer = new p2.ContactMaterial(this.material.map, this.material.player, {
             friction: 1
         });
         this.contactMaterial.mapBall = new p2.ContactMaterial(this.material.map, this.material.ball, {
-            friction: 0
+            friction: 0,
+            restitution: 0.3
         });
+
+        this.contactMaterial.goalBall = new p2.ContactMaterial(this.material.goal, this.material.ball, {
+            friction: 10000
+        });
+
         this.contactMaterial.playerBall = new p2.ContactMaterial(this.material.player, this.material.ball, {
             friction: 1
         });
         this.world.addContactMaterial(this.contactMaterial.mapBall);
         this.world.addContactMaterial(this.contactMaterial.playerBall);
+        this.world.addContactMaterial(this.contactMaterial.goalBall);
         this.world.addContactMaterial(this.contactMaterial.mapPlayer);
     }
 
@@ -87,6 +101,9 @@ export class Game {
                return (evt.bodyA === a || evt.bodyB === a) && (evt.bodyA === b || evt.bodyB === b);
         };
         this.world.on('beginContact', (evt: any) => {
+            if (isContact(evt, this.leftGoal.body, this.ball.body)) {
+                console.log(evt, 'dupppa');
+            }
             if (isContact(evt, this.player.body, this.ball.body)) {
                 if (this.player.shooting) {
                     this.events.push(() => {
@@ -148,6 +165,8 @@ export class Game {
         Canvas.clearCanvas();
 
         this.map.render();
+        this.leftGoal.render();
+        this.rightGoal.render();
         this.player.render();
         this.ball.render();
     }

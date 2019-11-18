@@ -18,8 +18,6 @@ export class Map {
     public cornerPointsAmount: number;
 
     public goalSize: ISize;
-    public leftGoal: LeftGoal;
-    public rightGoal: RightGoal;
 
     public pos: IPos;
     public size: ISize;
@@ -74,9 +72,6 @@ export class Map {
             shape.collisionGroup = MAP_BORDER;
             shape.collisionMask = PLAYER;
         });
-
-        this.leftGoal = new LeftGoal(this.goalSize, [this.pos.x - this.goalSize.width, this.pos.y + this.size.height/2 - this.goalSize.height/2], material);
-        this.rightGoal = new RightGoal(this.goalSize, [this.pos.x + this.size.width, this.pos.y + this.size.height/2 - this.goalSize.height/2], material);
     }
 
     private getTopShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
@@ -218,7 +213,5 @@ export class Map {
         // //Canvas.ctx.fill();
         // Canvas.stopDraw();
         // Canvas.ctx.restore();
-        this.leftGoal.render();
-        this.rightGoal.render();
     }
 }

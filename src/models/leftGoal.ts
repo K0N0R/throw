@@ -32,6 +32,7 @@ export class LeftGoal  {
         this.body.shapes.forEach(shape => {
             shape.collisionGroup = GOAL;
             shape.collisionMask = BALL;
+            shape.material = material;
         });
         this.topPostShape = new p2.Circle({
             radius: this.postRadius,
