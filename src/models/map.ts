@@ -1,8 +1,8 @@
 import * as p2 from 'p2';
 import { Canvas } from './canvas';
-import { ISize, Dictionary, IPos } from './../utils/model';
+import { ISize, IPos } from './../utils/model';
 import { getOffset } from './../utils/offset';
-import { PLAYER, MAP } from './collision';
+import { PLAYER, MAP, MAP_BORDER, BALL } from './collision';
 import { getCornerPoints } from './../utils/vertices';
 import { LeftGoal } from './leftGoal';
 import { RightGoal } from './rightGoal.';
@@ -11,6 +11,8 @@ import { RightGoal } from './rightGoal.';
 export class Map {
     public topBody: p2.Body;
     public botBody: p2.Body;
+
+    public borderBody: p2.Body;
 
     public cornerRadius: number;
     public cornerPointsAmount: number;
@@ -48,6 +50,8 @@ export class Map {
         this.topBody.fromPolygon(this.getTopShapePoints());
         this.topBody.shapes.forEach(shape => {
             shape.material = material;
+            shape.collisionGroup = MAP;
+            shape.collisionMask = BALL;
         });
 
         this.botBody = new p2.Body({
@@ -57,9 +61,18 @@ export class Map {
         this.botBody.fromPolygon(this.getBottomShapePoints());
         this.botBody.shapes.forEach(shape => {
             shape.material = material;
+            shape.collisionGroup = MAP;
+            shape.collisionMask = BALL;
         });
-        this.botBody.shapes.forEach(shape => {
-            shape.material = material;
+
+        this.borderBody = new p2.Body({
+            mass: 0,
+            position: [this.pos.x, this.pos.y]
+        });
+        this.borderBody.fromPolygon(this.getBorderShapePoints());
+        this.borderBody.shapes.forEach(shape => {
+            shape.collisionGroup = MAP_BORDER;
+            shape.collisionMask = PLAYER;
         });
 
         this.leftGoal = new LeftGoal(this.goalSize, [this.pos.x - this.goalSize.width, this.pos.y + this.size.height/2 - this.goalSize.height/2], material);
@@ -108,16 +121,33 @@ export class Map {
         ];
     }
 
+    private getBorderShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
+        const offset = getOffset(pos, this.size); // convex use relative position to body
+        const mapTickness = 10;
+        const borderDistance = this.goalSize.width* 2;
+        return [
+            [offset.left - borderDistance - mapTickness, offset.top - borderDistance], // top left corner
+            [offset.right + borderDistance, offset.top - borderDistance], // top right corner
+            [offset.right + borderDistance, offset.bottom + borderDistance], // bot right corner
+            [offset.left - borderDistance, offset.bottom + borderDistance], // bot left corner
+            [offset.left - borderDistance, offset.top - borderDistance + 1], // connector
+            [offset.left - borderDistance - mapTickness, offset.top - borderDistance + 1], // connector outer
+            [offset.left - borderDistance - mapTickness, offset.bottom + borderDistance + mapTickness], // bot left outer corner
+            [offset.right + borderDistance + mapTickness, offset.bottom + borderDistance + mapTickness], // bot right outer corner
+            [offset.right + borderDistance + mapTickness, offset.top - borderDistance - mapTickness], // top right outer corner
+            [offset.left - borderDistance - mapTickness, offset.top - borderDistance - mapTickness], // top left outer corner
+        ];
+    }
+
     public render(): void {
         Canvas.ctx.save();
-        Canvas.startDraw();
 
+        Canvas.startDraw();
         Canvas.ctx.moveTo(this.pos.x, this.pos.y + this.size.height/2 - this.goalSize.height/2);
         const verticesTop = this.getTopShapePoints(this.pos);
         verticesTop.forEach(v => {
             Canvas.ctx.lineTo(v[0] , v[1]);
         });
-
         Canvas.ctx.lineWidth = 2;
         Canvas.ctx.strokeStyle = '#B7B9A0';
         Canvas.ctx.stroke();
@@ -126,17 +156,28 @@ export class Map {
         Canvas.stopDraw();
 
         Canvas.startDraw();
-
         Canvas.ctx.moveTo(this.pos.x + this.size.width, this.pos.y + this.size.height/2 + this.goalSize.height/2);
         const verticesBottom = this.getBottomShapePoints(this.pos);
         verticesBottom.forEach(v => {
             Canvas.ctx.lineTo(v[0] , v[1]);
         });
-
         Canvas.ctx.lineWidth = 2;
         Canvas.ctx.strokeStyle = '#B7B9A0';
         Canvas.ctx.stroke();
         Canvas.ctx.fillStyle ='#e5e3c2';
+        Canvas.ctx.fill();
+        Canvas.stopDraw();
+
+        Canvas.startDraw();
+        Canvas.ctx.moveTo(this.pos.x - this.goalSize.width* 2 - 10, this.pos.y - this.goalSize.width* 2);
+        const verticesBorder = this.getBorderShapePoints(this.pos);
+        verticesBorder.forEach(v => {
+            Canvas.ctx.lineTo(v[0] , v[1]);
+        });
+        Canvas.ctx.lineWidth = 2;
+        Canvas.ctx.strokeStyle = '#B7B9A0';
+        Canvas.ctx.stroke();
+        Canvas.ctx.fillStyle ='#a7874d';
         Canvas.ctx.fill();
         Canvas.stopDraw();
 

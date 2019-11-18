@@ -42,7 +42,7 @@ export class GameField {
     }
 
     private static initCanvas(): void {
-        Canvas.createCanvas({ width: 1500, height: 900 });
+        Canvas.createCanvas({ width: 1700, height: 1000 });
     }
 
     private static initWorld(): void {
@@ -53,6 +53,7 @@ export class GameField {
         this.map = new Map(this.material.map);
         this.world.addBody(this.map.topBody);
         this.world.addBody(this.map.botBody);
+        this.world.addBody(this.map.borderBody);
         this.world.addBody(this.map.leftGoal.body);
         this.world.addBody(this.map.rightGoal.body);
 
@@ -61,6 +62,8 @@ export class GameField {
 
         this.ball = new Ball([Canvas.size.width / 2 - 50, Canvas.size.height / 2], this.material.ball);
         this.world.addBody(this.ball.body);
+
+        
     }
 
     private static initMaterials(): void {

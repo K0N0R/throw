@@ -1,13 +1,9 @@
 import * as p2 from 'p2';
 
 import { Canvas } from './canvas';
-import { KeysHandler, Keys } from './keysHandler';
-import { MouseHandler, MouseClicks } from './mouseHandler';
 import { calculateVectorLength, normalizeVector } from './../utils/vector';
-import { IPos, Shape, } from './../utils/model';
-import { EventManager } from './eventManager';
-import { ObjectBase } from './objectBase';
-import { MAP, PLAYER } from './collision';
+import { PLAYER, MAP_BORDER, BALL } from './collision';
+import { KeysHandler, Keys } from './keysHandler';
 
 
 export class Player  {
@@ -30,6 +26,8 @@ export class Player  {
 
         this.shape = new p2.Circle({
             radius: radius,
+            collisionGroup: PLAYER,
+            collisionMask: MAP_BORDER | PLAYER | BALL
         });
         this.shape.material = material;
         this.body.addShape(this.shape);

@@ -5,6 +5,7 @@ import { ISize } from '../utils/model';
 import { IPos } from '../utils/model';
 import { getCornerPoints } from '../utils/vertices';
 import { getOffset } from '../utils/offset';
+import { GOAL, BALL } from './collision';
 
 export class LeftGoal  {
     public body: p2.Body;
@@ -28,7 +29,10 @@ export class LeftGoal  {
         this.postRadius = 6;
         this.gateCornerRadius = 30;
         this.body.fromPolygon(this.getPoints());
-
+        this.body.shapes.forEach(shape => {
+            shape.collisionGroup = GOAL;
+            shape.collisionMask = BALL;
+        });
         this.topPostShape = new p2.Circle({
             radius: this.postRadius,
         });
