@@ -1,41 +1,50 @@
 import * as p2 from 'p2';
 
 import { Canvas } from './canvas';
-import { calculateVectorLength, normalizeVector } from './../utils/vector';
-import { PLAYER, MAP_BORDER, BALL } from './collision';
 import { KeysHandler, Keys } from './keysHandler';
+// import { MouseHandler, MouseClicks } from './mouseHandler';
+import { calculateVectorLength, normalizeVector } from './../utils/vector';
+// import { IPos, Shape, } from './../utils/model';
+// import { EventManager } from './eventManager';
+// import { ObjectBase } from './objectBase';
+import { MAP_BORDER, PLAYER, BALL } from './collision';
 
 
-export class Player  {
-    public body: p2.Body;
-    private shape: p2.Circle;
+export class Player {
+    public body!: p2.Body;
+    private shape!: p2.Circle;
+    private material: p2.Material;
+    private position: [number, number];
+    private radius = 25;
+    private mass = 2;
 
-    public shooting: boolean;
-    public movementSpeed: number;
-    public maxSpeed: number;
+    public shooting!: boolean;
+    public movementSpeed!: number;
+    public maxSpeed!: number;
 
-    public constructor(position: [number, number], material: p2.Material ) {
-        const radius = 25;
-        const mass = 2;
-
-        this.body = new p2.Body({
-            mass: mass,
-            position: position,
-            velocity: [0, 0],
-        });
-
-        this.shape = new p2.Circle({
-            radius: radius,
-            collisionGroup: PLAYER,
-            collisionMask: MAP_BORDER | PLAYER | BALL
-        });
-        this.shape.material = material;
-        this.body.addShape(this.shape);
-        this.body.damping = 0.5;
-
+    public constructor(position: [number, number], material: p2.Material) {
+        this.position = position;
+        this.material = material;
+        this.createPhysics();
         this.resetMovmentSpeed();
         this.addMovementHandlers();
+    }
 
+    private createPhysics = (): void => {
+        let options: p2.BodyOptions = {
+            mass: this.mass,
+            position: this.position,
+            velocity: [0, 0],
+        };
+        this.body = new p2.Body(options);
+        this.shape = new p2.Circle({
+            radius: this.radius,
+            collisionGroup: PLAYER,
+            collisionMask: MAP_BORDER | BALL
+        });
+        this.shape.material = this.material;
+        this.body.addShape(this.shape);
+        this.body.damping = 0.5;
     }
 
     private addMovementHandlers(): void {
@@ -86,10 +95,6 @@ export class Player  {
     private resetMovmentSpeed(): void {
         this.movementSpeed = 2;
         this.maxSpeed = 20;
-    }
-
-    public logic(): void {
-
     }
 
     public render(): void {
