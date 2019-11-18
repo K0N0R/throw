@@ -42,7 +42,7 @@ export class Game {
     }
 
     private initCanvas(): void {
-        Canvas.createCanvas({ width: 1500, height: 900 });
+        Canvas.createCanvas({ width: 1700, height: 1100 });
     }
 
     private initWorld(): void {
@@ -53,6 +53,7 @@ export class Game {
         this.map = new Map(this.material.map);
         this.world.addBody(this.map.topBody);
         this.world.addBody(this.map.botBody);
+        this.world.addBody(this.map.borderBody);
         this.world.addBody(this.map.leftGoal.body);
         this.world.addBody(this.map.rightGoal.body);
 
