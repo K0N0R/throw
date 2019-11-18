@@ -3,8 +3,8 @@
 //
 
 // import { loadImg } from './utils/loadImg';
-import { loopFnc } from './utils/loop';
-import { GameField } from './models/gameField';
+import { ticker } from './utils/loop';
+import { Game } from './models/game';
 // import { Assets, AssetKind } from './models/assets';
 
 // async function init() {
@@ -15,7 +15,7 @@ import { GameField } from './models/gameField';
 // }
 // init();
 
-GameField.init();
-loopFnc((time: number) => {
-    GameField.run(time);
+const game = new Game();
+ticker((time: number) => {
+    game.run(time);
 });
