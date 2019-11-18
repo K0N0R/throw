@@ -84,7 +84,7 @@ export class Game {
         });
 
         this.contactMaterial.goalBall = new p2.ContactMaterial(this.material.goal, this.material.ball, {
-            friction: 10000
+            friction: 2,
         });
 
         this.contactMaterial.playerBall = new p2.ContactMaterial(this.material.player, this.material.ball, {
