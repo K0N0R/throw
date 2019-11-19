@@ -35,8 +35,8 @@ export class Ball  {
         Canvas.ctx.arc(this.body.position[0], this.body.position[1], this.shape.radius, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = '#FAFAFA';
         Canvas.ctx.fill();
-        Canvas.ctx.strokeStyle = '#333';
-        Canvas.ctx.lineWidth = 5;
+        Canvas.ctx.strokeStyle = 'black';
+        Canvas.ctx.lineWidth = 3;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
     }

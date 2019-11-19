@@ -2,15 +2,12 @@ import * as p2 from 'p2';
 
 import { Canvas } from './canvas';
 import { KeysHandler, Keys } from './keysHandler';
-// import { MouseHandler, MouseClicks } from './mouseHandler';
-import { calculateVectorLength, normalizeVector } from './../utils/vector';
-// import { IPos, Shape, } from './../utils/model';
-// import { EventManager } from './eventManager';
-// import { ObjectBase } from './objectBase';
 import { MAP_BORDER, PLAYER, BALL } from './collision';
-
+import { calculateVectorLength, normalizeVector } from './../utils/vector';
+import { Camera } from './camera';
 
 export class Player {
+    public main: boolean;
     public body!: p2.Body;
     private shape!: p2.Circle;
     private material: p2.Material;
@@ -19,12 +16,14 @@ export class Player {
     private mass = 2;
 
     public shooting!: boolean;
+
     public movementSpeed!: number;
     public maxSpeed!: number;
 
-    public constructor(position: [number, number], material: p2.Material) {
+    public constructor(position: [number, number], material: p2.Material, main: boolean) {
         this.position = position;
         this.material = material;
+        this.main = main;
         this.createPhysics();
         this.resetMovmentSpeed();
         this.addMovementHandlers();
@@ -97,13 +96,19 @@ export class Player {
         this.maxSpeed = 20;
     }
 
+    public logic(): void {
+        if (this.body.velocity[0] || this.body.velocity[1]) {
+            Camera.updatePos({x: this.body.position[0], y: this.body.position[1]});
+        }
+    }
+
     public render(): void {
         Canvas.startDraw();
         Canvas.ctx.arc(this.body.position[0], this.body.position[1], this.shape.radius, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = '#a7874d';
         Canvas.ctx.fill();
-        Canvas.ctx.strokeStyle = this.shooting ? '#B7B9A0' : '#7f4b34';
-        Canvas.ctx.lineWidth = 2;
+        Canvas.ctx.strokeStyle = this.shooting ? 'white' : 'black';
+        Canvas.ctx.lineWidth = 3;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
     }

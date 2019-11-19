@@ -4,47 +4,39 @@ import { ISize, IPos } from './../utils/model';
 import { getOffset } from './../utils/offset';
 import { PLAYER, MAP, MAP_BORDER, BALL } from './collision';
 import { getCornerPoints } from './../utils/vertices';
-import { LeftGoal } from './leftGoal';
-import { RightGoal } from './rightGoal.';
-
 
 export class Map {
+    public pos: IPos;
+    public size: ISize;
+    public goalSize: ISize;
+    public cornerRadius: number;
+    public cornerPointsAmount: number;
+
     public topBody: p2.Body;
     public botBody: p2.Body;
 
     public borderBody: p2.Body;
 
-    public cornerRadius: number;
-    public cornerPointsAmount: number;
-
-    public goalSize: ISize;
-
-    public pos: IPos;
-    public size: ISize;
-
-    public constructor(material: p2.Material) {
+    public constructor(material: p2.Material, goalSize: ISize) {
         this.size = {
             height: 750,
             width: 1300
         };
+        this.goalSize = goalSize;
+
+        this.cornerRadius = this.size.width / 10;
+        this.cornerPointsAmount = 16;
 
         this.pos = {
             x: Canvas.size.width / 2 - this.size.width / 2,
             y: Canvas.size.height / 2 - this.size.height / 2
         }
 
-        this.goalSize = {
-            height: 150,
-            width: 50
-        };
-
         this.topBody = new p2.Body({
             mass: 0,
             position: [this.pos.x, this.pos.y]
         });
         
-        this.cornerRadius = this.size.width / 15;
-        this.cornerPointsAmount = 16;
         this.topBody.fromPolygon(this.getTopShapePoints());
         this.topBody.shapes.forEach(shape => {
             shape.material = material;
@@ -69,6 +61,7 @@ export class Map {
         });
         this.borderBody.fromPolygon(this.getBorderShapePoints());
         this.borderBody.shapes.forEach(shape => {
+            shape.material = material;
             shape.collisionGroup = MAP_BORDER;
             shape.collisionMask = PLAYER;
         });
@@ -134,12 +127,12 @@ export class Map {
         ];
     }
 
-    public render(): void {
-        Canvas.ctx.save();
+    public logic(): void {}
 
+    public render(): void {
         Canvas.startDraw();
-        Canvas.ctx.moveTo(this.pos.x, this.pos.y + this.size.height/2 - this.goalSize.height/2);
         const verticesTop = this.getTopShapePoints(this.pos);
+        Canvas.ctx.moveTo(verticesTop[0][0], verticesTop[0][1]);
         verticesTop.forEach(v => {
             Canvas.ctx.lineTo(v[0] , v[1]);
         });
@@ -151,8 +144,8 @@ export class Map {
         Canvas.stopDraw();
 
         Canvas.startDraw();
-        Canvas.ctx.moveTo(this.pos.x + this.size.width, this.pos.y + this.size.height/2 + this.goalSize.height/2);
         const verticesBottom = this.getBottomShapePoints(this.pos);
+        Canvas.ctx.moveTo(verticesBottom[0][0], verticesBottom[0][1]);
         verticesBottom.forEach(v => {
             Canvas.ctx.lineTo(v[0] , v[1]);
         });
@@ -164,8 +157,8 @@ export class Map {
         Canvas.stopDraw();
 
         Canvas.startDraw();
-        Canvas.ctx.moveTo(this.pos.x - this.goalSize.width* 2 - 10, this.pos.y - this.goalSize.width* 2);
         const verticesBorder = this.getBorderShapePoints(this.pos);
+        Canvas.ctx.moveTo(verticesBorder[0][0], verticesBorder[0][1]);
         verticesBorder.forEach(v => {
             Canvas.ctx.lineTo(v[0] , v[1]);
         });
@@ -175,43 +168,5 @@ export class Map {
         Canvas.ctx.fillStyle ='#a7874d';
         Canvas.ctx.fill();
         Canvas.stopDraw();
-
-        // Canvas.startDraw();
-        // Canvas.ctx.moveTo(this.pos.x + this.cornerRadius, this.pos.y)
-        // Canvas.ctx.lineTo(this.pos.x + this.size.width - this.cornerRadius, this.pos.y);
-        // Canvas.ctx.arcTo(
-        //     this.pos.x + this.size.width,
-        //     this.pos.y,
-        //     this.pos.x + this.size.width,
-        //     this.pos.y + this.cornerRadius,
-        //     this.cornerRadius);
-        // Canvas.ctx.lineTo(this.pos.x + this.size.width, this.pos.y + this.size.height - this.cornerRadius);
-        // Canvas.ctx.arcTo(
-        //     this.pos.x + this.size.width,
-        //     this.pos.y + this.size.height,
-        //     this.pos.x + this.size.width - this.cornerRadius,
-        //     this.pos.y + this.size.height,
-        //     this.cornerRadius);
-        // Canvas.ctx.lineTo(this.pos.x + this.cornerRadius, this.pos.y + this.size.height);
-        // Canvas.ctx.arcTo(
-        //     this.pos.x,
-        //     this.pos.y + this.size.height,
-        //     this.pos.x,
-        //     this.pos.y + this.size.height - this.cornerRadius,
-        //     this.cornerRadius);
-        // Canvas.ctx.lineTo(this.pos.x, this.pos.y + this.cornerRadius);
-        // Canvas.ctx.arcTo(
-        //     this.pos.x,
-        //     this.pos.y,
-        //     this.pos.x + this.cornerRadius,
-        //     this.pos.y,
-        //     this.cornerRadius);
-        // Canvas.ctx.lineWidth = 5;
-        // Canvas.ctx.strokeStyle = '#B7B9A0';
-        // Canvas.ctx.stroke();
-        // Canvas.ctx.fillStyle ='#e5e3c2';
-        // //Canvas.ctx.fill();
-        // Canvas.stopDraw();
-        // Canvas.ctx.restore();
     }
 }

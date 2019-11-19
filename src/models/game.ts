@@ -4,32 +4,34 @@ import { Canvas } from './canvas';
 import { KeysHandler } from './keysHandler';
 import { MouseHandler } from './mouseHandler';
 import { Player } from './player';
-// import { Camera } from './../../dist/src/models/camera';
-// import { EventManager } from './eventManager';
-import { Dictionary } from '../utils/model';
 import { Map } from './map';
 import { Ball } from './ball';
-import { getNormalizedVector } from '../utils/vector';
-import { RightGoal } from './rightGoal.';
+import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
-
+ import { Camera } from './camera';
+import { Dictionary } from '../utils/model';
+import { getNormalizedVector } from '../utils/vector';
+import { ISize } from './../utils/model';
 
 export class Game {
 
     private step = {
         fixedTime: 1 / 60,
         lastTime: 0,
-        max: 10,
+        maxSteps: 10,
     };
-    private world: p2.World;
-    private material: Dictionary<p2.Material> = {};
-    private contactMaterial: Dictionary<p2.ContactMaterial> = {};
 
-    private map: Map;
-    private player: Player;
-    private ball: Ball;
-    private leftGoal: LeftGoal;
-    private rightGoal: RightGoal;
+    private goalSize!: ISize;
+
+    private world!: p2.World;
+    private mat: Dictionary<p2.Material> = {};
+    private contactMat: Dictionary<p2.ContactMaterial> = {};
+
+    private map!: Map;
+    private player!: Player;
+    private ball!: Ball;
+    private leftGoal!: LeftGoal;
+    private rightGoal!: RightGoal;
 
     private events: (() => void)[] = [];
 
@@ -37,7 +39,7 @@ export class Game {
         this.initHandlers();
         this.initCanvas();
         this.initWorld();
-        this.initEventManager();
+        this.initEvents();
     }
 
     private initHandlers(): void {
@@ -54,56 +56,59 @@ export class Game {
             gravity: [0, 0]
         });
         this.initMaterials();
-        this.map = new Map(this.material.map);
+
+        this.goalSize = {
+            height: 150,
+            width: 50
+        };
+
+        this.map = new Map(this.mat.map, this.goalSize);
         this.world.addBody(this.map.topBody);
         this.world.addBody(this.map.botBody);
         this.world.addBody(this.map.borderBody);
-        this.leftGoal = new LeftGoal(this.map.goalSize, [this.map.pos.x - this.map.goalSize.width, this.map.pos.y + this.map.size.height/2 - this.map.goalSize.height/2], this.material.goal);
-        this.rightGoal = new RightGoal(this.map.goalSize, [this.map.pos.x + this.map.size.width, this.map.pos.y + this.map.size.height/2 - this.map.goalSize.height/2], this.material.goal);
+
+        this.leftGoal = new LeftGoal(this.map.goalSize, [this.map.pos.x - this.map.goalSize.width, this.map.pos.y + this.map.size.height/2 - this.map.goalSize.height/2], this.mat.goal);
         this.world.addBody(this.leftGoal.body);
+
+        this.rightGoal = new RightGoal(this.map.goalSize, [this.map.pos.x + this.map.size.width, this.map.pos.y + this.map.size.height/2 - this.map.goalSize.height/2], this.mat.goal);
         this.world.addBody(this.rightGoal.body);
 
-        this.player = new Player([Canvas.size.width / 2, Canvas.size.height / 2], this.material.player);
+        this.player = new Player([Canvas.size.width / 2, Canvas.size.height / 2], this.mat.player, true);
         this.world.addBody(this.player.body);
 
-        this.ball = new Ball([Canvas.size.width / 2 - 50, Canvas.size.height / 2], this.material.ball);
+        this.ball = new Ball([Canvas.size.width / 2 - 50, Canvas.size.height / 2], this.mat.ball);
         this.world.addBody(this.ball.body);
     }
 
     private initMaterials(): void {
-        this.material.map = new p2.Material();
-        this.material.player = new p2.Material();
-        this.material.ball = new p2.Material();
-        this.material.goal = new p2.Material();
-        this.contactMaterial.mapPlayer = new p2.ContactMaterial(this.material.map, this.material.player, {
+        this.mat.map = new p2.Material();
+        this.mat.player = new p2.Material();
+        this.mat.ball = new p2.Material();
+        this.mat.goal = new p2.Material();
+        this.contactMat.mapPlayer = new p2.ContactMaterial(this.mat.map, this.mat.player, {
             friction: 1
         });
-        this.contactMaterial.mapBall = new p2.ContactMaterial(this.material.map, this.material.ball, {
+        this.contactMat.mapBall = new p2.ContactMaterial(this.mat.map, this.mat.ball, {
             friction: 0,
             restitution: 0.3
         });
-
-        this.contactMaterial.goalBall = new p2.ContactMaterial(this.material.goal, this.material.ball, {
+        this.contactMat.goalBall = new p2.ContactMaterial(this.mat.goal, this.mat.ball, {
             friction: 2,
         });
-
-        this.contactMaterial.playerBall = new p2.ContactMaterial(this.material.player, this.material.ball, {
+        this.contactMat.playerBall = new p2.ContactMaterial(this.mat.player, this.mat.ball, {
             friction: 1
         });
-        this.world.addContactMaterial(this.contactMaterial.mapBall);
-        this.world.addContactMaterial(this.contactMaterial.playerBall);
-        this.world.addContactMaterial(this.contactMaterial.goalBall);
-        this.world.addContactMaterial(this.contactMaterial.mapPlayer);
+        this.world.addContactMaterial(this.contactMat.mapBall);
+        this.world.addContactMaterial(this.contactMat.playerBall);
+        this.world.addContactMaterial(this.contactMat.goalBall);
+        this.world.addContactMaterial(this.contactMat.mapPlayer);
     }
 
-    private initEventManager(): void {
+    private initEvents(): void {
         const isContact = (evt: any, a: p2.Body, b: p2.Body): boolean => {
                return (evt.bodyA === a || evt.bodyB === a) && (evt.bodyA === b || evt.bodyB === b);
         };
         this.world.on('beginContact', (evt: any) => {
-            if (isContact(evt, this.leftGoal.body, this.ball.body)) {
-                console.log(evt, 'dupppa');
-            }
             if (isContact(evt, this.player.body, this.ball.body)) {
                 if (this.player.shooting) {
                     this.events.push(() => {
@@ -118,28 +123,13 @@ export class Game {
                 }
             }
         });
-
-        // this.world.on('postStep', function(event: any){
-        //     // Add horizontal spring force
-        //     if(event.target.endContactEvent.shapeA)
-        //     {
-        //         console.log(event.target.endContactEvent.shapeA);
-        //     }
-
-        //     if(event.target)
-        //     {
-        //         console.log(event.target);
-        //     }
-        // });
     }
 
     public run(time: number) {
-        //Camera.translateStart();
         this.worldStep(time);
-        this.logic()
+        this.logic();
+        this.handleEvents();
         this.render();
-
-        //Camera.translateEnd();
     }
 
     private worldStep(time: number): void {
@@ -147,7 +137,7 @@ export class Game {
         const deltaTime = time - this.step.lastTime / 1000;
 
         // Move bodies forward in time
-        this.world.step(this.step.fixedTime, deltaTime, this.step.max);
+        this.world.step(this.step.fixedTime, deltaTime, this.step.maxSteps);
 
         this.step.lastTime = time;
     }
@@ -155,19 +145,32 @@ export class Game {
     private logic(): void {
         KeysHandler.reactOnKeys();
         MouseHandler.reactOnClicks();
+
+        this.map.logic();
+        this.leftGoal.logic();
+        this.rightGoal.logic();
+        this.player.logic();
+        this.ball.logic();
+    }
+
+    private handleEvents(): void {
         if (this.events.length) {
-            this.events.forEach(event=> event());
+            this.events.forEach(event => event());
         }
         this.events.length = 0;
     }
 
     public render(): void {
         Canvas.clearCanvas();
+        Camera.translateStart();
 
         this.map.render();
         this.leftGoal.render();
         this.rightGoal.render();
         this.player.render();
         this.ball.render();
+
+        Camera.translateEnd();
+
     }
 }

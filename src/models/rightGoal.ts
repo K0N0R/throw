@@ -71,21 +71,21 @@ export class RightGoal  {
     public logic(): void {}
 
     public render(): void {
-        Canvas.startDraw();
-        Canvas.ctx.arc(this.topPostShape.position[0], this.topPostShape.position[1], this.topPostShape.radius, 0, 2 * Math.PI, true);
-        Canvas.ctx.strokeStyle = '#FAFAFA';
-        Canvas.ctx.stroke();
-        Canvas.stopDraw();
+        // Canvas.startDraw();
+        // Canvas.ctx.arc(this.topPostShape.position[0], this.topPostShape.position[1], this.topPostShape.radius, 0, 2 * Math.PI, true);
+        // Canvas.ctx.strokeStyle = '#FAFAFA';
+        // Canvas.ctx.stroke();
+        // Canvas.stopDraw();
         
-        Canvas.startDraw();
-        Canvas.ctx.arc(this.bottomPostShape.position[0], this.bottomPostShape.position[1], this.bottomPostShape.radius, 0, 2 * Math.PI, true);
-        Canvas.ctx.strokeStyle = '#FAFAFA';
-        Canvas.ctx.stroke();
-        Canvas.stopDraw();
+        // Canvas.startDraw();
+        // Canvas.ctx.arc(this.bottomPostShape.position[0], this.bottomPostShape.position[1], this.bottomPostShape.radius, 0, 2 * Math.PI, true);
+        // Canvas.ctx.strokeStyle = '#FAFAFA';
+        // Canvas.ctx.stroke();
+        // Canvas.stopDraw();
 
         Canvas.startDraw();
-        Canvas.ctx.moveTo(this.pos.x + this.size.width + 10, this.pos.y + this.size.height + 10);
         const vertices = this.getPoints(this.pos);
+        Canvas.ctx.moveTo(vertices[0][0], vertices[0][1]);
         vertices.forEach(v => {
             Canvas.ctx.lineTo(v[0] , v[1]);
         });

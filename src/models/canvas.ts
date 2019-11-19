@@ -8,7 +8,7 @@ export class Canvas {
     }
 
     private static _ctx: CanvasRenderingContext2D;
-    public static get ctx(): CanvasRenderingContext2D {
+    public static get ctx(): CanvasRenderingContext2D  {
         return this._ctx;
     }
     
@@ -25,6 +25,7 @@ export class Canvas {
         this._ctx = this.element.getContext("2d");
         document.body.appendChild(this.element);
     }
+
 
     public static clearCanvas(): void {
         this.ctx.clearRect(0, 0, this.size.width, this.size.height);

@@ -1,6 +1,6 @@
 import { IPos } from './../utils/model';
 import { Canvas } from './canvas';
-import { EventManager } from './eventManager'; 
+
 export class Camera {
     public static pos: IPos;
 
@@ -9,7 +9,6 @@ export class Camera {
             x: pos.x -  Canvas.size.width/2,
             y: pos.y - Canvas.size.height/2
         }
-        EventManager.notify('camera::move');
     }
 
     public static translateStart() {
