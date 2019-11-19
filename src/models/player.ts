@@ -2,7 +2,7 @@ import * as p2 from 'p2';
 
 import { Canvas } from './canvas';
 import { KeysHandler, Keys } from './keysHandler';
-import { MAP_BORDER, PLAYER, BALL } from './collision';
+import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
 import { calculateVectorLength, normalizeVector } from './../utils/vector';
 import { Camera } from './camera';
 
@@ -39,7 +39,7 @@ export class Player {
         this.shape = new p2.Circle({
             radius: this.radius,
             collisionGroup: PLAYER,
-            collisionMask: MAP_BORDER | BALL
+            collisionMask: PLAYER | MAP_BORDER | BALL | GOAL_POST 
         });
         this.shape.material = this.material;
         this.body.addShape(this.shape);

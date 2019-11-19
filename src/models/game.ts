@@ -58,7 +58,7 @@ export class Game {
         this.initMaterials();
 
         this.goalSize = {
-            height: 150,
+            height: 200,
             width: 50
         };
 
@@ -67,11 +67,13 @@ export class Game {
         this.world.addBody(this.map.botBody);
         this.world.addBody(this.map.borderBody);
 
-        this.leftGoal = new LeftGoal(this.map.goalSize, [this.map.pos.x - this.map.goalSize.width, this.map.pos.y + this.map.size.height/2 - this.map.goalSize.height/2], this.mat.goal);
-        this.world.addBody(this.leftGoal.body);
+        this.leftGoal = new LeftGoal(this.goalSize, { x:this.map.pos.x - this.goalSize.width, y: this.map.pos.y + this.map.size.height/2 - this.goalSize.height/2}, this.mat.goal);
+        this.world.addBody(this.leftGoal.borderBody);
+        this.world.addBody(this.leftGoal.postBody);
 
-        this.rightGoal = new RightGoal(this.map.goalSize, [this.map.pos.x + this.map.size.width, this.map.pos.y + this.map.size.height/2 - this.map.goalSize.height/2], this.mat.goal);
-        this.world.addBody(this.rightGoal.body);
+        this.rightGoal = new RightGoal(this.goalSize, { x: this.map.pos.x + this.map.size.width, y: this.map.pos.y + this.map.size.height/2 - this.goalSize.height/2}, this.mat.goal);
+        this.world.addBody(this.rightGoal.borderBody);
+        this.world.addBody(this.rightGoal.postBody);
 
         this.player = new Player([Canvas.size.width / 2, Canvas.size.height / 2], this.mat.player, true);
         this.world.addBody(this.player.body);

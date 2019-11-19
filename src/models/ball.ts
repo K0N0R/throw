@@ -1,7 +1,7 @@
 import * as p2 from 'p2';
 
 import { Canvas } from './canvas';
-import { BALL, MAP, GOAL, PLAYER } from './collision';
+import { BALL, MAP, GOAL, PLAYER, GOAL_POST } from './collision';
 
 export class Ball  {
     public body: p2.Body;
@@ -19,7 +19,7 @@ export class Ball  {
         this.shape = new p2.Circle({
             radius: radius,
             collisionGroup: BALL,
-            collisionMask: MAP | GOAL | PLAYER
+            collisionMask: MAP | GOAL | PLAYER | GOAL_POST
 
         });
 

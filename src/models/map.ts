@@ -24,7 +24,7 @@ export class Map {
         };
         this.goalSize = goalSize;
 
-        this.cornerRadius = this.size.width / 10;
+        this.cornerRadius = this.size.width / 8;
         this.cornerPointsAmount = 16;
 
         this.pos = {
@@ -36,7 +36,7 @@ export class Map {
             mass: 0,
             position: [this.pos.x, this.pos.y]
         });
-        
+
         this.topBody.fromPolygon(this.getTopShapePoints());
         this.topBody.shapes.forEach(shape => {
             shape.material = material;
@@ -72,19 +72,19 @@ export class Map {
         const offset = getOffset(pos, this.size); // convex use relative position to body
         const mapTickness = 10;
         return [
-            [offset.left, offset.midVert - this.goalSize.height/2],
+            [offset.left, offset.midVert - this.goalSize.height / 2],
             [offset.left, offset.top + this.cornerRadius],
             ...getCornerPoints(cornerPointsAmount, Math.PI, { x: offset.left + this.cornerRadius, y: offset.top + this.cornerRadius }, this.cornerRadius),
             [offset.left + this.cornerRadius, offset.top],
             [offset.right - this.cornerRadius, offset.top],
             ...getCornerPoints(cornerPointsAmount, Math.PI + Math.PI / 2, { x: offset.right - this.cornerRadius, y: offset.top + this.cornerRadius }, this.cornerRadius),
             [offset.right, offset.top + this.cornerRadius],
-            [offset.right, offset.midVert - this.goalSize.height/2],
-             
-            [offset.right + mapTickness, offset.midVert - this.goalSize.height/2], // obramówka zewnętrzna
+            [offset.right, offset.midVert - this.goalSize.height / 2],
+
+            [offset.right + mapTickness, offset.midVert - this.goalSize.height / 2], // obramówka zewnętrzna
             [offset.right + mapTickness, offset.top - mapTickness],
             [offset.left - mapTickness, offset.top - mapTickness],
-            [offset.left - mapTickness, offset.midVert - this.goalSize.height/2],
+            [offset.left - mapTickness, offset.midVert - this.goalSize.height / 2],
         ];
     }
 
@@ -93,26 +93,26 @@ export class Map {
         const offset = getOffset(pos, this.size); // convex use relative position to body
         const mapTickness = 10;
         return [
-            [offset.right, offset.midVert + this.goalSize.height/2],
+            [offset.right, offset.midVert + this.goalSize.height / 2],
             [offset.right, offset.bottom - this.cornerRadius],
             ...getCornerPoints(cornerPointsAmount, 0, { x: offset.right - this.cornerRadius, y: offset.bottom - this.cornerRadius }, this.cornerRadius),
             [offset.right - this.cornerRadius, offset.bottom],
             [offset.left + this.cornerRadius, offset.bottom],
             ...getCornerPoints(cornerPointsAmount, Math.PI / 2, { x: offset.left + this.cornerRadius, y: offset.bottom - this.cornerRadius }, this.cornerRadius),
             [offset.left, offset.bottom - this.cornerRadius],
-            [offset.left, offset.midVert + this.goalSize.height/2],
+            [offset.left, offset.midVert + this.goalSize.height / 2],
 
-            [offset.left - mapTickness, offset.midVert + this.goalSize.height/2],// obramówka zewnętrzna
+            [offset.left - mapTickness, offset.midVert + this.goalSize.height / 2],// obramówka zewnętrzna
             [offset.left - mapTickness, offset.bottom + mapTickness],
             [offset.right + mapTickness, offset.bottom + mapTickness],
-            [offset.right + mapTickness, offset.midVert + this.goalSize.height/2],
+            [offset.right + mapTickness, offset.midVert + this.goalSize.height / 2],
         ];
     }
 
     private getBorderShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
         const offset = getOffset(pos, this.size); // convex use relative position to body
         const mapTickness = 10;
-        const borderDistance = this.goalSize.width* 2;
+        const borderDistance = this.goalSize.width * 2;
         return [
             [offset.left - borderDistance - mapTickness, offset.top - borderDistance], // top left corner
             [offset.right + borderDistance, offset.top - borderDistance], // top right corner
@@ -127,45 +127,46 @@ export class Map {
         ];
     }
 
-    public logic(): void {}
+    public logic(): void { }
 
     public render(): void {
         Canvas.startDraw();
         const verticesTop = this.getTopShapePoints(this.pos);
         Canvas.ctx.moveTo(verticesTop[0][0], verticesTop[0][1]);
-        verticesTop.forEach(v => {
-            Canvas.ctx.lineTo(v[0] , v[1]);
-        });
-        Canvas.ctx.lineWidth = 2;
-        Canvas.ctx.strokeStyle = '#B7B9A0';
+        verticesTop
+            .filter((_, idx) => idx < verticesTop.length - 4) // skip 4 last
+            .forEach(v => {
+                Canvas.ctx.lineTo(v[0], v[1]);
+            });
+        Canvas.ctx.lineWidth = 3;
+        Canvas.ctx.strokeStyle = 'white';
         Canvas.ctx.stroke();
-        Canvas.ctx.fillStyle ='#e5e3c2';
-        Canvas.ctx.fill();
         Canvas.stopDraw();
 
         Canvas.startDraw();
         const verticesBottom = this.getBottomShapePoints(this.pos);
         Canvas.ctx.moveTo(verticesBottom[0][0], verticesBottom[0][1]);
-        verticesBottom.forEach(v => {
-            Canvas.ctx.lineTo(v[0] , v[1]);
-        });
-        Canvas.ctx.lineWidth = 2;
-        Canvas.ctx.strokeStyle = '#B7B9A0';
+        verticesBottom
+            .filter((_, idx) => idx < verticesBottom.length - 4) // skip 4 last
+            .forEach(v => {
+                Canvas.ctx.lineTo(v[0], v[1]);
+            });
+        Canvas.ctx.lineWidth = 3;
+        Canvas.ctx.strokeStyle = 'white';
         Canvas.ctx.stroke();
-        Canvas.ctx.fillStyle ='#e5e3c2';
-        Canvas.ctx.fill();
         Canvas.stopDraw();
 
         Canvas.startDraw();
         const verticesBorder = this.getBorderShapePoints(this.pos);
         Canvas.ctx.moveTo(verticesBorder[0][0], verticesBorder[0][1]);
-        verticesBorder.forEach(v => {
-            Canvas.ctx.lineTo(v[0] , v[1]);
-        });
-        Canvas.ctx.lineWidth = 2;
+        verticesBorder
+            .forEach(v => {
+                Canvas.ctx.lineTo(v[0], v[1]);
+            });
+        Canvas.ctx.lineWidth = 3;
         Canvas.ctx.strokeStyle = '#B7B9A0';
         Canvas.ctx.stroke();
-        Canvas.ctx.fillStyle ='#a7874d';
+        Canvas.ctx.fillStyle = '#a7874d';
         Canvas.ctx.fill();
         Canvas.stopDraw();
     }
