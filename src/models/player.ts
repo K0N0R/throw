@@ -107,7 +107,7 @@ export class Player {
     public render(): void {
         Canvas.startDraw();
         Canvas.ctx.arc(this.body.position[0], this.body.position[1], this.shape.radius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = '#a7874d';
+        Canvas.ctx.fillStyle = '#4663A0';
         Canvas.ctx.fill();
         Canvas.ctx.strokeStyle = this.shooting ? 'white' : 'black';
         Canvas.ctx.lineWidth = 3;

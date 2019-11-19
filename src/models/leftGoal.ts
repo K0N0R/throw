@@ -97,21 +97,22 @@ export class LeftGoal {
         Canvas.stopDraw();
 
         Canvas.startDraw();
-        Canvas.ctx.lineWidth = 3;
         Canvas.ctx.arc(this.pos.x + this.topPostShape.position[0], this.pos.y + this.topPostShape.position[1], this.topPostShape.radius, 0, 2 * Math.PI, true);
+        Canvas.ctx.fillStyle = '#D95A62';
+        Canvas.ctx.fill();
+        Canvas.ctx.lineWidth = 3;
         Canvas.ctx.strokeStyle = 'black';
         Canvas.ctx.stroke();
-        Canvas.ctx.fillStyle = 'red';
-        Canvas.ctx.fill();
         Canvas.stopDraw();
 
         Canvas.startDraw();
-        Canvas.ctx.lineWidth = 3;
         Canvas.ctx.arc(this.pos.x + this.bottomPostShape.position[0], this.pos.y + this.bottomPostShape.position[1], this.bottomPostShape.radius, 0, 2 * Math.PI, true);
+        Canvas.ctx.fillStyle = '#D95A62';
+        Canvas.ctx.fill();
+        Canvas.ctx.lineWidth = 3;
         Canvas.ctx.strokeStyle = 'black';
         Canvas.ctx.stroke();
-        Canvas.ctx.fillStyle = 'red';
-        Canvas.ctx.fill();
+
         Canvas.stopDraw();
     }
 }
