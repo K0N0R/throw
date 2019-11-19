@@ -7,10 +7,14 @@ import { getCornerPoints } from './../utils/vertices';
 
 export class Map {
     public pos: IPos;
+    public outerPos: IPos;
     public size: ISize;
     public goalSize: ISize;
+    public outerSize: ISize;
+
     public cornerRadius: number;
     public cornerPointsAmount: number;
+    public borderDistance: number;
 
     public topBody: p2.Body;
     public botBody: p2.Body;
@@ -18,19 +22,30 @@ export class Map {
     public borderBody: p2.Body;
 
     public constructor(material: p2.Material, goalSize: ISize) {
-        this.size = {
-            height: 750,
-            width: 1300
-        };
         this.goalSize = goalSize;
+        this.borderDistance = this.goalSize.width * 2;
 
-        this.cornerRadius = this.size.width / 12;
-        this.cornerPointsAmount = 16;
-
+        this.size = {
+            height: 1000,
+            width: 1600
+        };
         this.pos = {
             x: Canvas.size.width / 2 - this.size.width / 2,
             y: Canvas.size.height / 2 - this.size.height / 2
-        }
+        };
+
+        this.outerSize = {
+            height: this.size.height + this.borderDistance * 2,
+            width: this.size.width + this.borderDistance * 2
+        };
+
+        this.outerPos = {
+            x: this.pos.x - this.borderDistance,
+            y: this.pos.y - this.borderDistance
+        };
+
+        this.cornerPointsAmount = 16;
+        this.cornerRadius = this.size.width / 12;
 
         this.topBody = new p2.Body({
             mass: 0,
@@ -112,18 +127,17 @@ export class Map {
     private getBorderShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
         const offset = getOffset(pos, this.size); // convex use relative position to body
         const mapTickness = 10;
-        const borderDistance = this.goalSize.width * 1.5;
         return [
-            [offset.left - borderDistance - mapTickness, offset.top - borderDistance], // top left corner
-            [offset.right + borderDistance, offset.top - borderDistance], // top right corner
-            [offset.right + borderDistance, offset.bottom + borderDistance], // bot right corner
-            [offset.left - borderDistance, offset.bottom + borderDistance], // bot left corner
-            [offset.left - borderDistance, offset.top - borderDistance + 1], // connector
-            [offset.left - borderDistance - mapTickness, offset.top - borderDistance + 1], // connector outer
-            [offset.left - borderDistance - mapTickness, offset.bottom + borderDistance + mapTickness], // bot left outer corner
-            [offset.right + borderDistance + mapTickness, offset.bottom + borderDistance + mapTickness], // bot right outer corner
-            [offset.right + borderDistance + mapTickness, offset.top - borderDistance - mapTickness], // top right outer corner
-            [offset.left - borderDistance - mapTickness, offset.top - borderDistance - mapTickness], // top left outer corner
+            [offset.left - this.borderDistance - mapTickness, offset.top - this.borderDistance], // top left corner
+            [offset.right + this.borderDistance, offset.top - this.borderDistance], // top right corner
+            [offset.right + this.borderDistance, offset.bottom + this.borderDistance], // bot right corner
+            [offset.left - this.borderDistance, offset.bottom + this.borderDistance], // bot left corner
+            [offset.left - this.borderDistance, offset.top - this.borderDistance + 1], // connector
+            [offset.left - this.borderDistance - mapTickness, offset.top - this.borderDistance + 1], // connector outer
+            [offset.left - this.borderDistance - mapTickness, offset.bottom + this.borderDistance + mapTickness], // bot left outer corner
+            [offset.right + this.borderDistance + mapTickness, offset.bottom + this.borderDistance + mapTickness], // bot right outer corner
+            [offset.right + this.borderDistance + mapTickness, offset.top - this.borderDistance - mapTickness], // top right outer corner
+            [offset.left - this.borderDistance - mapTickness, offset.top - this.borderDistance - mapTickness], // top left outer corner
         ];
     }
 

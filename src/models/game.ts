@@ -12,6 +12,7 @@ import { LeftGoal } from './leftGoal';
 import { Dictionary } from '../utils/model';
 import { getNormalizedVector } from '../utils/vector';
 import { ISize } from './../utils/model';
+import { getOffset } from './../utils/offset';
 
 export class Game {
 
@@ -39,6 +40,7 @@ export class Game {
         this.initHandlers();
         this.initCanvas();
         this.initWorld();
+        this.initCamera();
         this.initEvents();
     }
 
@@ -104,6 +106,10 @@ export class Game {
         this.world.addContactMaterial(this.contactMat.playerBall);
         this.world.addContactMaterial(this.contactMat.goalBall);
         this.world.addContactMaterial(this.contactMat.mapPlayer);
+    }
+
+    private initCamera(): void {
+        Camera.setBounduary(getOffset(this.map.outerPos, this.map.outerSize));
     }
 
     private initEvents(): void {
