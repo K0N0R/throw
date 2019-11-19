@@ -47,11 +47,11 @@ export class Player {
     }
 
     private addMovementHandlers(): void {
-        KeysHandler.add(Keys.Up, (pressed: boolean) => { if(pressed) this.movementKeysHandler(Keys.Up); });
-        KeysHandler.add(Keys.Down, (pressed: boolean) => { if(pressed) this.movementKeysHandler(Keys.Down); });
-        KeysHandler.add(Keys.Left, (pressed: boolean) => { if(pressed) this.movementKeysHandler(Keys.Left); });
-        KeysHandler.add(Keys.Right, (pressed: boolean) => { if(pressed) this.movementKeysHandler(Keys.Right); });
-        KeysHandler.add(Keys.Shift, (pressed: boolean) => {  this.sprintKeyHandler(pressed); });
+        KeysHandler.add(Keys.Up, (pressed: boolean) => { if (pressed) this.movementKeysHandler(Keys.Up); });
+        KeysHandler.add(Keys.Down, (pressed: boolean) => { if (pressed) this.movementKeysHandler(Keys.Down); });
+        KeysHandler.add(Keys.Left, (pressed: boolean) => { if (pressed) this.movementKeysHandler(Keys.Left); });
+        KeysHandler.add(Keys.Right, (pressed: boolean) => { if (pressed) this.movementKeysHandler(Keys.Right); });
+        KeysHandler.add(Keys.Shift, (pressed: boolean) => { this.sprintKeyHandler(pressed); });
         KeysHandler.add(Keys.X, (pressed: boolean) => { this.shootingKeyHandler(pressed); });
     }
 
@@ -97,8 +97,10 @@ export class Player {
     }
 
     public logic(): void {
-        if (this.body.velocity[0] || this.body.velocity[1]) {
-            Camera.updatePos({x: this.body.position[0], y: this.body.position[1]});
+        if (this.main) {
+            if (this.body.velocity[0] || this.body.velocity[1]) {
+                Camera.updatePos({ x: this.body.position[0], y: this.body.position[1] });
+            }
         }
     }
 
