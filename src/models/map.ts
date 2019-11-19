@@ -24,7 +24,7 @@ export class Map {
         };
         this.goalSize = goalSize;
 
-        this.cornerRadius = this.size.width / 8;
+        this.cornerRadius = this.size.width / 12;
         this.cornerPointsAmount = 16;
 
         this.pos = {
