@@ -112,7 +112,7 @@ export class Map {
     private getBorderShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
         const offset = getOffset(pos, this.size); // convex use relative position to body
         const mapTickness = 10;
-        const borderDistance = this.goalSize.width * 2;
+        const borderDistance = this.goalSize.width * 1.5;
         return [
             [offset.left - borderDistance - mapTickness, offset.top - borderDistance], // top left corner
             [offset.right + borderDistance, offset.top - borderDistance], // top right corner
@@ -163,10 +163,7 @@ export class Map {
             .forEach(v => {
                 Canvas.ctx.lineTo(v[0], v[1]);
             });
-        Canvas.ctx.lineWidth = 3;
-        Canvas.ctx.strokeStyle = '#B7B9A0';
-        Canvas.ctx.stroke();
-        Canvas.ctx.fillStyle = '#a7874d';
+        Canvas.ctx.fillStyle = '#222';
         Canvas.ctx.fill();
         Canvas.stopDraw();
     }
