@@ -5,45 +5,37 @@ import { KeysHandler, Keys } from './keysHandler';
 import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
 import { calculateVectorLength, normalizeVector } from './../utils/vector';
 import { Camera } from './camera';
+import { player } from './callibration'; 
 
 export class Player {
     public main: boolean;
     public body!: p2.Body;
     private shape!: p2.Circle;
-    private material: p2.Material;
-    private position: [number, number];
-    private radius = 25;
-    private mass = 2;
 
     public shooting!: boolean;
 
-    public movementSpeed!: number;
+    public movementIncrease!: number;
     public maxSpeed!: number;
 
     public constructor(position: [number, number], material: p2.Material, main: boolean) {
-        this.position = position;
-        this.material = material;
-        this.main = main;
-        this.createPhysics();
-        this.resetMovmentSpeed();
-        this.addMovementHandlers();
-    }
 
-    private createPhysics = (): void => {
+        this.main = main;
         let options: p2.BodyOptions = {
-            mass: this.mass,
-            position: this.position,
+            mass: player.mass,
+            position: position,
             velocity: [0, 0],
         };
         this.body = new p2.Body(options);
         this.shape = new p2.Circle({
-            radius: this.radius,
+            radius: player.radius,
             collisionGroup: PLAYER,
             collisionMask: PLAYER | MAP_BORDER | BALL | GOAL_POST 
         });
-        this.shape.material = this.material;
+        this.shape.material = material;
         this.body.addShape(this.shape);
-        this.body.damping = 0.5;
+        this.body.damping = player.damping;
+        this.sprintHandler();
+        this.addMovementHandlers();
     }
 
     private addMovementHandlers(): void {
@@ -51,35 +43,36 @@ export class Player {
         KeysHandler.add(Keys.Down, (pressed: boolean) => { if (pressed) this.movementKeysHandler(Keys.Down); });
         KeysHandler.add(Keys.Left, (pressed: boolean) => { if (pressed) this.movementKeysHandler(Keys.Left); });
         KeysHandler.add(Keys.Right, (pressed: boolean) => { if (pressed) this.movementKeysHandler(Keys.Right); });
-        KeysHandler.add(Keys.Shift, (pressed: boolean) => { this.sprintKeyHandler(pressed); });
-        KeysHandler.add(Keys.X, (pressed: boolean) => { this.shootingKeyHandler(pressed); });
+        KeysHandler.add(Keys.Shift, (pressed: boolean) => { this.sprintHandler(pressed); });
+        KeysHandler.add(Keys.X, (pressed: boolean) => { this.shootingHandler(pressed); });
     }
 
-    private shootingKeyHandler(pressed: boolean): void {
+    private shootingHandler(pressed: boolean): void {
         this.shooting = pressed;
     }
 
-    private sprintKeyHandler(pressed: boolean): void {
+    private sprintHandler(pressed: boolean = false): void {
         if (pressed) {
-            this.movementSpeed = 4;
-            this.maxSpeed = 45;
+            this.movementIncrease = player.sprintMaxSpeed;
+            this.maxSpeed = player.sprintMaxSpeed;
         } else {
-            this.resetMovmentSpeed();
+            this.movementIncrease = player.movementIncrease;
+            this.maxSpeed = player.maxSpeed;
         }
     }
 
     private movementKeysHandler(key: Keys): void {
         if (key == Keys.Up) {
-            this.body.velocity[1] -= this.movementSpeed;
+            this.body.velocity[1] -= this.movementIncrease;
         }
         if (key == Keys.Down) {
-            this.body.velocity[1] += this.movementSpeed;
+            this.body.velocity[1] += this.movementIncrease;
         }
         if (key == Keys.Left) {
-            this.body.velocity[0] -= this.movementSpeed;
+            this.body.velocity[0] -= this.movementIncrease;
         }
         if (key == Keys.Right) {
-            this.body.velocity[0] += this.movementSpeed;
+            this.body.velocity[0] += this.movementIncrease;
         }
 
         const moveVector = { x: this.body.velocity[0], y: this.body.velocity[1] };
@@ -89,11 +82,6 @@ export class Player {
             this.body.velocity[0] = normalizedMoveVector.x * this.maxSpeed;
             this.body.velocity[1] = normalizedMoveVector.y * this.maxSpeed;
         }
-    }
-
-    private resetMovmentSpeed(): void {
-        this.movementSpeed = 2;
-        this.maxSpeed = 20;
     }
 
     public logic(): void {

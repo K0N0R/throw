@@ -2,22 +2,20 @@ import * as p2 from 'p2';
 
 import { Canvas } from './canvas';
 import { BALL, MAP, GOAL, PLAYER, GOAL_POST } from './collision';
+import { ball } from './callibration';
 
 export class Ball  {
     public body: p2.Body;
     private shape: p2.Circle;
 
     public constructor(position: [number, number], material: p2.Material ) {
-        const radius = 20;
-        const mass = 1;
-
         this.body = new p2.Body({
-            mass: mass,
+            mass: ball.mass,
             position: position,
         });
 
         this.shape = new p2.Circle({
-            radius: radius,
+            radius: ball.radius,
             collisionGroup: BALL,
             collisionMask: MAP | GOAL | PLAYER | GOAL_POST
 
@@ -25,7 +23,7 @@ export class Ball  {
 
         this.shape.material = material;
         this.body.addShape(this.shape);
-        this.body.damping = 0.1;
+        this.body.damping = ball.damping;
     }
 
     public logic(): void {}

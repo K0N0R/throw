@@ -16,7 +16,7 @@ export class MouseHandler {
     private static clickHandlers: { click: MouseClicks, action: Function}[] = [];
     public static bindEvents() {
 
-        document.addEventListener('mousedown', (event: KeyboardEvent) => {
+        document.addEventListener('mousedown', (event: MouseEvent) => {
             this.pressed[event.which] = true;
         });
 

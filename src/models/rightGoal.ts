@@ -1,36 +1,28 @@
 import * as p2 from 'p2';
 
-import { Canvas } from './canvas';
-import { ISize } from '../utils/model';
 import { IPos } from '../utils/model';
 import { getCornerPoints } from '../utils/vertices';
 import { getOffset } from '../utils/offset';
+import { Canvas } from './canvas';
 import { GOAL, BALL, GOAL_POST, PLAYER } from './collision';
+import { goal } from './callibration';
 
 export class RightGoal {
-    private size: ISize;
     private pos: IPos;
-    private postRadius: number;
-    private goalCornerRadius: number;
 
     public borderBody: p2.Body;
-
     public postBody: p2.Body;
+
     private topPostShape: p2.Circle;
     private bottomPostShape: p2.Circle;
 
-    public constructor(size: ISize, pos: IPos, material: p2.Material) {
-        this.size = size;
-        this.postRadius = 15;
-        this.goalCornerRadius = 30;
+    public constructor(pos: IPos, material: p2.Material) {
         this.pos = { x: pos.x, y: pos.y };
 
-        const mass = 0;
         this.borderBody = new p2.Body({
             position: [this.pos.x, this.pos.y],
-            mass: mass
-        })
-
+            mass: 0
+        });
         this.borderBody.fromPolygon(this.getPoints());
         this.borderBody.shapes.forEach(shape => {
             shape.collisionGroup = GOAL;
@@ -40,10 +32,10 @@ export class RightGoal {
 
         this.postBody = new p2.Body({
             position: [this.pos.x, this.pos.y],
-            mass: mass
+            mass: 0
         });
         this.topPostShape = new p2.Circle({
-            radius: this.postRadius,
+            radius: goal.postRadius,
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
@@ -51,27 +43,25 @@ export class RightGoal {
         this.postBody.addShape(this.topPostShape, [0, 0]);
 
         this.bottomPostShape = new p2.Circle({
-            radius: this.postRadius,
+            radius: goal.postRadius,
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
         this.bottomPostShape.material = material;
-        this.postBody.addShape(this.bottomPostShape, [0, this.size.height]);
-
+        this.postBody.addShape(this.bottomPostShape, [0, goal.size.height]);
     }
 
     private getPoints(pos = { x: 0, y: 0 }): ([number, number])[] {
-        const cornerPointsAmount = 5;
-        const offset = getOffset(pos, this.size)
+        const offset = getOffset(pos, goal.size)
         const goalTickness = 10;
         return [
             [offset.left, offset.bottom],
-            [offset.right - this.goalCornerRadius, offset.bottom],
-            ...getCornerPoints(cornerPointsAmount, Math.PI / 2, { x: offset.right - this.goalCornerRadius, y: offset.bottom - this.goalCornerRadius }, this.goalCornerRadius, -1),
-            [offset.right, offset.bottom - this.goalCornerRadius],
-            [offset.right, offset.top + this.goalCornerRadius],
-            ...getCornerPoints(cornerPointsAmount, 0, { x: offset.right - this.goalCornerRadius, y: offset.top + this.goalCornerRadius }, this.goalCornerRadius, -1),
-            [offset.right - this.goalCornerRadius, offset.top],
+            [offset.right - goal.cornerRadius, offset.bottom],
+            ...getCornerPoints(goal.cornerPointsAmount, Math.PI / 2, { x: offset.right - goal.cornerRadius, y: offset.bottom - goal.cornerRadius }, goal.cornerRadius, -1),
+            [offset.right, offset.bottom - goal.cornerRadius],
+            [offset.right, offset.top + goal.cornerRadius],
+            ...getCornerPoints(goal.cornerPointsAmount, 0, { x: offset.right - goal.cornerRadius, y: offset.top + goal.cornerRadius }, goal.cornerRadius, -1),
+            [offset.right - goal.cornerRadius, offset.top],
             [offset.left, offset.top],
             [offset.left, offset.top - goalTickness],
             [offset.right + goalTickness, offset.top - goalTickness],

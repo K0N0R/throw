@@ -1,17 +1,14 @@
 import * as p2 from 'p2';
 
-import { Canvas } from './canvas';
-import { ISize } from '../utils/model';
-import { IPos } from '../utils/model';
 import { getCornerPoints } from '../utils/vertices';
 import { getOffset } from '../utils/offset';
+import { IPos } from '../utils/model';
+import { Canvas } from './canvas';
 import { PLAYER, GOAL, BALL, GOAL_POST } from './collision';
+import { goal } from './callibration';
 
 export class LeftGoal {
-    private size: ISize;
     private pos: IPos;
-    private postRadius: number;
-    private goalCornerRadius: number;
 
     public borderBody: p2.Body;
     public postBody: p2.Body;
@@ -19,18 +16,13 @@ export class LeftGoal {
     private topPostShape: p2.Circle;
     private bottomPostShape: p2.Circle;
 
-    public constructor(size: ISize, pos: IPos, material: p2.Material) {
-        this.size = size;
+    public constructor(pos: IPos, material: p2.Material) {
         this.pos = { x: pos.x, y: pos.y };
-        this.postRadius = 15;
-        this.goalCornerRadius = 30;
 
-        const mass = 0;
         this.borderBody = new p2.Body({
             position: [this.pos.x, this.pos.y],
-            mass: mass
+            mass: 0
         });
-
         this.borderBody.fromPolygon(this.getPoints());
         this.borderBody.shapes.forEach(shape => {
             shape.collisionGroup = GOAL;
@@ -40,38 +32,36 @@ export class LeftGoal {
 
         this.postBody = new p2.Body({
             position: [this.pos.x, this.pos.y],
-            mass: mass
+            mass: 0
         });
         this.topPostShape = new p2.Circle({
-            radius: this.postRadius,
+            radius: goal.postRadius,
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
         this.topPostShape.material = material;
-        this.postBody.addShape(this.topPostShape, [this.size.width, 0]);
+        this.postBody.addShape(this.topPostShape, [goal.size.width, 0]);
 
         this.bottomPostShape = new p2.Circle({
-            radius: this.postRadius,
+            radius: goal.postRadius,
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
         this.bottomPostShape.material = material;
-        this.postBody.addShape(this.bottomPostShape, [this.size.width, this.size.height]);
-
+        this.postBody.addShape(this.bottomPostShape, [goal.size.width, goal.size.height]);
     }
 
     private getPoints(pos = { x: 0, y: 0 }): ([number, number])[] {
-        const cornerPointsAmount = 5;
-        const offset = getOffset(pos, this.size)
+        const offset = getOffset(pos, goal.size)
         const goalTickness = 10;
         return [
             [offset.right, offset.bottom],
-            [offset.left + this.goalCornerRadius, offset.bottom],
-            ...getCornerPoints(cornerPointsAmount, Math.PI / 2, { x: offset.left + this.goalCornerRadius, y: offset.bottom - this.goalCornerRadius }, this.goalCornerRadius),
-            [offset.left, offset.bottom - this.goalCornerRadius],
-            [offset.left, offset.top + this.goalCornerRadius],
-            ...getCornerPoints(cornerPointsAmount, Math.PI, { x: offset.left + this.goalCornerRadius, y: offset.top + this.goalCornerRadius }, this.goalCornerRadius),
-            [offset.left + this.goalCornerRadius, offset.top],
+            [offset.left + goal.cornerRadius, offset.bottom],
+            ...getCornerPoints(goal.cornerPointsAmount, Math.PI / 2, { x: offset.left + goal.cornerRadius, y: offset.bottom - goal.cornerRadius }, goal.cornerRadius),
+            [offset.left, offset.bottom - goal.cornerRadius],
+            [offset.left, offset.top + goal.cornerRadius],
+            ...getCornerPoints(goal.cornerPointsAmount, Math.PI, { x: offset.left + goal.cornerRadius, y: offset.top + goal.cornerRadius }, goal.cornerRadius),
+            [offset.left + goal.cornerRadius, offset.top],
             [offset.right, offset.top],
             [offset.right, offset.top - goalTickness],
             [offset.left - goalTickness, offset.top - goalTickness],
@@ -112,7 +102,6 @@ export class LeftGoal {
         Canvas.ctx.lineWidth = 3;
         Canvas.ctx.strokeStyle = 'black';
         Canvas.ctx.stroke();
-
         Canvas.stopDraw();
     }
 }

@@ -1,4 +1,4 @@
-import { ISize } from './../utils/model';
+import { canvas } from './callibration'; 
 
 export class Canvas {
 
@@ -11,24 +11,18 @@ export class Canvas {
     public static get ctx(): CanvasRenderingContext2D  {
         return this._ctx;
     }
-    
-    private static _size: ISize;
-    public static get size(): ISize {
-        return this._size;
-    }
 
-    public static createCanvas(size: ISize): void {
-        this._size = size;
+    public static createCanvas(): void {
         this._element = document.createElement('canvas');  
-        this._element.width = this._size.width;
-        this._element.height = this._size.height;
+        this._element.width = canvas.size.width;
+        this._element.height = canvas.size.height;
         this._ctx = this.element.getContext("2d");
         document.body.appendChild(this.element);
     }
 
 
     public static clearCanvas(): void {
-        this.ctx.clearRect(0, 0, this.size.width, this.size.height);
+        this.ctx.clearRect(0, 0, canvas.size.width, canvas.size.height);
     }
 
     public static startDraw(): void {
