@@ -9,9 +9,9 @@ import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
-import { goal, map, player } from './callibration';
+import { goal, map, player, ball } from './callibration';
 import { Dictionary } from '../utils/model';
-import { getNormalizedVector } from '../utils/vector';
+import { getNormalizedVector, getDistance } from '../utils/vector';
 import { getOffset } from './../utils/offset';
 
 export class Game {
@@ -32,6 +32,7 @@ export class Game {
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
 
+    private worldEvents: (() => void)[] = [];
     private events: (() => void)[] = [];
 
     constructor() {
@@ -62,18 +63,18 @@ export class Game {
         this.world.addBody(this.map.botBody);
         this.world.addBody(this.map.borderBody);
 
-        this.leftGoal = new LeftGoal({ x:this.map.pos.x - goal.size.width, y: this.map.pos.y + map.size.height/2 - goal.size.height/2}, this.mat.goal);
+        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 }, this.mat.goal);
         this.world.addBody(this.leftGoal.borderBody);
         this.world.addBody(this.leftGoal.postBody);
 
-        this.rightGoal = new RightGoal({ x: this.map.pos.x + map.size.width, y: this.map.pos.y + map.size.height/2 - goal.size.height/2}, this.mat.goal);
+        this.rightGoal = new RightGoal({ x: this.map.pos.x + map.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 }, this.mat.goal);
         this.world.addBody(this.rightGoal.borderBody);
         this.world.addBody(this.rightGoal.postBody);
 
-        this.player = new Player([this.map.pos.x + map.size.width/2 - 50, this.map.pos.y + map.size.height/2], this.mat.player, true);
+        this.player = new Player([this.map.pos.x + map.size.width / 2 - 50, this.map.pos.y + map.size.height / 2], this.mat.player, true);
         this.world.addBody(this.player.body);
 
-        this.ball = new Ball([this.map.pos.x + map.size.width/2, this.map.pos.y + map.size.height/2], this.mat.ball);
+        this.ball = new Ball([this.map.pos.x + map.size.width / 2, this.map.pos.y + map.size.height / 2], this.mat.ball);
         this.world.addBody(this.ball.body);
     }
 
@@ -107,22 +108,29 @@ export class Game {
     }
 
     private initEvents(): void {
-        const isContact = (evt: any, a: p2.Body, b: p2.Body): boolean => {
-               return (evt.bodyA === a || evt.bodyB === a) && (evt.bodyA === b || evt.bodyB === b);
-        };
-        this.world.on('beginContact', (evt: any) => {
-            if (isContact(evt, this.player.body, this.ball.body)) {
-                if (this.player.shooting) {
-                    this.events.push(() => {
-                        const shootingVector = getNormalizedVector(
-                            { x: this.player.body.position[0], y: this.player.body.position[1] },
-                            { x: this.ball.body.position[0], y: this.ball.body.position[1] }
-                        );
-                        this.ball.body.velocity[0] += shootingVector.x* player.shootingMultiplier;
-                        this.ball.body.velocity[1] += shootingVector.y* player.shootingMultiplier;
-                    });
+        this.events.push(() => {
+            if (this.player.shootingStrong || this.player.shootingWeak) {
+                const playerPos = { x: this.player.body.position[0], y: this.player.body.position[1] };
+                const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
+                const minDistance = player.radius + ball.radius;
+                const shootingDistance = 3;
+                if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
+                    const shootingVector = getNormalizedVector(
+                        { x: this.player.body.position[0], y: this.player.body.position[1] },
+                        { x: this.ball.body.position[0], y: this.ball.body.position[1] }
+                    );
+                    if (this.player.shootingStrong && this.player.shootingWeak) {
+                        this.ball.body.velocity[0] += shootingVector.x * (player.shootingStrong + player.shootingWeak)/2;
+                        this.ball.body.velocity[1] += shootingVector.y * (player.shootingStrong + player.shootingWeak)/2;
+                    } else if(this.player.shootingStrong) {
+                        this.ball.body.velocity[0] += shootingVector.x * player.shootingStrong;
+                        this.ball.body.velocity[1] += shootingVector.y * player.shootingStrong;
+                    } else if(this.player.shootingWeak) {
+                        this.ball.body.velocity[0] += shootingVector.x * player.shootingWeak;
+                        this.ball.body.velocity[1] += shootingVector.y * player.shootingWeak;
+                    }
+                };
 
-                }
             }
         });
     }
@@ -156,10 +164,14 @@ export class Game {
     }
 
     private handleEvents(): void {
+        if (this.worldEvents.length) {
+            this.worldEvents.forEach(event => event());
+        }
+        this.worldEvents.length = 0;
+
         if (this.events.length) {
             this.events.forEach(event => event());
         }
-        this.events.length = 0;
     }
 
     public render(): void {

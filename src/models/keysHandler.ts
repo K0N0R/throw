@@ -9,6 +9,7 @@ export enum Keys {
     D = 68,
     X = 88,
     Shift = 16,
+    C = 67
     
 }
 

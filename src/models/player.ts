@@ -5,14 +5,15 @@ import { KeysHandler, Keys } from './keysHandler';
 import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
 import { calculateVectorLength, normalizeVector } from './../utils/vector';
 import { Camera } from './camera';
-import { player } from './callibration'; 
+import { player } from './callibration';
 
 export class Player {
     public main: boolean;
     public body!: p2.Body;
     private shape!: p2.Circle;
 
-    public shooting!: boolean;
+    public shootingStrong!: boolean;
+    public shootingWeak!: boolean;
 
     public movementIncrease!: number;
     public maxSpeed!: number;
@@ -34,8 +35,11 @@ export class Player {
         this.shape.material = material;
         this.body.addShape(this.shape);
         this.body.damping = player.damping;
-        this.sprintHandler();
-        this.addMovementHandlers();
+
+        if (this.main) {
+            this.sprintHandler();
+            this.addMovementHandlers();
+        }
     }
 
     private addMovementHandlers(): void {
@@ -44,11 +48,16 @@ export class Player {
         KeysHandler.add(Keys.Left, (pressed: boolean) => { if (pressed) this.movementKeysHandler(Keys.Left); });
         KeysHandler.add(Keys.Right, (pressed: boolean) => { if (pressed) this.movementKeysHandler(Keys.Right); });
         KeysHandler.add(Keys.Shift, (pressed: boolean) => { this.sprintHandler(pressed); });
-        KeysHandler.add(Keys.X, (pressed: boolean) => { this.shootingHandler(pressed); });
+        KeysHandler.add(Keys.X, (pressed: boolean) => { this.shootingStrongHandler(pressed); });
+        KeysHandler.add(Keys.C, (pressed: boolean) => { this.shootingWeakHandler(pressed); });
     }
 
-    private shootingHandler(pressed: boolean): void {
-        this.shooting = pressed;
+    private shootingStrongHandler(pressed: boolean): void {
+        this.shootingStrong = pressed;
+    }
+
+    private shootingWeakHandler(pressed: boolean): void {
+        this.shootingWeak = pressed;
     }
 
     private sprintHandler(pressed: boolean = false): void {
@@ -97,7 +106,7 @@ export class Player {
         Canvas.ctx.arc(this.body.position[0], this.body.position[1], this.shape.radius, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = '#4663A0';
         Canvas.ctx.fill();
-        Canvas.ctx.strokeStyle = this.shooting ? 'white' : 'black';
+        Canvas.ctx.strokeStyle = this.shootingStrong || this.shootingWeak ? 'white' : 'black';
         Canvas.ctx.lineWidth = 3;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
