@@ -17,8 +17,9 @@ export class Player {
 
     public movementIncrease!: number;
     public maxSpeed!: number;
+    public color: string;
 
-    public constructor(position: [number, number], material: p2.Material, main: boolean) {
+    public constructor(position: [number, number], material: p2.Material, main: boolean = false) {
 
         this.main = main;
         let options: p2.BodyOptions = {
@@ -104,7 +105,7 @@ export class Player {
     public render(): void {
         Canvas.startDraw();
         Canvas.ctx.arc(this.body.position[0], this.body.position[1], this.shape.radius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = '#4663A0';
+        Canvas.ctx.fillStyle = this.color;
         Canvas.ctx.fill();
         Canvas.ctx.strokeStyle = this.shootingStrong || this.shootingWeak ? 'white' : 'black';
         Canvas.ctx.lineWidth = 3;

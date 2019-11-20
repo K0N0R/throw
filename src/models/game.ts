@@ -27,7 +27,9 @@ export class Game {
     private contactMat: Dictionary<p2.ContactMaterial> = {};
 
     private map!: Map;
-    private player!: Player;
+    private players: Player[] = [];
+    private teamLeft: Player[] = [];
+    private teamRight: Player[] = [];
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
@@ -38,6 +40,8 @@ export class Game {
     constructor() {
         this.initHandlers();
         this.initCanvas();
+        this.initEntities();
+        this.initTeams();
         this.initWorld();
         this.initCamera();
         this.initEvents();
@@ -52,29 +56,52 @@ export class Game {
         Canvas.createCanvas();
     }
 
+    private initEntities(): void {
+        this.map = new Map(this.mat.map);
+        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 }, this.mat.goal);
+        this.rightGoal = new RightGoal({ x: this.map.pos.x + map.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 }, this.mat.goal);
+        this.players.push(new Player([0, 0], this.mat.player, true));
+        this.players.push(new Player([0, 0], this.mat.player));
+        this.players.push(new Player([0, 0], this.mat.player));
+        this.players.push(new Player([0, 0], this.mat.player));
+        this.players.push(new Player([0, 0], this.mat.player));
+        this.players.push(new Player([0, 0], this.mat.player));
+        this.ball = new Ball([this.map.pos.x + map.size.width / 2, this.map.pos.y + map.size.height / 2], this.mat.ball);
+    }
+
+    private initTeams(): void {
+        this.teamLeft.push(this.players[0], this.players[1], this.players[2]);
+        this.teamLeft.forEach((player, idx) => {
+            player.body.position[0] = map.size.width/6;
+            player.body.position[1] = map.size.height/2 - 150*(this.teamLeft.length-1)/2 + 150*idx;
+            player.color = '#8F1218';
+        });
+        this.teamRight.push(this.players[3], this.players[4], this.players[5]);
+        this.teamRight.forEach((player, idx) => {
+            player.body.position[0] = 5*map.size.width/6;
+            player.body.position[1] = map.size.height/2 - 150*(this.teamLeft.length-1)/2 + 150*idx;
+            player.color = '#4663A0';
+        });
+    }
+
     private initWorld(): void {
         this.world = new p2.World({
             gravity: [0, 0]
         });
         this.initMaterials();
 
-        this.map = new Map(this.mat.map);
         this.world.addBody(this.map.topBody);
         this.world.addBody(this.map.botBody);
         this.world.addBody(this.map.borderBody);
 
-        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 }, this.mat.goal);
         this.world.addBody(this.leftGoal.borderBody);
         this.world.addBody(this.leftGoal.postBody);
 
-        this.rightGoal = new RightGoal({ x: this.map.pos.x + map.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 }, this.mat.goal);
         this.world.addBody(this.rightGoal.borderBody);
         this.world.addBody(this.rightGoal.postBody);
-
-        this.player = new Player([this.map.pos.x + map.size.width / 2 - 50, this.map.pos.y + map.size.height / 2], this.mat.player, true);
-        this.world.addBody(this.player.body);
-
-        this.ball = new Ball([this.map.pos.x + map.size.width / 2, this.map.pos.y + map.size.height / 2], this.mat.ball);
+        this.players.forEach(player => {
+            this.world.addBody(player.body);
+        });
         this.world.addBody(this.ball.body);
     }
 
@@ -102,37 +129,44 @@ export class Game {
         this.world.addContactMaterial(this.contactMat.mapPlayer);
     }
 
+
+
     private initCamera(): void {
+        const mainPlayer = this.players.find(player => player.main);
+        if (!mainPlayer) return;
         Camera.setBounduary(getOffset(this.map.outerPos, map.outerSize));
-        Camera.updatePos({ x: this.player.body.position[0], y: this.player.body.position[1] });
+        Camera.updatePos({ x: mainPlayer.body.position[0], y: mainPlayer.body.position[1] });
     }
 
     private initEvents(): void {
-        this.events.push(() => {
-            if (this.player.shootingStrong || this.player.shootingWeak) {
-                const playerPos = { x: this.player.body.position[0], y: this.player.body.position[1] };
-                const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
-                const minDistance = player.radius + ball.radius;
-                const shootingDistance = 3;
-                if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
-                    const shootingVector = getNormalizedVector(
-                        { x: this.player.body.position[0], y: this.player.body.position[1] },
-                        { x: this.ball.body.position[0], y: this.ball.body.position[1] }
-                    );
-                    if (this.player.shootingStrong && this.player.shootingWeak) {
-                        this.ball.body.velocity[0] += shootingVector.x * (player.shootingStrong + player.shootingWeak)/2;
-                        this.ball.body.velocity[1] += shootingVector.y * (player.shootingStrong + player.shootingWeak)/2;
-                    } else if(this.player.shootingStrong) {
-                        this.ball.body.velocity[0] += shootingVector.x * player.shootingStrong;
-                        this.ball.body.velocity[1] += shootingVector.y * player.shootingStrong;
-                    } else if(this.player.shootingWeak) {
-                        this.ball.body.velocity[0] += shootingVector.x * player.shootingWeak;
-                        this.ball.body.velocity[1] += shootingVector.y * player.shootingWeak;
-                    }
-                };
+        const mainPlayer = this.players.find(player => player.main);
+        if (mainPlayer) {
+            this.events.push(() => {
+                if (mainPlayer.shootingStrong || mainPlayer.shootingWeak) {
+                    const playerPos = { x: mainPlayer.body.position[0], y: mainPlayer.body.position[1] };
+                    const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
+                    const minDistance = player.radius + ball.radius;
+                    const shootingDistance = 3;
+                    if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
+                        const shootingVector = getNormalizedVector(
+                            { x: mainPlayer.body.position[0], y: mainPlayer.body.position[1] },
+                            { x: this.ball.body.position[0], y: this.ball.body.position[1] }
+                        );
+                        if (mainPlayer.shootingStrong && mainPlayer.shootingWeak) {
+                            this.ball.body.velocity[0] += shootingVector.x * (player.shootingStrong + player.shootingWeak) / 2;
+                            this.ball.body.velocity[1] += shootingVector.y * (player.shootingStrong + player.shootingWeak) / 2;
+                        } else if (mainPlayer.shootingStrong) {
+                            this.ball.body.velocity[0] += shootingVector.x * player.shootingStrong;
+                            this.ball.body.velocity[1] += shootingVector.y * player.shootingStrong;
+                        } else if (mainPlayer.shootingWeak) {
+                            this.ball.body.velocity[0] += shootingVector.x * player.shootingWeak;
+                            this.ball.body.velocity[1] += shootingVector.y * player.shootingWeak;
+                        }
+                    };
 
-            }
-        });
+                }
+            });
+        }
     }
 
     public run(time: number) {
@@ -159,7 +193,9 @@ export class Game {
         this.map.logic();
         this.leftGoal.logic();
         this.rightGoal.logic();
-        this.player.logic();
+        this.players.forEach(player => {
+            player.logic();
+        });
         this.ball.logic();
     }
 
@@ -181,7 +217,9 @@ export class Game {
         this.map.render();
         this.leftGoal.render();
         this.rightGoal.render();
-        this.player.render();
+        this.players.forEach(player => {
+            player.render();
+        });
         this.ball.render();
 
         Camera.translateEnd();
