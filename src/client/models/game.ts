@@ -31,22 +31,14 @@ export class Game {
     private initHandlers(): void {
         KeysHandler.bindEvents();
 
-        KeysHandler.add(Keys.Up, (pressed: boolean) => { this.socket.emit('player::key', { key: Keys.Up, pressed: pressed }) });
-        KeysHandler.add(Keys.Down, (pressed: boolean) => { this.socket.emit('player::key', { key: Keys.Down, pressed: pressed }) });
-        KeysHandler.add(Keys.Left, (pressed: boolean) => { this.socket.emit('player::key', { key: Keys.Left, pressed: pressed }) });
-        KeysHandler.add(Keys.Right, (pressed: boolean) => { this.socket.emit('player::key', { key: Keys.Right, pressed: pressed }) });
-        KeysHandler.add(Keys.Shift, (pressed: boolean) => { this.socket.emit('player::key', { key: Keys.Shift, pressed: pressed }) });
-        KeysHandler.add(Keys.X, (pressed: boolean) => {
-            this.socket.emit('player::key', { key: Keys.X, pressed: pressed });
+        KeysHandler.addAll(() => {
+            this.socket.emit('player::key', KeysHandler.pressed);
             const plr = this.players.find(plr => plr.socketId === this.socket.id);
-            if (plr) plr.shootingStrong = pressed;
+            if (plr) {
+                plr.shootingWeak = KeysHandler.pressed[Keys.C];
+                plr.shootingStrong = KeysHandler.pressed[Keys.X];
+            };
         });
-        KeysHandler.add(Keys.C, (pressed: boolean) => {
-            this.socket.emit('player::key', { key: Keys.C, pressed: pressed });
-            const plr = this.players.find(plr => plr.socketId === this.socket.id);
-            if (plr) plr.shootingWeak = pressed;
-        });
-
     }
 
     private initEvents(): void {

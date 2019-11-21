@@ -42,23 +42,23 @@ export class Player {
     }
 
     private addMovementHandlers(): void {
-        this.socket.on('player::key', (data: { key: Keys; pressed: boolean}) => {
-            if (data) {
-                switch (data.key) {
+        this.socket.on('player::key', (data: { [param: number]: boolean }) => {
+            for(let key in data) {
+                switch (Number(key)) {
                     case Keys.Up:
                     case Keys.Down:
                     case Keys.Left:
                     case Keys.Right:
-                        if (data.pressed) this.movementKeysHandler(data.key);
+                        if (data[key]) this.movementKeysHandler(Number(key));
                         break;
                     case Keys.Shift:
-                        this.sprintHandler(data.pressed);
+                        this.sprintHandler(data[key]);
                         break;
                     case Keys.X:
-                        this.shootingStrongHandler(data.pressed);
+                        this.shootingStrongHandler(data[key]);
                         break;
                     case Keys.C:
-                        this.shootingWeakHandler(data.pressed);
+                        this.shootingWeakHandler(data[key]);
                         break;
                 }
             }

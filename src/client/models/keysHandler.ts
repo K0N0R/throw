@@ -14,8 +14,9 @@ export enum Keys {
 }
 
 export class KeysHandler {
-    private static pressed: any = {};
+    public static pressed: { [param: number]: boolean } = {};
     public static handlers: { key: Keys, action: Function }[] = [];
+    public static handlersForAll: Function[] = [];
     public static bindEvents() {
         document.addEventListener('keydown', (event: KeyboardEvent) => {
             this.pressed[event.which] = true;
@@ -29,6 +30,19 @@ export class KeysHandler {
         this.handlers.forEach(h => {
             h.action(this.pressed[h.key]);
         });
+
+        this.handlersForAll.forEach(action => {
+            action();
+        });
+
+    }
+
+    public static addAll(action: Function): (() => void) {
+        this.handlersForAll.push(action);
+        const idx = this.handlersForAll.length - 1;
+        return () => {
+            this.handlersForAll.splice(idx, 1);
+        };
     }
 
     public static add(key: Keys, action: Function): (() => void) {
