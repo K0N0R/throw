@@ -55,10 +55,10 @@ export class Player {
                         this.sprintHandler(data.pressed);
                         break;
                     case Keys.X:
-                        if (data.pressed) this.shootingStrongHandler(data.pressed);
+                        this.shootingStrongHandler(data.pressed);
                         break;
                     case Keys.C:
-                        if (data.pressed) this.shootingWeakHandler(data.pressed);
+                        this.shootingWeakHandler(data.pressed);
                         break;
                 }
             }
