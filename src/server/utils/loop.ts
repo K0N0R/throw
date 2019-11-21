@@ -1,6 +1,6 @@
 
 export function ticker(action: FrameRequestCallback) {
-    setInterval((time) => {
+    requestAnimationFrame((time) => {
         ticker(action);
         action(time);
     });

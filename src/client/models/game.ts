@@ -65,12 +65,32 @@ export class Game {
             this.ball.pos.y = data.position[1];
         });
 
-        this.socket.on('player::team-left', (data: { id: string; position:[number, number] } ) => {
-            this.players.push(new Player({x: data.position[0], y: data.position[1]}, data.id, '#4663A0'));
+        this.socket.on('player::team-left', (data: { id: string; position:[number, number], teamLeft: { id: string; position:[number, number] }[], teamRight: { id: string; position:[number, number] }[] } ) => {
+            this.players.push(new Player({x: data.position[0], y: data.position[1]}, data.id, '#8F1218'));
+            Camera.updatePos({x: data.position[0], y: data.position[1]});
+            data.teamLeft.forEach(p => {
+                const idx = this.players.findIndex(plr => p.id === plr.socketId);
+                if (idx === -1)
+                this.players.push(new Player({x: p.position[0], y: p.position[1]}, p.id, '#8F1218'));
+            });
+            data.teamRight.forEach(p => {
+                const idx = this.players.findIndex(plr => p.id === plr.socketId);
+                if (idx === -1)
+                this.players.push(new Player({x: p.position[0], y: p.position[1]}, p.id, '#4663A0'));
+            });
         });
 
-        this.socket.on('player::team-right', (data: { id: string; position:[number, number] } ) => {
-            this.players.push(new Player({x: data.position[0], y: data.position[1]}, data.id, '#8F1218'));
+        this.socket.on('player::team-right', (data: { id: string; position:[number, number], teamLeft: { id: string; position:[number, number] }[], teamRight: { id: string; position:[number, number] }[] } ) => {
+            this.players.push(new Player({x: data.position[0], y: data.position[1]}, data.id, '#4663A0'));
+            Camera.updatePos({x: data.position[0], y: data.position[1]});
+            data.teamLeft.forEach(p => {
+                const idx = this.players.findIndex(plr => p.id === plr.socketId);
+                if (idx === -1) this.players.push(new Player({x: p.position[0], y: p.position[1]}, p.id, '#8F1218'));
+            });
+            data.teamRight.forEach(p => {
+                const idx = this.players.findIndex(plr => p.id === plr.socketId);
+                if (idx === -1) this.players.push(new Player({x: p.position[0], y: p.position[1]}, p.id, '#4663A0'));
+            });
         });
     }
 

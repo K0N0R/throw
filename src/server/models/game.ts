@@ -59,18 +59,40 @@ export class Game {
     }
 
     private playerAddToTeam(newPlayer: Player): void {
-        if (this.teamLeft.length < this.teamRight.length) {
+        if (this.teamLeft.length > this.teamRight.length) {
             // assing to right
             newPlayer.body.position[0] = map.size.width - player.radius;
             newPlayer.body.position[1] = map.size.height / 2;
+            this.io.emit('player::team-right', {
+                id: newPlayer.socket.id,
+                position: newPlayer.body.position,
+                teamLeft: this.teamLeft.map(p => ({
+                    id: p.socket.id,
+                    position: p.body.position
+                })),
+                teamRight: this.teamRight.map(p => ({
+                    id: p.socket.id,
+                    position: p.body.position
+                }))
+            });
             this.teamRight.push(newPlayer);
-            this.io.emit('player::team-left', { id: newPlayer.socket.id, position: newPlayer.body.position });
         } else {
             // assign to left
             newPlayer.body.position[0] = player.radius;
             newPlayer.body.position[1] = map.size.height / 2;
-            this.teamRight.push(newPlayer);
-            this.io.emit('player::team-right', { id: newPlayer.socket.id, position: newPlayer.body.position });
+            this.io.emit('player::team-left', {
+                id: newPlayer.socket.id,
+                position: newPlayer.body.position,
+                teamLeft: this.teamLeft.map(p => ({
+                    id: p.socket.id,
+                    position: p.body.position
+                })),
+                teamRight: this.teamRight.map(p => ({
+                    id: p.socket.id,
+                    position: p.body.position
+                }))
+            });
+            this.teamLeft.push(newPlayer);
         }
     }
 
