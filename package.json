@@ -4,8 +4,8 @@
     "private": true,
     "main": "./dist/server/server.js",
     "scripts": {
-        "start": "parcel ./src/client/index.html ",
-        "build": "parcel build ./src/client/index.html --out-dir dist/client && cd ./src/server && ts-node-dev --respawn --transpileOnly server.ts && cd ..",
+        "start": "parcel ./src/client/index.html",
+        "build": "parcel build ./src/client/index.html --out-dir dist/client && cd ./src/server && ts-node-dev --respawn --transpileOnly server.ts && cd .."
     },
     "dependencies": {
         "express": "^4.17.1",
