@@ -10,7 +10,7 @@ const io = socketIo(httpServer);
 const PORT = 3000;
 const HOST = 'localhost';
 const ENV = process.argv.find((arg) => arg.includes('dist')) ? 'production' : 'development';
-const BASE_PATH = (ENV === 'production' ? __dirname + '/../../' : __dirname + '/../../dist');
+const BASE_PATH = (ENV === 'production' ? __dirname + '/../' : __dirname + '/../../dist');
 
 
 app.get('/', (_req: any, res: any) => {
