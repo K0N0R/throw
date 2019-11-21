@@ -16,14 +16,14 @@ import { Game } from './models/game';
 // }
 // init();
 
-const game = new Game();
-ticker((time: number) => {
-    game.run(time);
-});
-
 const socket = io({
     host: 'localhost:3000'
 });
-socket.on('connected', (data: any) => {
-    console.log(data);
+
+const game = new Game(socket);
+ticker(() => {
+    game.run();
 });
+
+
+

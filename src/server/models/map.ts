@@ -1,14 +1,21 @@
+import * as p2 from 'p2';
+
 import { IPos } from './../utils/model';
 import { getOffset } from './../utils/offset';
 import { getCornerPoints } from './../utils/vertices';
-import { Canvas } from './canvas';
+import { PLAYER, MAP, MAP_BORDER, BALL } from './collision';
 import { map, goal, canvas } from './callibration';
 
 export class Map {
     public pos: IPos;
     public outerPos: IPos;
 
-    public constructor() {
+    public topBody: p2.Body;
+    public botBody: p2.Body;
+
+    public borderBody: p2.Body;
+
+    public constructor(material: p2.Material) {
 
         this.pos = {
             x: canvas.size.width / 2 - map.size.width / 2,
@@ -20,6 +27,39 @@ export class Map {
             y: this.pos.y - map.border
         };
 
+        this.topBody = new p2.Body({
+            mass: 0,
+            position: [this.pos.x, this.pos.y]
+        });
+
+        this.topBody.fromPolygon(this.getTopShapePoints());
+        this.topBody.shapes.forEach(shape => {
+            shape.material = material;
+            shape.collisionGroup = MAP;
+            shape.collisionMask = BALL;
+        });
+
+        this.botBody = new p2.Body({
+            mass: 0,
+            position: [this.pos.x, this.pos.y]
+        });
+        this.botBody.fromPolygon(this.getBottomShapePoints());
+        this.botBody.shapes.forEach(shape => {
+            shape.material = material;
+            shape.collisionGroup = MAP;
+            shape.collisionMask = BALL;
+        });
+
+        this.borderBody = new p2.Body({
+            mass: 0,
+            position: [this.pos.x, this.pos.y]
+        });
+        this.borderBody.fromPolygon(this.getBorderShapePoints());
+        this.borderBody.shapes.forEach(shape => {
+            shape.material = material;
+            shape.collisionGroup = MAP_BORDER;
+            shape.collisionMask = PLAYER;
+        });
     }
 
     private getTopShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
@@ -62,31 +102,22 @@ export class Map {
         ];
     }
 
-    public render(): void {
-        Canvas.startDraw();
-        const verticesTop = this.getTopShapePoints(this.pos);
-        Canvas.ctx.moveTo(verticesTop[0][0], verticesTop[0][1]);
-        verticesTop
-            .filter((_, idx) => idx < verticesTop.length - 4) // skip 4 last
-            .forEach(v => {
-                Canvas.ctx.lineTo(v[0], v[1]);
-            });
-        Canvas.ctx.lineWidth = 3;
-        Canvas.ctx.strokeStyle = 'white';
-        Canvas.ctx.stroke();
-        Canvas.stopDraw();
-
-        Canvas.startDraw();
-        const verticesBottom = this.getBottomShapePoints(this.pos);
-        Canvas.ctx.moveTo(verticesBottom[0][0], verticesBottom[0][1]);
-        verticesBottom
-            .filter((_, idx) => idx < verticesBottom.length - 4) // skip 4 last
-            .forEach(v => {
-                Canvas.ctx.lineTo(v[0], v[1]);
-            });
-        Canvas.ctx.lineWidth = 3;
-        Canvas.ctx.strokeStyle = 'white';
-        Canvas.ctx.stroke();
-        Canvas.stopDraw();
+    private getBorderShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
+        const offset = getOffset(pos, map.size); // convex use relative position to body
+        const mapTickness = 10;
+        return [
+            [offset.left - map.border - mapTickness, offset.top - map.border], // top left corner
+            [offset.right + map.border, offset.top - map.border], // top right corner
+            [offset.right + map.border, offset.bottom + map.border], // bot right corner
+            [offset.left - map.border, offset.bottom + map.border], // bot left corner
+            [offset.left - map.border, offset.top - map.border + 1], // connector
+            [offset.left - map.border - mapTickness, offset.top - map.border + 1], // connector outer
+            [offset.left - map.border - mapTickness, offset.bottom + map.border + mapTickness], // bot left outer corner
+            [offset.right + map.border + mapTickness, offset.bottom + map.border + mapTickness], // bot right outer corner
+            [offset.right + map.border + mapTickness, offset.top - map.border - mapTickness], // top right outer corner
+            [offset.left - map.border - mapTickness, offset.top - map.border - mapTickness], // top left outer corner
+        ];
     }
+
+    public logic(): void { }
 }

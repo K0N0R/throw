@@ -1,11 +1,14 @@
 import express from 'express';
 import http from 'http';
 import path from 'path';
-import socketIo from 'socket.io';
+import socketIO from 'socket.io';
+
+import { ticker } from './utils/loop';
+import { Game } from './models/game';
 
 const app = express();
 const httpServer = http.createServer(app);
-const io = socketIo(httpServer);
+const io = socketIO(httpServer);
 
 const PORT = 3000;
 const HOST = 'localhost';
@@ -22,10 +25,10 @@ app.use(express.static(path.resolve(BASE_PATH + '/client')));
 httpServer.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);
 
-io.on('connection', function(socket){
-  console.log('a user connected');
-  socket.emit('connected', 'you motherfucker!');
-  socket.on('disconnect', function(){
-    console.log('user disconnected');
-  });
+// ---------------- GAME
+
+const game = new Game(io);
+setInterval((time: number) => {
+    game.run(time);
 });
+

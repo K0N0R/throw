@@ -1,54 +1,19 @@
-import * as p2 from 'p2';
-
 import { IPos } from '../utils/model';
 import { getCornerPoints } from '../utils/vertices';
 import { getOffset } from '../utils/offset';
 import { Canvas } from './canvas';
-import { GOAL, BALL, GOAL_POST, PLAYER } from './collision';
+
 import { goal } from './callibration';
 
 export class RightGoal {
     private pos: IPos;
+    private topPostPosition: IPos;
+    private bottomPostPosition: IPos;
 
-    public borderBody: p2.Body;
-    public postBody: p2.Body;
-
-    private topPostShape: p2.Circle;
-    private bottomPostShape: p2.Circle;
-
-    public constructor(pos: IPos, material: p2.Material) {
+    public constructor(pos: IPos) {
         this.pos = { x: pos.x, y: pos.y };
-
-        this.borderBody = new p2.Body({
-            position: [this.pos.x, this.pos.y],
-            mass: 0
-        });
-        this.borderBody.fromPolygon(this.getPoints());
-        this.borderBody.shapes.forEach(shape => {
-            shape.collisionGroup = GOAL;
-            shape.collisionMask = BALL;
-            shape.material = material;
-        });
-
-        this.postBody = new p2.Body({
-            position: [this.pos.x, this.pos.y],
-            mass: 0
-        });
-        this.topPostShape = new p2.Circle({
-            radius: goal.postRadius,
-            collisionGroup: GOAL_POST,
-            collisionMask: PLAYER | BALL
-        });
-        this.topPostShape.material = material;
-        this.postBody.addShape(this.topPostShape, [0, 0]);
-
-        this.bottomPostShape = new p2.Circle({
-            radius: goal.postRadius,
-            collisionGroup: GOAL_POST,
-            collisionMask: PLAYER | BALL
-        });
-        this.bottomPostShape.material = material;
-        this.postBody.addShape(this.bottomPostShape, [0, goal.size.height]);
+        this.topPostPosition = { x: this.pos.x, y: this.pos.y };
+        this.bottomPostPosition = { x: this.pos.x, y: this.pos.y + goal.size.height };
     }
 
     private getPoints(pos = { x: 0, y: 0 }): ([number, number])[] {
@@ -70,8 +35,6 @@ export class RightGoal {
         ]
     }
 
-    public logic(): void { }
-
     public render(): void {
         Canvas.startDraw();
         const vertices = this.getPoints(this.pos);
@@ -87,7 +50,7 @@ export class RightGoal {
         Canvas.stopDraw();
 
         Canvas.startDraw();
-        Canvas.ctx.arc(this.pos.x + this.topPostShape.position[0], this.pos.y + this.topPostShape.position[1], this.topPostShape.radius, 0, 2 * Math.PI, true);
+        Canvas.ctx.arc(this.topPostPosition.x, this.topPostPosition.y, goal.postRadius, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = '#D95A62';
         Canvas.ctx.fill();
         Canvas.ctx.lineWidth = 3;
@@ -96,7 +59,7 @@ export class RightGoal {
         Canvas.stopDraw();
 
         Canvas.startDraw();
-        Canvas.ctx.arc(this.pos.x + this.bottomPostShape.position[0], this.pos.y + this.bottomPostShape.position[1], this.bottomPostShape.radius, 0, 2 * Math.PI, true);
+        Canvas.ctx.arc(this.bottomPostPosition.x, this.bottomPostPosition.y, goal.postRadius, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = '#D95A62';
         Canvas.ctx.fill();
         Canvas.ctx.lineWidth = 3;
