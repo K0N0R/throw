@@ -1,3 +1,4 @@
+import io from 'socket.io-client';
 //TODO: read from server
 //import { AssetsNames } from './assets-names.json';
 //
@@ -18,4 +19,11 @@ import { Game } from './models/game';
 const game = new Game();
 ticker((time: number) => {
     game.run(time);
+});
+
+const socket = io({
+    host: 'localhost:3000'
+});
+socket.on('connected', (data: any) => {
+    console.log(data);
 });
