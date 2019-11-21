@@ -5,7 +5,9 @@
     "main": "./dist/server/server.js",
     "scripts": {
         "start": "parcel ./src/client/index.html",
-        "build": "parcel build ./src/client/index.html --out-dir dist/client && cd ./src/server && ts-node-dev --respawn --transpileOnly server.ts && cd .."
+        "build": "parcel build ./src/client/index.html --out-dir dist/client && cd ./src/server && ts-node-dev --respawn --transpileOnly server.ts && cd ..",
+        "prod": "parcel build ./src/client/index.html --out-dir dist/client && tsc -p ./src/server/tsconfig.json",
+        "prod:deploy": "node ./dist/server/server.js"
     },
     "dependencies": {
         "express": "^4.17.1",
@@ -21,7 +23,6 @@
         "parcel-bundler": "^1.12.4",
         "ts-node": "^8.5.2",
         "ts-node-dev": "^1.0.0-pre.44",
-        "tsc": "^1.20150623.0",
         "typescript": "^3.7.2"
     },
     "author": "",
