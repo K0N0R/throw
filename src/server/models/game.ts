@@ -11,6 +11,7 @@ import { goal, map, player, ball } from './callibration';
 import { Dictionary } from '../utils/model';
 import { getNormalizedVector, getDistance } from '../utils/vector';
 import { isMoving } from '../utils/body';
+import { Team } from './team';
 
 export class Game {
     private io: io.Server;
@@ -27,8 +28,6 @@ export class Game {
 
     private map!: Map;
     private players: Player[] = [];
-    private teamLeft: Player[] = [];
-    private teamRight: Player[] = [];
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
@@ -53,53 +52,48 @@ export class Game {
         this.io = io;
         // mozliwe ze połączenie będzie jeszcze wczesniej nawiazywane
         io.on('connection', (socket) => {
+            socket.emit('player::init', {
+                players: this.players.map(plr => ({
+                    socketId: plr.socket.id,
+                    team: plr.team,
+                    position: plr.body.position,
+                })),
+                ball: {
+                    position: this.ball.body.position,
+                }
+            });
             const newPlayer = new Player(socket, this.mat.player)
             this.players.push(newPlayer);
             this.playerAddToTeam(newPlayer);
             this.playerAddToWorld(newPlayer);
             this.playerAddEvents(newPlayer);
 
+            io.emit('player::add', {
+                socketId: newPlayer.socket.id,
+                team: newPlayer.team,
+                position: newPlayer.body.position,
+            });
+
             socket.on('disconnect', () => {
                 this.playerDispose(newPlayer);
+                io.emit('player::dispose', socket.id);
             });
         });
     }
 
     private playerAddToTeam(newPlayer: Player): void {
-        if (this.teamLeft.length > this.teamRight.length) {
+        const leftTeam = this.players.filter(plr => plr.team === Team.Left);
+        const rightTeam = this.players.filter(plr => plr.team === Team.Right);
+        if (leftTeam.length > rightTeam.length) {
             // assing to right
             newPlayer.body.position[0] = map.size.width - player.radius;
-            newPlayer.body.position[1] = map.size.height / 2;
-            this.io.emit('player::team-right', {
-                id: newPlayer.socket.id,
-                position: newPlayer.body.position,
-                teamLeft: this.teamLeft.map(p => ({
-                    id: p.socket.id,
-                    position: p.body.position
-                })),
-                teamRight: this.teamRight.map(p => ({
-                    id: p.socket.id,
-                    position: p.body.position
-                }))
-            });
-            this.teamRight.push(newPlayer);
+            newPlayer.body.position[1] = map.size.height / 2
+            newPlayer.team = Team.Right;
         } else {
             // assign to left
             newPlayer.body.position[0] = player.radius;
             newPlayer.body.position[1] = map.size.height / 2;
-            this.io.emit('player::team-left', {
-                id: newPlayer.socket.id,
-                position: newPlayer.body.position,
-                teamLeft: this.teamLeft.map(p => ({
-                    id: p.socket.id,
-                    position: p.body.position
-                })),
-                teamRight: this.teamRight.map(p => ({
-                    id: p.socket.id,
-                    position: p.body.position
-                }))
-            });
-            this.teamLeft.push(newPlayer);
+            newPlayer.team = Team.Left;
         }
     }
 
@@ -146,14 +140,8 @@ export class Game {
 
     private playerDispose(oldPlayer: Player): void {
         this.world.removeBody(oldPlayer.body);
-        const leftTeamIdx = this.teamLeft.indexOf(oldPlayer);
-        if (leftTeamIdx !== -1) {
-            this.teamLeft.splice(leftTeamIdx, 1);
-        }
-        const rightTeamIdx = this.teamRight.indexOf(oldPlayer);
-        if (rightTeamIdx !== -1) {
-            this.teamRight.splice(rightTeamIdx, 1);
-        }
+        const plrIdx = this.players.indexOf(oldPlayer);
+        this.players.splice(plrIdx, 1)
         const eventIdx = this.playerEvents.findIndex(playerEvent => playerEvent.player === oldPlayer);
         this.playerEvents.splice(eventIdx, 1);
     }

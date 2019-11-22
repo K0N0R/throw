@@ -6,19 +6,20 @@ import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
 import { calculateVectorLength, normalizeVector } from './../utils/vector';
 
 import { player } from './callibration';
+import { Team } from './team';
 
 export class Player {
     public socket: io.Socket;
     public body!: p2.Body;
     private shape!: p2.Circle;
-    private keysPressed: { [param: number]: boolean };
 
+        private keysPressed: { [param: number]: boolean };
     public shootingStrong!: boolean;
     public shootingWeak!: boolean;
 
     public movementIncrease!: number;
     public maxSpeed!: number;
-    public color: string;
+    public team: Team
 
     public constructor(socket: io.Socket, material: p2.Material) {
 

@@ -6,8 +6,9 @@ import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
-import { goal, map, player, ball } from './callibration';
+import { goal, map } from './callibration';
 import { getOffset } from './../utils/offset';
+import { Team } from './team';
 
 
 export class Game {
@@ -19,15 +20,49 @@ export class Game {
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
 
-    constructor( socket: SocketIOClient.Socket) {
+    constructor(socket: SocketIOClient.Socket) {
         this.socket = socket;
         this.initHandlers();
-        this.initEvents();
         this.initCanvas();
         this.initEntities();
         this.initCamera();
+        this.initEvents();
         this.socket.on('world::postStep', () => {
             this.run();
+        });
+    }
+
+    private initEvents(): void {
+        this.socket.on('player::init', (data: { players: { socketId: string; team: Team; position: [number, number] }[]; ball: { position: [number, number] } }) => {
+            this.players.push(...data.players.map(p => new Player({ x: p.position[0], y: p.position[1] }, p.socketId, p.team)));
+            this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
+        });
+
+        this.socket.on('player::add', (data: { socketId: string; team: Team; position: [number, number] }) => {
+            this.players.push(new Player({ x: data.position[0], y: data.position[1] }, data.socketId, data.team));
+            if(data.socketId === this.socket.id) {
+                Camera.updatePos({ x: data.position[0], y: data.position[1] });
+            }
+        });
+
+        this.socket.on('player::dispose', (socketId: string) => {
+            const idx = this.players.findIndex(plr => plr.socketId === socketId);
+            this.players.splice(idx, 1);
+        });
+
+        this.socket.on('player::move', (data: { id: string, position: [number, number] }) => {
+            const plr = this.players.find(plr => plr.socketId === data.id);
+            if (plr) {
+                plr.pos.x = data.position[0];
+                plr.pos.y = data.position[1];
+                if (data.id === this.socket.id) {
+                    Camera.updatePos({ ...plr.pos });
+                }
+            }
+        });
+        this.socket.on('ball::move', (data: { position: [number, number] }) => {
+            this.ball.pos.x = data.position[0];
+            this.ball.pos.y = data.position[1];
         });
     }
 
@@ -42,51 +77,6 @@ export class Game {
         });
     }
 
-    private initEvents(): void {
-        this.socket.on('player::move', (data: { id: string, position: [number, number] }) => {
-            const plr = this.players.find(plr => plr.socketId === data.id);
-            if (plr) {
-                plr.pos.x = data.position[0];
-                plr.pos.y = data.position[1];
-                if (data.id === this.socket.id) {
-                    Camera.updatePos({ ...plr.pos });
-                }
-            }
-        });
-        this.socket.on('ball::move', (data: { position:[number, number] }) => {
-            this.ball.pos.x = data.position[0];
-            this.ball.pos.y = data.position[1];
-        });
-
-        this.socket.on('player::team-left', (data: { id: string; position:[number, number], teamLeft: { id: string; position:[number, number] }[], teamRight: { id: string; position:[number, number] }[] } ) => {
-            this.players.push(new Player({x: data.position[0], y: data.position[1]}, data.id, '#8F1218'));
-            Camera.updatePos({x: data.position[0], y: data.position[1]});
-            data.teamLeft.forEach(p => {
-                const idx = this.players.findIndex(plr => p.id === plr.socketId);
-                if (idx === -1)
-                this.players.push(new Player({x: p.position[0], y: p.position[1]}, p.id, '#8F1218'));
-            });
-            data.teamRight.forEach(p => {
-                const idx = this.players.findIndex(plr => p.id === plr.socketId);
-                if (idx === -1)
-                this.players.push(new Player({x: p.position[0], y: p.position[1]}, p.id, '#4663A0'));
-            });
-        });
-
-        this.socket.on('player::team-right', (data: { id: string; position:[number, number], teamLeft: { id: string; position:[number, number] }[], teamRight: { id: string; position:[number, number] }[] } ) => {
-            this.players.push(new Player({x: data.position[0], y: data.position[1]}, data.id, '#4663A0'));
-            Camera.updatePos({x: data.position[0], y: data.position[1]});
-            data.teamLeft.forEach(p => {
-                const idx = this.players.findIndex(plr => p.id === plr.socketId);
-                if (idx === -1) this.players.push(new Player({x: p.position[0], y: p.position[1]}, p.id, '#8F1218'));
-            });
-            data.teamRight.forEach(p => {
-                const idx = this.players.findIndex(plr => p.id === plr.socketId);
-                if (idx === -1) this.players.push(new Player({x: p.position[0], y: p.position[1]}, p.id, '#4663A0'));
-            });
-        });
-    }
-
     private initCanvas(): void {
         Canvas.createCanvas();
     }
@@ -95,7 +85,7 @@ export class Game {
         this.map = new Map();
         this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 });
         this.rightGoal = new RightGoal({ x: this.map.pos.x + map.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 });
-        this.ball = new Ball({x: this.map.pos.x + map.size.width / 2, y: this.map.pos.y + map.size.height / 2 });
+        this.ball = new Ball({ x: this.map.pos.x + map.size.width / 2, y: this.map.pos.y + map.size.height / 2 });
     }
 
     private initCamera(): void {

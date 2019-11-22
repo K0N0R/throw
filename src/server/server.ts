@@ -3,7 +3,6 @@ import http from 'http';
 import path from 'path';
 import socketIO from 'socket.io';
 
-import { ticker } from './utils/loop';
 import { Game } from './models/game';
 
 const app = express();
