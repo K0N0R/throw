@@ -50,16 +50,25 @@ export class Game {
             this.players.splice(idx, 1);
         });
 
-        this.socket.on('player::move', (data: { id: string, position: [number, number] }) => {
-            const plr = this.players.find(plr => plr.socketId === data.id);
+        this.socket.on('player::move', (data: { socketId: string, position: [number, number] }) => {
+            const plr = this.players.find(plr => plr.socketId === data.socketId);
             if (plr) {
                 plr.pos.x = data.position[0];
                 plr.pos.y = data.position[1];
-                if (data.id === this.socket.id) {
+                if (data.socketId === this.socket.id) {
                     Camera.updatePos({ ...plr.pos });
                 }
             }
         });
+
+        this.socket.on('player::shooting', (data: { socketId: string, shootingWeak: boolean, shootingStrong: boolean }) => {
+            const plr = this.players.find(plr => plr.socketId === data.socketId);
+            if (plr) {
+                plr.shootingStrong = data.shootingStrong !== void 0 ? data.shootingStrong : plr.shootingStrong;
+                plr.shootingWeak = data.shootingWeak !== void 0 ? data.shootingWeak : plr.shootingWeak;
+            }
+        });
+
         this.socket.on('ball::move', (data: { position: [number, number] }) => {
             this.ball.pos.x = data.position[0];
             this.ball.pos.y = data.position[1];

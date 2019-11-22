@@ -12,6 +12,7 @@ import { Dictionary } from '../utils/model';
 import { getNormalizedVector, getDistance } from '../utils/vector';
 import { isMoving } from '../utils/body';
 import { Team } from './team';
+import { Keys } from './keys';
 
 export class Game {
     private io: io.Server;
@@ -78,8 +79,34 @@ export class Game {
                 this.playerDispose(newPlayer);
                 io.emit('player::dispose', socket.id);
             });
+
+            socket.on('player::key', (data: { [param: number]: boolean }) => {
+                for (let key in data) {
+                    switch (Number(key)) {
+                        case Keys.Up:
+                        case Keys.Down:
+                        case Keys.Left:
+                        case Keys.Right:
+                            if (data[key]) newPlayer.movementKeysHandler(Number(key));
+                            break;
+                        case Keys.Shift:
+                            newPlayer.sprintHandler(data[key]);
+                            break;
+                        case Keys.X:
+                            newPlayer.shootingStrongHandler(data[key]);
+                            this.io.emit('player::shooting', { socketId: newPlayer.socket.id, shootingStrong: data[key]});
+                            break;
+                        case Keys.C:
+                            newPlayer.shootingWeakHandler(data[key]);
+                            this.io.emit('player::shooting', { socketId: newPlayer.socket.id, shootingWeak: data[key]});
+                            break;
+                    }
+                }
+            });
         });
     }
+
+
 
     private playerAddToTeam(newPlayer: Player): void {
         const leftTeam = this.players.filter(plr => plr.team === Team.Left);
@@ -108,7 +135,7 @@ export class Game {
         };
         playerEvents.events.push(() => {
             if (isMoving(newPlayer.body)) {
-                this.io.emit('player::move', { id: newPlayer.socket.id, position: newPlayer.body.position });
+                this.io.emit('player::move', { socketId: newPlayer.socket.id, position: newPlayer.body.position });
             }
         });
         playerEvents.events.push(() => {

@@ -40,47 +40,17 @@ export class Player {
         this.body.damping = player.damping;
 
         this.sprintHandler();
-        this.keyHandler();
     }
 
-    private keyHandler(): void {
-        this.socket.on('player::key', (data: { [param: number]: boolean }) => {
-            this.keysPressed = data
-            this.action();
-        });
-    }
-
-    public action(): void {
-        for(let key in this.keysPressed) {
-            switch (Number(key)) {
-                case Keys.Up:
-                case Keys.Down:
-                case Keys.Left:
-                case Keys.Right:
-                    if (this.keysPressed[key]) this.movementKeysHandler(Number(key));
-                    break;
-                case Keys.Shift:
-                    this.sprintHandler(this.keysPressed[key]);
-                    break;
-                case Keys.X:
-                    this.shootingStrongHandler(this.keysPressed[key]);
-                    break;
-                case Keys.C:
-                    this.shootingWeakHandler(this.keysPressed[key]);
-                    break;
-            }
-        }
-    }
-
-    private shootingStrongHandler(pressed: boolean): void {
+    public shootingStrongHandler(pressed: boolean): void {
         this.shootingStrong = pressed;
     }
 
-    private shootingWeakHandler(pressed: boolean): void {
+    public shootingWeakHandler(pressed: boolean): void {
         this.shootingWeak = pressed;
     }
 
-    private sprintHandler(pressed: boolean = false): void {
+    public sprintHandler(pressed: boolean = false): void {
         if (pressed) {
             this.movementIncrease = player.sprintMaxSpeed;
             this.maxSpeed = player.sprintMaxSpeed;
@@ -90,7 +60,7 @@ export class Player {
         }
     }
 
-    private movementKeysHandler(key: Keys): void {
+    public movementKeysHandler(key: Keys): void {
         if (key == Keys.Up) {
             this.body.velocity[1] -= this.movementIncrease;
         }

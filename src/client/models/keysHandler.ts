@@ -10,7 +10,6 @@ export enum Keys {
     X = 88,
     Shift = 16,
     C = 67
-
 }
 
 export class KeysHandler {
@@ -19,15 +18,12 @@ export class KeysHandler {
     public static bindEvents(handler: (pressed: { [param: number]: boolean }) => void) {
         document.addEventListener('keydown', (event: KeyboardEvent) => {
             this.pressed[event.which] = true;
-            this.change = true;
         });
         document.addEventListener('keyup', (event: KeyboardEvent) => {
             this.pressed[event.which] = false;
-            this.change = true;
         });
 
         this.handler = handler;
-
     }
 
     public static reactOnPressChange() {
