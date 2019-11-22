@@ -10,46 +10,27 @@ export enum Keys {
     X = 88,
     Shift = 16,
     C = 67
-    
+
 }
 
 export class KeysHandler {
-    public static pressed: { [param: number]: boolean } = {};
-    public static handlers: { key: Keys, action: Function }[] = [];
-    public static handlersForAll: Function[] = [];
-    public static bindEvents() {
+    private static pressed: { [param: number]: boolean } = {};
+    private static handler: (pressed: { [param: number]: boolean }) => void;
+    public static bindEvents(handler: (pressed: { [param: number]: boolean }) => void) {
         document.addEventListener('keydown', (event: KeyboardEvent) => {
             this.pressed[event.which] = true;
+            this.change = true;
         });
         document.addEventListener('keyup', (event: KeyboardEvent) => {
             this.pressed[event.which] = false;
-        });
-    }
-
-    public static reactOnKeys() {
-        this.handlers.forEach(h => {
-            h.action(this.pressed[h.key]);
+            this.change = true;
         });
 
-        this.handlersForAll.forEach(action => {
-            action();
-        });
+        this.handler = handler;
 
     }
 
-    public static addAll(action: Function): (() => void) {
-        this.handlersForAll.push(action);
-        const idx = this.handlersForAll.length - 1;
-        return () => {
-            this.handlersForAll.splice(idx, 1);
-        };
-    }
-
-    public static add(key: Keys, action: Function): (() => void) {
-        this.handlers.push({ key: key, action: action });
-        const idx = this.handlers.length - 1;
-        return () => {
-            this.handlers.splice(idx, 1);
-        };
+    public static reactOnPressChange() {
+        this.handler(this.pressed);
     }
 }

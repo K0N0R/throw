@@ -10,14 +10,15 @@ import { LeftGoal } from './leftGoal';
 import { goal, map, player, ball } from './callibration';
 import { Dictionary } from '../utils/model';
 import { getNormalizedVector, getDistance } from '../utils/vector';
+import { isMoving } from '../utils/body';
 
 export class Game {
     private io: io.Server;
 
-    private step = {
-        fixedTime: 1 / 60,
-        lastTime: 0,
-        maxSteps: 10,
+    private step: {
+        fixedTime: number;
+        lastTime: number;
+        maxSteps: number;
     };
 
     private world!: p2.World;
@@ -36,12 +37,18 @@ export class Game {
     private ballEvents: (() => void)[] = [];
     private playerEvents: { player: Player, events: Function[] }[] = [];
 
-    constructor(io: io.Server) {
+    constructor(io: io.Server, intervalTime: number) {
+        this.step = {
+            fixedTime: intervalTime / 60,
+            lastTime: 0,
+            maxSteps: 10,
+        };
+
         this.initEntities();
         this.initWorld();
-        this.initEvents();
         this.initConnection(io);
     }
+
     private initConnection(io: io.Server): void {
         this.io = io;
         // mozliwe ze połączenie będzie jeszcze wczesniej nawiazywane
@@ -106,11 +113,16 @@ export class Game {
             events: []
         };
         playerEvents.events.push(() => {
+            if (isMoving(newPlayer.body)) {
+                this.io.emit('player::move', { id: newPlayer.socket.id, position: newPlayer.body.position });
+            }
+        });
+        playerEvents.events.push(() => {
             if (newPlayer.shootingStrong || newPlayer.shootingWeak) {
                 const playerPos = { x: newPlayer.body.position[0], y: newPlayer.body.position[1] };
                 const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
                 const minDistance = player.radius + ball.radius;
-                const shootingDistance = 3;
+                const shootingDistance = 1;
                 if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
                     const shootingVector = getNormalizedVector(
                         { x: newPlayer.body.position[0], y: newPlayer.body.position[1] },
@@ -127,11 +139,6 @@ export class Game {
                         this.ball.body.velocity[1] += shootingVector.y * player.shootingWeak;
                     }
                 }
-            }
-        });
-        playerEvents.events.push(() => {
-            if (newPlayer.body.velocity[0] !== 0 && newPlayer.body.velocity[1] !== 0) {
-                this.io.emit('player::move', { id: newPlayer.socket.id, position: newPlayer.body.position });
             }
         });
         this.playerEvents.push(playerEvents);
@@ -174,6 +181,9 @@ export class Game {
         this.world.addBody(this.rightGoal.borderBody);
         this.world.addBody(this.rightGoal.postBody);
         this.world.addBody(this.ball.body);
+
+        this.initWorldEvents();
+        this.initBallEvents();
     }
 
     private initMaterials(): void {
@@ -200,45 +210,20 @@ export class Game {
         this.world.addContactMaterial(this.contactMat.mapPlayer);
     }
 
-    private initEvents(): void {
-        this.initBallEvents();
-    }
-
     private initBallEvents(): void {
         this.ballEvents.push(() => {
-            if (this.ball.body.velocity[0] !== 0 && this.ball.body.velocity[1] !== 0) {
+            if (isMoving(this.ball.body)) {
                 this.io.emit('ball::move', { position: this.ball.body.position });
             }
         })
     }
 
+    private initWorldEvents(): void {
+    }
+
     public run(time: number) {
         this.worldStep(time);
-        this.logic();
-        this.handleEvents();
-    }
 
-    private worldStep(time: number): void {
-        // Compute elapsed time since last frame
-        const deltaTime = time - this.step.lastTime / 1000;
-
-        // Move bodies forward in time
-        this.world.step(this.step.fixedTime, deltaTime, this.step.maxSteps);
-
-        this.step.lastTime = time;
-    }
-
-    private logic(): void {
-        this.map.logic();
-        this.leftGoal.logic();
-        this.rightGoal.logic();
-        this.players.forEach(player => {
-            player.logic();
-        });
-        this.ball.logic();
-    }
-
-    private handleEvents(): void {
         if (this.worldEvents.length) {
             this.worldEvents.forEach(event => event());
         }
@@ -250,5 +235,15 @@ export class Game {
             });
         }
         this.ballEvents.forEach(event => event());
+        this.io.emit('world::postStep');
     }
+
+    private worldStep(time: number): void {
+
+        // Move bodies forward in time
+        this.world.step(this.step.fixedTime) //deltaTime, this.step.maxSteps);
+
+        this.step.lastTime = time;
+    }
+
 }

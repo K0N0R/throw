@@ -26,17 +26,18 @@ export class Game {
         this.initCanvas();
         this.initEntities();
         this.initCamera();
+        this.socket.on('world::postStep', () => {
+            this.run();
+        });
     }
 
     private initHandlers(): void {
-        KeysHandler.bindEvents();
-
-        KeysHandler.addAll(() => {
-            this.socket.emit('player::key', KeysHandler.pressed);
+        KeysHandler.bindEvents((pressed: { [param: number]: boolean }) => {
+            this.socket.emit('player::key', pressed);
             const plr = this.players.find(plr => plr.socketId === this.socket.id);
             if (plr) {
-                plr.shootingWeak = KeysHandler.pressed[Keys.C];
-                plr.shootingStrong = KeysHandler.pressed[Keys.X];
+                plr.shootingWeak = pressed[Keys.C];
+                plr.shootingStrong = pressed[Keys.X];
             };
         });
     }
@@ -107,9 +108,8 @@ export class Game {
     }
 
     private logic(): void {
-        KeysHandler.reactOnKeys();
+        KeysHandler.reactOnPressChange();
     }
-
 
     public render(): void {
         Canvas.clearCanvas();

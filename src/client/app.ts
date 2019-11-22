@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 //
 
 // import { loadImg } from './utils/loadImg';
-import { ticker } from './utils/loop';
+//import { ticker } from './utils/loop';
 import { Game } from './models/game';
 // import { Assets, AssetKind } from './models/assets';
 
@@ -20,10 +20,7 @@ const socket = io({
     host: 'localhost:3000'
 });
 
-const game = new Game(socket);
-ticker(() => {
-    game.run();
-});
+new Game(socket);
 
 
 

@@ -68,6 +68,4 @@ export class RightGoal {
             [offset.left, offset.bottom + goalTickness],
         ]
     }
-
-    public logic(): void { }
 }

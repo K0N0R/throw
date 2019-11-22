@@ -118,6 +118,4 @@ export class Map {
             [offset.left - map.border - mapTickness, offset.top - map.border - mapTickness], // top left outer corner
         ];
     }
-
-    public logic(): void { }
 }

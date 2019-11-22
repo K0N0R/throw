@@ -24,6 +24,4 @@ export class Ball  {
         this.body.addShape(this.shape);
         this.body.damping = ball.damping;
     }
-
-    public logic(): void {}
 }

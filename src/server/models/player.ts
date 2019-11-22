@@ -11,6 +11,7 @@ export class Player {
     public socket: io.Socket;
     public body!: p2.Body;
     private shape!: p2.Circle;
+    private keysPressed: { [param: number]: boolean };
 
     public shootingStrong!: boolean;
     public shootingWeak!: boolean;
@@ -38,31 +39,36 @@ export class Player {
         this.body.damping = player.damping;
 
         this.sprintHandler();
-        this.addMovementHandlers();
+        this.keyHandler();
     }
 
-    private addMovementHandlers(): void {
+    private keyHandler(): void {
         this.socket.on('player::key', (data: { [param: number]: boolean }) => {
-            for(let key in data) {
-                switch (Number(key)) {
-                    case Keys.Up:
-                    case Keys.Down:
-                    case Keys.Left:
-                    case Keys.Right:
-                        if (data[key]) this.movementKeysHandler(Number(key));
-                        break;
-                    case Keys.Shift:
-                        this.sprintHandler(data[key]);
-                        break;
-                    case Keys.X:
-                        this.shootingStrongHandler(data[key]);
-                        break;
-                    case Keys.C:
-                        this.shootingWeakHandler(data[key]);
-                        break;
-                }
-            }
+            this.keysPressed = data
+            this.action();
         });
+    }
+
+    public action(): void {
+        for(let key in this.keysPressed) {
+            switch (Number(key)) {
+                case Keys.Up:
+                case Keys.Down:
+                case Keys.Left:
+                case Keys.Right:
+                    if (this.keysPressed[key]) this.movementKeysHandler(Number(key));
+                    break;
+                case Keys.Shift:
+                    this.sprintHandler(this.keysPressed[key]);
+                    break;
+                case Keys.X:
+                    this.shootingStrongHandler(this.keysPressed[key]);
+                    break;
+                case Keys.C:
+                    this.shootingWeakHandler(this.keysPressed[key]);
+                    break;
+            }
+        }
     }
 
     private shootingStrongHandler(pressed: boolean): void {
@@ -105,6 +111,4 @@ export class Player {
             this.body.velocity[1] = normalizedMoveVector.y * this.maxSpeed;
         }
     }
-
-    public logic(): void {}
 }
