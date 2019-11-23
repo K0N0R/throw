@@ -1,7 +1,7 @@
 import { IPos } from './../../shared/model';
 import { getCornerPoints } from './../../shared/vertices';
 import { getOffset } from './../../shared/offset';
-import { goal_config } from './../../shared/callibration';
+import { goal_config, goal_style } from './../../shared/callibration';
 
 import { Canvas } from './canvas';
 
@@ -44,26 +44,26 @@ export class RightGoal {
             .forEach(v => {
                 Canvas.ctx.lineTo(v[0], v[1]);
             });
-        Canvas.ctx.lineWidth = 3;
-        Canvas.ctx.strokeStyle = 'white';
+        Canvas.ctx.lineWidth = goal_style.lineWidth;
+        Canvas.ctx.strokeStyle = goal_style.strokeStyle;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
         Canvas.startDraw();
         Canvas.ctx.arc(this.topPostPosition.x, this.topPostPosition.y, goal_config.postRadius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = '#D95A62';
+        Canvas.ctx.fillStyle = goal_style.postFillStyle;
         Canvas.ctx.fill();
-        Canvas.ctx.lineWidth = 3;
-        Canvas.ctx.strokeStyle = 'black';
+        Canvas.ctx.lineWidth = goal_style.postLineWidth;
+        Canvas.ctx.strokeStyle = goal_style.postStrokeStyle;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
         Canvas.startDraw();
         Canvas.ctx.arc(this.bottomPostPosition.x, this.bottomPostPosition.y, goal_config.postRadius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = '#D95A62';
+        Canvas.ctx.fillStyle = goal_style.postFillStyle;
         Canvas.ctx.fill();
-        Canvas.ctx.lineWidth = 3;
-        Canvas.ctx.strokeStyle = 'black';
+        Canvas.ctx.lineWidth = goal_style.postLineWidth;
+        Canvas.ctx.strokeStyle = goal_style.postStrokeStyle;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
     }

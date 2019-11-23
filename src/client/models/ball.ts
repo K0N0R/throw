@@ -1,4 +1,4 @@
-import { ball_config } from './../../shared/callibration';
+import { ball_config, ball_style } from './../../shared/callibration';
 import { IPos } from './../../shared/model';
 
 import { Canvas } from './canvas';
@@ -12,10 +12,10 @@ export class Ball  {
     public render(): void {
         Canvas.startDraw();
         Canvas.ctx.arc(this.pos.x, this.pos.y, ball_config.radius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = '#FAFAFA';
+        Canvas.ctx.fillStyle = ball_style.fillStyle;
         Canvas.ctx.fill();
-        Canvas.ctx.strokeStyle = 'black';
-        Canvas.ctx.lineWidth = 3;
+        Canvas.ctx.strokeStyle = ball_style.strokeStyle;
+        Canvas.ctx.lineWidth = ball_style.lineWidth;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
     }

@@ -1,7 +1,7 @@
 import { IPos } from './../../shared/model';
 import { getOffset } from './../../shared/offset';
 import { getCornerPoints } from './../../shared/vertices';
-import { map_config, goal_config, canvas_config } from './../../shared/callibration';
+import { map_config, map_style, goal_config, canvas_config } from './../../shared/callibration';
 
 import { Canvas } from './canvas';
 
@@ -72,8 +72,8 @@ export class Map {
             .forEach(v => {
                 Canvas.ctx.lineTo(v[0], v[1]);
             });
-        Canvas.ctx.lineWidth = 3;
-        Canvas.ctx.strokeStyle = 'white';
+        Canvas.ctx.lineWidth = map_style.lineWidth;
+        Canvas.ctx.strokeStyle = map_style.strokeStyle;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
@@ -85,8 +85,8 @@ export class Map {
             .forEach(v => {
                 Canvas.ctx.lineTo(v[0], v[1]);
             });
-        Canvas.ctx.lineWidth = 3;
-        Canvas.ctx.strokeStyle = 'white';
+        Canvas.ctx.lineWidth = map_style.lineWidth;
+        Canvas.ctx.strokeStyle = map_style.strokeStyle;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
     }
