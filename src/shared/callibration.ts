@@ -35,5 +35,7 @@ export const player = {
     sprintMaxSpeed: 36,
     shootingStrong: 100,
     shootingWeak: 50,
+    sprinting: 2000,
+    sprintingCooldown: 4000
 }
 

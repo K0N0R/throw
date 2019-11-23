@@ -1,4 +1,4 @@
-import { goal, map } from './../../shared/callibration';
+import { goal, map, player } from './../../shared/callibration';
 import { getOffset } from './../../shared/offset';
 import { Team } from './../../shared/team';
 import { Keys } from './../../shared/keys';
@@ -77,13 +77,34 @@ export class Game {
     }
 
     private initHandlers(): void {
+        const handleShooting = (plr: Player, pressed: { [param: number]: boolean }) => {
+            plr.shootingWeak = pressed[Keys.C];
+            plr.shootingStrong = pressed[Keys.X];
+        };
+        const handleSprinting = (plr: Player, pressed: { [param: number]: boolean }) => {
+            if (plr.sprintingCooldown) {
+                pressed[Keys.Shift] = false;
+            } else if (plr.sprinting) {
+                pressed[Keys.Shift] = true;
+            } else if (pressed[Keys.Shift] && !plr.sprintingCooldown) {
+                plr.sprinting = true;
+                setTimeout(() => {
+                    plr.sprinting = false;
+                    plr.sprintingCooldown = true;
+                    plr.sprintingCooldownTimer();
+                    setTimeout(() => {
+                        plr.sprintingCooldown = false;
+                    }, player.sprintingCooldown);
+               }, player.sprinting);
+            }
+        };
         KeysHandler.bindEvents((pressed: { [param: number]: boolean }) => {
-            this.socket.emit('player::key', pressed);
             const plr = this.players.find(plr => plr.socketId === this.socket.id);
             if (plr) {
-                plr.shootingWeak = pressed[Keys.C];
-                plr.shootingStrong = pressed[Keys.X];
-            };
+                handleShooting(plr, pressed);
+                handleSprinting(plr, pressed);
+            }
+            this.socket.emit('player::key', pressed);
         });
     }
     
