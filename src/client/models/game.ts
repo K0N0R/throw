@@ -11,6 +11,7 @@ import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
+import { Score } from './score';
 
 export class Game {
     private socket: SocketIOClient.Socket;
@@ -20,6 +21,7 @@ export class Game {
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
+    private score!: Score;
 
     constructor(socket: SocketIOClient.Socket) {
         this.socket = socket;
@@ -34,9 +36,10 @@ export class Game {
     }
 
     private initEvents(): void {
-        this.socket.on('player::init', (data: { players: { socketId: string; team: Team; position: [number, number] }[]; ball: { position: [number, number] } }) => {
+        this.socket.on('player::init', (data: { players: { socketId: string; team: Team; position: [number, number] }[]; ball: { position: [number, number] }; score: { left: number; right: number } }) => {
             this.players.push(...data.players.map(p => new Player({ x: p.position[0], y: p.position[1] }, p.socketId, p.team)));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
+            this.score.updateScore(data.score);
         });
 
         this.socket.on('player::add', (data: { socketId: string; team: Team; position: [number, number] }) => {
@@ -73,6 +76,14 @@ export class Game {
         this.socket.on('ball::move', (data: { position: [number, number] }) => {
             this.ball.pos.x = data.position[0];
             this.ball.pos.y = data.position[1];
+        });
+
+        this.socket.on('score::right', (data: { left: number; right: number }) => {
+            this.score.updateScore(data);
+        });
+
+        this.socket.on('score::left', (data: { left: number; right: number }) => {
+            this.score.updateScore(data);
         });
     }
 
@@ -117,6 +128,7 @@ export class Game {
         this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
         this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
         this.ball = new Ball({ x: this.map.pos.x + map_config.size.width / 2, y: this.map.pos.y + map_config.size.height / 2 });
+        this.score = new Score();
     }
 
     private initCamera(): void {

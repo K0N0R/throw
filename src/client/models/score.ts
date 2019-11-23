@@ -1,11 +1,7 @@
 export class Score {
-    private left: number;
-    private right: number;
-    constructor(left: number, right: number) {
-        this.left = left;
-        this.right = right;
-        this.updateScore({left: this.left, right:this.right});
-    }
+    public left!: number;
+    public right!: number;
+    constructor() {}
 
     public updateScore(score: {left?: number; right?: number}): void {
         if (score.left !== void 0) {

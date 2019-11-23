@@ -2,7 +2,7 @@ import * as p2 from 'p2';
 
 import { ball_config } from './../../shared/callibration';
 
-import { BALL, MAP, GOAL, PLAYER, GOAL_POST } from './collision';
+import { BALL, MAP, GOAL, PLAYER, GOAL_POST, GOAL_SCORE } from './collision';
 
 export class Ball  {
     public body: p2.Body;
@@ -17,7 +17,7 @@ export class Ball  {
         this.shape = new p2.Circle({
             radius: ball_config.radius,
             collisionGroup: BALL,
-            collisionMask: MAP | GOAL | PLAYER | GOAL_POST
+            collisionMask: MAP | GOAL | PLAYER | GOAL_POST | GOAL_SCORE
 
         });
 

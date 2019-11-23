@@ -13,6 +13,7 @@ import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
 import { Keys } from './../../shared/keys';
+import { isContact } from './../../shared/body';
 
 export class Game {
     private io: io.Server;
@@ -36,6 +37,8 @@ export class Game {
     private worldEvents: (() => void)[] = [];
     private ballEvents: (() => void)[] = [];
     private playerEvents: { player: Player, events: Function[] }[] = [];
+
+    private score = { left: 0, right: 0};
 
     constructor(io: io.Server, intervalTime: number) {
         this.step = {
@@ -61,7 +64,8 @@ export class Game {
                 })),
                 ball: {
                     position: this.ball.body.position,
-                }
+                },
+                score: this.score
             });
             const newPlayer = new Player(socket, this.mat.player)
             this.players.push(newPlayer);
@@ -105,8 +109,6 @@ export class Game {
             });
         });
     }
-
-
 
     private playerAddToTeam(newPlayer: Player): void {
         const leftTeam = this.players.filter(player => player.team === Team.Left);
@@ -192,9 +194,11 @@ export class Game {
 
         this.world.addBody(this.leftGoal.borderBody);
         this.world.addBody(this.leftGoal.postBody);
+        this.world.addBody(this.leftGoal.scoreBody);
 
         this.world.addBody(this.rightGoal.borderBody);
         this.world.addBody(this.rightGoal.postBody);
+        this.world.addBody(this.rightGoal.scoreBody);
         this.world.addBody(this.ball.body);
 
         this.initWorldEvents();
@@ -234,6 +238,14 @@ export class Game {
     }
 
     private initWorldEvents(): void {
+        this.world.on('beginContact', evt => {
+            if (isContact(evt, this.ball.body, this.leftGoal.scoreBody)) {
+                this.io.emit('score::right', { right: ++this.score.right});
+            }
+            if (isContact(evt, this.ball.body, this.rightGoal.scoreBody)) {
+                this.io.emit('score::left', { left: ++this.score.left });
+            }
+        });
     }
 
     public run(time: number) {
