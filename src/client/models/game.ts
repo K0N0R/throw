@@ -1,4 +1,4 @@
-import { goal, map, player } from './../../shared/callibration';
+import { goal_config, map_config, player_config } from './../../shared/callibration';
 import { getOffset } from './../../shared/offset';
 import { Team } from './../../shared/team';
 import { Keys } from './../../shared/keys';
@@ -47,26 +47,26 @@ export class Game {
         });
 
         this.socket.on('player::dispose', (socketId: string) => {
-            const idx = this.players.findIndex(plr => plr.socketId === socketId);
+            const idx = this.players.findIndex(player => player.socketId === socketId);
             this.players.splice(idx, 1);
         });
 
         this.socket.on('player::move', (data: { socketId: string, position: [number, number] }) => {
-            const plr = this.players.find(plr => plr.socketId === data.socketId);
-            if (plr) {
-                plr.pos.x = data.position[0];
-                plr.pos.y = data.position[1];
+            const player = this.players.find(player => player.socketId === data.socketId);
+            if (player) {
+                player.pos.x = data.position[0];
+                player.pos.y = data.position[1];
                 if (data.socketId === this.socket.id) {
-                    Camera.updatePos({ ...plr.pos });
+                    Camera.updatePos({ ...player.pos });
                 }
             }
         });
 
         this.socket.on('player::shooting', (data: { socketId: string, shootingWeak: boolean, shootingStrong: boolean }) => {
-            const plr = this.players.find(plr => plr.socketId === data.socketId);
-            if (plr) {
-                plr.shootingStrong = data.shootingStrong !== void 0 ? data.shootingStrong : plr.shootingStrong;
-                plr.shootingWeak = data.shootingWeak !== void 0 ? data.shootingWeak : plr.shootingWeak;
+            const player = this.players.find(player => player.socketId === data.socketId);
+            if (player) {
+                player.shootingStrong = data.shootingStrong !== void 0 ? data.shootingStrong : player.shootingStrong;
+                player.shootingWeak = data.shootingWeak !== void 0 ? data.shootingWeak : player.shootingWeak;
             }
         });
 
@@ -77,32 +77,32 @@ export class Game {
     }
 
     private initHandlers(): void {
-        const handleShooting = (plr: Player, pressed: { [param: number]: boolean }) => {
-            plr.shootingWeak = pressed[Keys.C];
-            plr.shootingStrong = pressed[Keys.X];
+        const handleShooting = (player: Player, pressed: { [param: number]: boolean }) => {
+            player.shootingWeak = pressed[Keys.C];
+            player.shootingStrong = pressed[Keys.X];
         };
-        const handleSprinting = (plr: Player, pressed: { [param: number]: boolean }) => {
-            if (plr.sprintingCooldown) {
+        const handleSprinting = (player: Player, pressed: { [param: number]: boolean }) => {
+            if (player.sprintingCooldown) {
                 pressed[Keys.Shift] = false;
-            } else if (plr.sprinting) {
+            } else if (player.sprinting) {
                 pressed[Keys.Shift] = true;
-            } else if (pressed[Keys.Shift] && !plr.sprintingCooldown) {
-                plr.sprinting = true;
+            } else if (pressed[Keys.Shift] && !player.sprintingCooldown) {
+                player.sprinting = true;
                 setTimeout(() => {
-                    plr.sprinting = false;
-                    plr.sprintingCooldown = true;
-                    plr.sprintingCooldownTimer();
+                    player.sprinting = false;
+                    player.sprintingCooldown = true;
+                    player.sprintingCooldownTimer();
                     setTimeout(() => {
-                        plr.sprintingCooldown = false;
-                    }, player.sprintingCooldown);
-               }, player.sprinting);
+                        player.sprintingCooldown = false;
+                    }, player_config.sprintingCooldown);
+               }, player_config.sprinting);
             }
         };
         KeysHandler.bindEvents((pressed: { [param: number]: boolean }) => {
-            const plr = this.players.find(plr => plr.socketId === this.socket.id);
-            if (plr) {
-                handleShooting(plr, pressed);
-                handleSprinting(plr, pressed);
+            const player = this.players.find(player => player.socketId === this.socket.id);
+            if (player) {
+                handleShooting(player, pressed);
+                handleSprinting(player, pressed);
             }
             this.socket.emit('player::key', pressed);
         });
@@ -114,13 +114,13 @@ export class Game {
 
     private initEntities(): void {
         this.map = new Map();
-        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 });
-        this.rightGoal = new RightGoal({ x: this.map.pos.x + map.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 });
-        this.ball = new Ball({ x: this.map.pos.x + map.size.width / 2, y: this.map.pos.y + map.size.height / 2 });
+        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
+        this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
+        this.ball = new Ball({ x: this.map.pos.x + map_config.size.width / 2, y: this.map.pos.y + map_config.size.height / 2 });
     }
 
     private initCamera(): void {
-        Camera.setBounduary(getOffset(this.map.outerPos, map.outerSize));
+        Camera.setBounduary(getOffset(this.map.outerPos, map_config.outerSize));
     }
 
     public run() {

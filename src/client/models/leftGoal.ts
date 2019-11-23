@@ -1,7 +1,7 @@
 import { getCornerPoints } from './../../shared/vertices';
 import { getOffset } from './../../shared/offset';
 import { IPos } from './../../shared/model';
-import { goal } from './../../shared/callibration';
+import { goal_config } from './../../shared/callibration';
 
 import { Canvas } from './canvas';
 
@@ -13,21 +13,21 @@ export class LeftGoal {
 
     public constructor(pos: IPos) {
         this.pos = { x: pos.x, y: pos.y };
-        this.topPostPosition = { x: this.pos.x + goal.size.width, y: this.pos.y };
-        this.bottomPostPosition = { x: this.pos.x + goal.size.width, y: this.pos.y + goal.size.height };
+        this.topPostPosition = { x: this.pos.x + goal_config.size.width, y: this.pos.y };
+        this.bottomPostPosition = { x: this.pos.x + goal_config.size.width, y: this.pos.y + goal_config.size.height };
     }
 
     private getPoints(pos = { x: 0, y: 0 }): ([number, number])[] {
-        const offset = getOffset(pos, goal.size)
+        const offset = getOffset(pos, goal_config.size)
         const goalTickness = 10;
         return [
             [offset.right, offset.bottom],
-            [offset.left + goal.cornerRadius, offset.bottom],
-            ...getCornerPoints(goal.cornerPointsAmount, Math.PI / 2, { x: offset.left + goal.cornerRadius, y: offset.bottom - goal.cornerRadius }, goal.cornerRadius),
-            [offset.left, offset.bottom - goal.cornerRadius],
-            [offset.left, offset.top + goal.cornerRadius],
-            ...getCornerPoints(goal.cornerPointsAmount, Math.PI, { x: offset.left + goal.cornerRadius, y: offset.top + goal.cornerRadius }, goal.cornerRadius),
-            [offset.left + goal.cornerRadius, offset.top],
+            [offset.left + goal_config.cornerRadius, offset.bottom],
+            ...getCornerPoints(goal_config.cornerPointsAmount, Math.PI / 2, { x: offset.left + goal_config.cornerRadius, y: offset.bottom - goal_config.cornerRadius }, goal_config.cornerRadius),
+            [offset.left, offset.bottom - goal_config.cornerRadius],
+            [offset.left, offset.top + goal_config.cornerRadius],
+            ...getCornerPoints(goal_config.cornerPointsAmount, Math.PI, { x: offset.left + goal_config.cornerRadius, y: offset.top + goal_config.cornerRadius }, goal_config.cornerRadius),
+            [offset.left + goal_config.cornerRadius, offset.top],
             [offset.right, offset.top],
             [offset.right, offset.top - goalTickness],
             [offset.left - goalTickness, offset.top - goalTickness],
@@ -51,7 +51,7 @@ export class LeftGoal {
         Canvas.stopDraw();
 
         Canvas.startDraw();
-        Canvas.ctx.arc(this.topPostPosition.x, this.topPostPosition.y , goal.postRadius, 0, 2 * Math.PI, true);
+        Canvas.ctx.arc(this.topPostPosition.x, this.topPostPosition.y , goal_config.postRadius, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = '#D95A62';
         Canvas.ctx.fill();
         Canvas.ctx.lineWidth = 3;
@@ -60,7 +60,7 @@ export class LeftGoal {
         Canvas.stopDraw();
 
         Canvas.startDraw();
-        Canvas.ctx.arc(this.bottomPostPosition.x, this.bottomPostPosition.y, goal.postRadius, 0, 2 * Math.PI, true);
+        Canvas.ctx.arc(this.bottomPostPosition.x, this.bottomPostPosition.y, goal_config.postRadius, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = '#D95A62';
         Canvas.ctx.fill();
         Canvas.ctx.lineWidth = 3;

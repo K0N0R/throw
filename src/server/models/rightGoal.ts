@@ -3,7 +3,7 @@ import * as p2 from 'p2';
 import { IPos } from './../../shared/model';
 import { getCornerPoints } from './../../shared/vertices';
 import { getOffset } from './../../shared/offset';
-import { goal } from './../../shared/callibration';
+import { goal_config } from './../../shared/callibration';
 
 import { GOAL, BALL, GOAL_POST, PLAYER } from './collision';
 
@@ -35,7 +35,7 @@ export class RightGoal {
             mass: 0
         });
         this.topPostShape = new p2.Circle({
-            radius: goal.postRadius,
+            radius: goal_config.postRadius,
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
@@ -43,25 +43,25 @@ export class RightGoal {
         this.postBody.addShape(this.topPostShape, [0, 0]);
 
         this.bottomPostShape = new p2.Circle({
-            radius: goal.postRadius,
+            radius: goal_config.postRadius,
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
         this.bottomPostShape.material = material;
-        this.postBody.addShape(this.bottomPostShape, [0, goal.size.height]);
+        this.postBody.addShape(this.bottomPostShape, [0, goal_config.size.height]);
     }
 
     private getPoints(pos = { x: 0, y: 0 }): ([number, number])[] {
-        const offset = getOffset(pos, goal.size)
+        const offset = getOffset(pos, goal_config.size)
         const goalTickness = 10;
         return [
             [offset.left, offset.bottom],
-            [offset.right - goal.cornerRadius, offset.bottom],
-            ...getCornerPoints(goal.cornerPointsAmount, Math.PI / 2, { x: offset.right - goal.cornerRadius, y: offset.bottom - goal.cornerRadius }, goal.cornerRadius, -1),
-            [offset.right, offset.bottom - goal.cornerRadius],
-            [offset.right, offset.top + goal.cornerRadius],
-            ...getCornerPoints(goal.cornerPointsAmount, 0, { x: offset.right - goal.cornerRadius, y: offset.top + goal.cornerRadius }, goal.cornerRadius, -1),
-            [offset.right - goal.cornerRadius, offset.top],
+            [offset.right - goal_config.cornerRadius, offset.bottom],
+            ...getCornerPoints(goal_config.cornerPointsAmount, Math.PI / 2, { x: offset.right - goal_config.cornerRadius, y: offset.bottom - goal_config.cornerRadius }, goal_config.cornerRadius, -1),
+            [offset.right, offset.bottom - goal_config.cornerRadius],
+            [offset.right, offset.top + goal_config.cornerRadius],
+            ...getCornerPoints(goal_config.cornerPointsAmount, 0, { x: offset.right - goal_config.cornerRadius, y: offset.top + goal_config.cornerRadius }, goal_config.cornerRadius, -1),
+            [offset.right - goal_config.cornerRadius, offset.top],
             [offset.left, offset.top],
             [offset.left, offset.top - goalTickness],
             [offset.right + goalTickness, offset.top - goalTickness],

@@ -1,4 +1,4 @@
-import { canvas } from './../../shared/callibration'; 
+import { canvas_config } from './../../shared/callibration'; 
 
 export class Canvas {
 
@@ -14,8 +14,8 @@ export class Canvas {
 
     public static createCanvas(): void {
         this._element = document.createElement('canvas');  
-        this._element.width = canvas.size.width;
-        this._element.height = canvas.size.height;
+        this._element.width = canvas_config.size.width;
+        this._element.height = canvas_config.size.height;
         const ctx = this.element.getContext("2d");
         if (ctx !== null) {
             this._ctx = ctx;
@@ -25,7 +25,7 @@ export class Canvas {
 
 
     public static clearCanvas(): void {
-        this.ctx.clearRect(0, 0, canvas.size.width, canvas.size.height);
+        this.ctx.clearRect(0, 0, canvas_config.size.width, canvas_config.size.height);
     }
 
     public static startDraw(): void {

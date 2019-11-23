@@ -3,7 +3,7 @@ import io from 'socket.io';
 
 import { calculateVectorLength, normalizeVector } from './../../shared/vector';
 import { Keys } from './../../shared/keys';
-import { player } from './../../shared/callibration';
+import { player_config } from './../../shared/callibration';
 import { Team } from './../../shared/team';
 
 import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
@@ -25,19 +25,19 @@ export class Player {
 
         this.socket = socket;
         let options: p2.BodyOptions = {
-            mass: player.mass,
+            mass: player_config.mass,
             position: [0, 0],
             velocity: [0, 0],
         };
         this.body = new p2.Body(options);
         this.shape = new p2.Circle({
-            radius: player.radius,
+            radius: player_config.radius,
             collisionGroup: PLAYER,
             collisionMask: PLAYER | MAP_BORDER | BALL | GOAL_POST 
         });
         this.shape.material = material;
         this.body.addShape(this.shape);
-        this.body.damping = player.damping;
+        this.body.damping = player_config.damping;
 
         this.sprintHandler();
     }
@@ -52,11 +52,11 @@ export class Player {
 
     public sprintHandler(pressed: boolean = false): void {
         if (pressed) {
-            this.movementIncrease = player.sprintMaxSpeed;
-            this.maxSpeed = player.sprintMaxSpeed;
+            this.movementIncrease = player_config.sprintMaxSpeed;
+            this.maxSpeed = player_config.sprintMaxSpeed;
         } else {
-            this.movementIncrease = player.movementIncrease;
-            this.maxSpeed = player.maxSpeed;
+            this.movementIncrease = player_config.movementIncrease;
+            this.maxSpeed = player_config.maxSpeed;
         }
     }
 

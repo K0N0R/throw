@@ -13,6 +13,6 @@ export class KeysHandler {
     }
 
     public static reactOnPressChange() {
-        this.handler(this.pressed);
+        this.handler({...this.pressed});
     }
 }

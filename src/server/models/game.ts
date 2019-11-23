@@ -7,7 +7,7 @@ import { Map } from './map';
 import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
-import { goal, map, player, ball } from './../../shared/callibration';
+import { goal_config, map_config, player_config, ball_config } from './../../shared/callibration';
 import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
@@ -54,10 +54,10 @@ export class Game {
         // mozliwe ze połączenie będzie jeszcze wczesniej nawiazywane
         io.on('connection', (socket) => {
             socket.emit('player::init', {
-                players: this.players.map(plr => ({
-                    socketId: plr.socket.id,
-                    team: plr.team,
-                    position: plr.body.position,
+                players: this.players.map(player => ({
+                    socketId: player.socket.id,
+                    team: player.team,
+                    position: player.body.position,
                 })),
                 ball: {
                     position: this.ball.body.position,
@@ -109,17 +109,17 @@ export class Game {
 
 
     private playerAddToTeam(newPlayer: Player): void {
-        const leftTeam = this.players.filter(plr => plr.team === Team.Left);
-        const rightTeam = this.players.filter(plr => plr.team === Team.Right);
+        const leftTeam = this.players.filter(player => player.team === Team.Left);
+        const rightTeam = this.players.filter(player => player.team === Team.Right);
         if (leftTeam.length > rightTeam.length) {
             // assing to right
-            newPlayer.body.position[0] = map.size.width - player.radius;
-            newPlayer.body.position[1] = map.size.height / 2
+            newPlayer.body.position[0] = map_config.size.width - player_config.radius;
+            newPlayer.body.position[1] = map_config.size.height / 2
             newPlayer.team = Team.Right;
         } else {
             // assign to left
-            newPlayer.body.position[0] = player.radius;
-            newPlayer.body.position[1] = map.size.height / 2;
+            newPlayer.body.position[0] = player_config.radius;
+            newPlayer.body.position[1] = map_config.size.height / 2;
             newPlayer.team = Team.Left;
         }
     }
@@ -142,7 +142,7 @@ export class Game {
             if (newPlayer.shootingStrong || newPlayer.shootingWeak) {
                 const playerPos = { x: newPlayer.body.position[0], y: newPlayer.body.position[1] };
                 const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
-                const minDistance = player.radius + ball.radius;
+                const minDistance = player_config.radius + ball_config.radius;
                 const shootingDistance = 1;
                 if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
                     const shootingVector = getNormalizedVector(
@@ -150,14 +150,14 @@ export class Game {
                         { x: this.ball.body.position[0], y: this.ball.body.position[1] }
                     );
                     if (newPlayer.shootingStrong && newPlayer.shootingWeak) {
-                        this.ball.body.velocity[0] += shootingVector.x * (player.shootingStrong + player.shootingWeak) / 2;
-                        this.ball.body.velocity[1] += shootingVector.y * (player.shootingStrong + player.shootingWeak) / 2;
+                        this.ball.body.velocity[0] += shootingVector.x * (player_config.shootingStrong + player_config.shootingWeak) / 2;
+                        this.ball.body.velocity[1] += shootingVector.y * (player_config.shootingStrong + player_config.shootingWeak) / 2;
                     } else if (newPlayer.shootingStrong) {
-                        this.ball.body.velocity[0] += shootingVector.x * player.shootingStrong;
-                        this.ball.body.velocity[1] += shootingVector.y * player.shootingStrong;
+                        this.ball.body.velocity[0] += shootingVector.x * player_config.shootingStrong;
+                        this.ball.body.velocity[1] += shootingVector.y * player_config.shootingStrong;
                     } else if (newPlayer.shootingWeak) {
-                        this.ball.body.velocity[0] += shootingVector.x * player.shootingWeak;
-                        this.ball.body.velocity[1] += shootingVector.y * player.shootingWeak;
+                        this.ball.body.velocity[0] += shootingVector.x * player_config.shootingWeak;
+                        this.ball.body.velocity[1] += shootingVector.y * player_config.shootingWeak;
                     }
                 }
             }
@@ -167,17 +167,17 @@ export class Game {
 
     private playerDispose(oldPlayer: Player): void {
         this.world.removeBody(oldPlayer.body);
-        const plrIdx = this.players.indexOf(oldPlayer);
-        this.players.splice(plrIdx, 1)
+        const playerIdx = this.players.indexOf(oldPlayer);
+        this.players.splice(playerIdx, 1)
         const eventIdx = this.playerEvents.findIndex(playerEvent => playerEvent.player === oldPlayer);
         this.playerEvents.splice(eventIdx, 1);
     }
 
     private initEntities(): void {
         this.map = new Map(this.mat.map);
-        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 }, this.mat.goal);
-        this.rightGoal = new RightGoal({ x: this.map.pos.x + map.size.width, y: this.map.pos.y + map.size.height / 2 - goal.size.height / 2 }, this.mat.goal);
-        this.ball = new Ball([this.map.pos.x + map.size.width / 2, this.map.pos.y + map.size.height / 2], this.mat.ball);
+        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal);
+        this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal);
+        this.ball = new Ball([this.map.pos.x + map_config.size.width / 2, this.map.pos.y + map_config.size.height / 2], this.mat.ball);
     }
 
     private initWorld(): void {

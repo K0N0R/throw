@@ -1,6 +1,6 @@
 import * as p2 from 'p2';
 
-import { ball } from './../../shared/callibration';
+import { ball_config } from './../../shared/callibration';
 
 import { BALL, MAP, GOAL, PLAYER, GOAL_POST } from './collision';
 
@@ -10,12 +10,12 @@ export class Ball  {
 
     public constructor(position: [number, number], material: p2.Material ) {
         this.body = new p2.Body({
-            mass: ball.mass,
+            mass: ball_config.mass,
             position: position,
         });
 
         this.shape = new p2.Circle({
-            radius: ball.radius,
+            radius: ball_config.radius,
             collisionGroup: BALL,
             collisionMask: MAP | GOAL | PLAYER | GOAL_POST
 
@@ -23,6 +23,6 @@ export class Ball  {
 
         this.shape.material = material;
         this.body.addShape(this.shape);
-        this.body.damping = ball.damping;
+        this.body.damping = ball_config.damping;
     }
 }

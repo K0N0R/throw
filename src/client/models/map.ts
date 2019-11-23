@@ -1,7 +1,7 @@
 import { IPos } from './../../shared/model';
 import { getOffset } from './../../shared/offset';
 import { getCornerPoints } from './../../shared/vertices';
-import { map, goal, canvas } from './../../shared/callibration';
+import { map_config, goal_config, canvas_config } from './../../shared/callibration';
 
 import { Canvas } from './canvas';
 
@@ -12,54 +12,54 @@ export class Map {
     public constructor() {
 
         this.pos = {
-            x: canvas.size.width / 2 - map.size.width / 2,
-            y: canvas.size.height / 2 - map.size.height / 2
+            x: canvas_config.size.width / 2 - map_config.size.width / 2,
+            y: canvas_config.size.height / 2 - map_config.size.height / 2
         };
 
         this.outerPos = {
-            x: this.pos.x - map.border,
-            y: this.pos.y - map.border
+            x: this.pos.x - map_config.border,
+            y: this.pos.y - map_config.border
         };
 
     }
 
     private getTopShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
-        const offset = getOffset(pos, map.size); // convex use relative position to body
+        const offset = getOffset(pos, map_config.size); // convex use relative position to body
         const mapTickness = 10;
         return [
-            [offset.left, offset.midVert - goal.size.height / 2],
-            [offset.left, offset.top + map.cornerRadius],
-            ...getCornerPoints(map.cornerPointsAmount, Math.PI, { x: offset.left + map.cornerRadius, y: offset.top + map.cornerRadius }, map.cornerRadius),
-            [offset.left + map.cornerRadius, offset.top],
-            [offset.right - map.cornerRadius, offset.top],
-            ...getCornerPoints(map.cornerPointsAmount, Math.PI + Math.PI / 2, { x: offset.right - map.cornerRadius, y: offset.top + map.cornerRadius }, map.cornerRadius),
-            [offset.right, offset.top + map.cornerRadius],
-            [offset.right, offset.midVert - goal.size.height / 2],
+            [offset.left, offset.midVert - goal_config.size.height / 2],
+            [offset.left, offset.top + map_config.cornerRadius],
+            ...getCornerPoints(map_config.cornerPointsAmount, Math.PI, { x: offset.left + map_config.cornerRadius, y: offset.top + map_config.cornerRadius }, map_config.cornerRadius),
+            [offset.left + map_config.cornerRadius, offset.top],
+            [offset.right - map_config.cornerRadius, offset.top],
+            ...getCornerPoints(map_config.cornerPointsAmount, Math.PI + Math.PI / 2, { x: offset.right - map_config.cornerRadius, y: offset.top + map_config.cornerRadius }, map_config.cornerRadius),
+            [offset.right, offset.top + map_config.cornerRadius],
+            [offset.right, offset.midVert - goal_config.size.height / 2],
 
-            [offset.right + mapTickness, offset.midVert - goal.size.height / 2], // obramówka zewnętrzna
+            [offset.right + mapTickness, offset.midVert - goal_config.size.height / 2], // obramówka zewnętrzna
             [offset.right + mapTickness, offset.top - mapTickness],
             [offset.left - mapTickness, offset.top - mapTickness],
-            [offset.left - mapTickness, offset.midVert - goal.size.height / 2],
+            [offset.left - mapTickness, offset.midVert - goal_config.size.height / 2],
         ];
     }
 
     private getBottomShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
-        const offset = getOffset(pos, map.size); // convex use relative position to body
+        const offset = getOffset(pos, map_config.size); // convex use relative position to body
         const mapTickness = 10;
         return [
-            [offset.right, offset.midVert + goal.size.height / 2],
-            [offset.right, offset.bottom - map.cornerRadius],
-            ...getCornerPoints(map.cornerPointsAmount, 0, { x: offset.right - map.cornerRadius, y: offset.bottom - map.cornerRadius }, map.cornerRadius),
-            [offset.right - map.cornerRadius, offset.bottom],
-            [offset.left + map.cornerRadius, offset.bottom],
-            ...getCornerPoints(map.cornerPointsAmount, Math.PI / 2, { x: offset.left + map.cornerRadius, y: offset.bottom - map.cornerRadius }, map.cornerRadius),
-            [offset.left, offset.bottom - map.cornerRadius],
-            [offset.left, offset.midVert + goal.size.height / 2],
+            [offset.right, offset.midVert + goal_config.size.height / 2],
+            [offset.right, offset.bottom - map_config.cornerRadius],
+            ...getCornerPoints(map_config.cornerPointsAmount, 0, { x: offset.right - map_config.cornerRadius, y: offset.bottom - map_config.cornerRadius }, map_config.cornerRadius),
+            [offset.right - map_config.cornerRadius, offset.bottom],
+            [offset.left + map_config.cornerRadius, offset.bottom],
+            ...getCornerPoints(map_config.cornerPointsAmount, Math.PI / 2, { x: offset.left + map_config.cornerRadius, y: offset.bottom - map_config.cornerRadius }, map_config.cornerRadius),
+            [offset.left, offset.bottom - map_config.cornerRadius],
+            [offset.left, offset.midVert + goal_config.size.height / 2],
 
-            [offset.left - mapTickness, offset.midVert + goal.size.height / 2],// obramówka zewnętrzna
+            [offset.left - mapTickness, offset.midVert + goal_config.size.height / 2],// obramówka zewnętrzna
             [offset.left - mapTickness, offset.bottom + mapTickness],
             [offset.right + mapTickness, offset.bottom + mapTickness],
-            [offset.right + mapTickness, offset.midVert + goal.size.height / 2],
+            [offset.right + mapTickness, offset.midVert + goal_config.size.height / 2],
         ];
     }
 
