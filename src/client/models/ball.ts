@@ -1,6 +1,7 @@
+import { ball } from './../../shared/callibration';
+import { IPos } from './../../shared/model';
+
 import { Canvas } from './canvas';
-import { ball } from './callibration';
-import { IPos } from './../utils/model';
 
 export class Ball  {
     public pos: IPos;

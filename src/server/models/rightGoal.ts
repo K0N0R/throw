@@ -1,10 +1,11 @@
 import * as p2 from 'p2';
 
-import { IPos } from '../utils/model';
-import { getCornerPoints } from '../utils/vertices';
-import { getOffset } from '../utils/offset';
+import { IPos } from './../../shared/model';
+import { getCornerPoints } from './../../shared/vertices';
+import { getOffset } from './../../shared/offset';
+import { goal } from './../../shared/callibration';
+
 import { GOAL, BALL, GOAL_POST, PLAYER } from './collision';
-import { goal } from './callibration';
 
 export class RightGoal {
     private pos: IPos;

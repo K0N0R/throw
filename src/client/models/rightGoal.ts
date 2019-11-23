@@ -1,9 +1,9 @@
-import { IPos } from '../utils/model';
-import { getCornerPoints } from '../utils/vertices';
-import { getOffset } from '../utils/offset';
-import { Canvas } from './canvas';
+import { IPos } from './../../shared/model';
+import { getCornerPoints } from './../../shared/vertices';
+import { getOffset } from './../../shared/offset';
+import { goal } from './../../shared/callibration';
 
-import { goal } from './callibration';
+import { Canvas } from './canvas';
 
 export class RightGoal {
     private pos: IPos;

@@ -1,7 +1,8 @@
+import { player } from './../../shared/callibration';
+import { IPos } from './../../shared/model';
+import { Team } from './../../shared/team';
+
 import { Canvas } from './canvas';
-import { player } from './callibration';
-import { IPos } from './../utils/model';
-import { Team } from './team';
 
 export class Player {
     public socketId: string;

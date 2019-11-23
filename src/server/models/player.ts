@@ -1,12 +1,12 @@
 import * as p2 from 'p2';
 import io from 'socket.io';
 
-import { Keys } from './keys';
-import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
-import { calculateVectorLength, normalizeVector } from './../utils/vector';
+import { calculateVectorLength, normalizeVector } from './../../shared/vector';
+import { Keys } from './../../shared/keys';
+import { player } from './../../shared/callibration';
+import { Team } from './../../shared/team';
 
-import { player } from './callibration';
-import { Team } from './team';
+import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
 
 export class Player {
     public socket: io.Socket;

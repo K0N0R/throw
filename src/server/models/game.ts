@@ -7,12 +7,12 @@ import { Map } from './map';
 import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
-import { goal, map, player, ball } from './callibration';
-import { Dictionary } from '../utils/model';
-import { getNormalizedVector, getDistance } from '../utils/vector';
-import { isMoving } from '../utils/body';
-import { Team } from './team';
-import { Keys } from './keys';
+import { goal, map, player, ball } from './../../shared/callibration';
+import { Dictionary } from './../../shared/model';
+import { getNormalizedVector, getDistance } from './../../shared/vector';
+import { isMoving } from '../../shared/body';
+import { Team } from './../../shared/team';
+import { Keys } from './../../shared/keys';
 
 export class Game {
     private io: io.Server;

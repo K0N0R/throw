@@ -14,14 +14,16 @@
       "noUnusedParameters": true,
       "noImplicitReturns": true,
       "moduleResolution": "node",
-      "baseUrl": "./",
+      "baseUrl": "src",
       "allowSyntheticDefaultImports": true,
       "resolveJsonModule": true,
       "esModuleInterop": true,
       "experimentalDecorators": true
   },
   "paths": {
-      "~*": ["./*"]
+      "~*": ["./*"],
+      "shared/*": ["shared/*"],
+
   },
   "typeRoots": ["node_modules/@types"],
   "include": ["src/**/*"],

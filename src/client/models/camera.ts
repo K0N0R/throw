@@ -1,7 +1,8 @@
-import { IPos } from './../utils/model';
+import { IPos } from './../../shared/model';
+import { IOffset } from './../../shared/offset';
+import { canvas } from './../../shared/callibration';
+
 import { Canvas } from './canvas';
-import { IOffset } from './../utils/offset';
-import { canvas } from './callibration';
 
 export class Camera {
     private static offset: IOffset;

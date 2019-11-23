@@ -1,4 +1,4 @@
-import { loadImg } from './../utils/loadImg';
+import { loadImg } from './loadImg';
 
 export enum AssetKind {
     Img

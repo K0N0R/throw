@@ -1,15 +1,16 @@
+import { goal, map } from './../../shared/callibration';
+import { getOffset } from './../../shared/offset';
+import { Team } from './../../shared/team';
+import { Keys } from './../../shared/keys';
+
 import { Canvas } from './canvas';
-import { KeysHandler, Keys } from './keysHandler';
+import { KeysHandler } from './keysHandler';
 import { Player } from './player';
 import { Map } from './map';
 import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
-import { goal, map } from './callibration';
-import { getOffset } from './../utils/offset';
-import { Team } from './team';
-
 
 export class Game {
     private socket: SocketIOClient.Socket;
@@ -85,7 +86,7 @@ export class Game {
             };
         });
     }
-
+    
     private initCanvas(): void {
         Canvas.createCanvas();
     }
@@ -102,12 +103,8 @@ export class Game {
     }
 
     public run() {
-        this.logic();
-        this.render();
-    }
-
-    private logic(): void {
         KeysHandler.reactOnPressChange();
+        this.render();
     }
 
     public render(): void {

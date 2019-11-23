@@ -1,7 +1,8 @@
 import * as p2 from 'p2';
 
+import { ball } from './../../shared/callibration';
+
 import { BALL, MAP, GOAL, PLAYER, GOAL_POST } from './collision';
-import { ball } from './callibration';
 
 export class Ball  {
     public body: p2.Body;

@@ -1,4 +1,4 @@
-import { canvas } from './callibration'; 
+import { canvas } from './../../shared/callibration'; 
 
 export class Canvas {
 
@@ -16,7 +16,10 @@ export class Canvas {
         this._element = document.createElement('canvas');  
         this._element.width = canvas.size.width;
         this._element.height = canvas.size.height;
-        this._ctx = this.element.getContext("2d");
+        const ctx = this.element.getContext("2d");
+        if (ctx !== null) {
+            this._ctx = ctx;
+        }
         document.body.appendChild(this.element);
     }
 

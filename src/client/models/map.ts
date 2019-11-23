@@ -1,8 +1,9 @@
-import { IPos } from './../utils/model';
-import { getOffset } from './../utils/offset';
-import { getCornerPoints } from './../utils/vertices';
+import { IPos } from './../../shared/model';
+import { getOffset } from './../../shared/offset';
+import { getCornerPoints } from './../../shared/vertices';
+import { map, goal, canvas } from './../../shared/callibration';
+
 import { Canvas } from './canvas';
-import { map, goal, canvas } from './callibration';
 
 export class Map {
     public pos: IPos;
