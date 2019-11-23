@@ -1,9 +1,7 @@
-export const canvas_config = {
-    size: { width: 1600, height: 1000 }
-}
+
 
 export const ball_config = {
-    radius: 20,
+    radius: 17.5,
     mass: 1,
     damping: 0.1
 }
@@ -15,10 +13,10 @@ export const ball_style = {
 }
 
 export const goal_config = {
-    size: { height: 200, width: 50 },
-    postRadius: 15,
+    size: { height: 220, width: 50 },
+    postRadius: 13,
     cornerRadius: 30,
-    cornerPointsAmount: 5,
+    cornerPointsAmount: 10,
 }
 
 export const goal_style = {
@@ -29,14 +27,18 @@ export const goal_style = {
     postLineWidth: 3
 }
 
-const mapSize = { height: 1000, width: 1600 };
+const mapSize = { height: 586, width: 1280 };
 const mapBorder = 2*goal_config.size.width; 
 export const map_config = {
     size: { height: mapSize.height, width: mapSize.width },
     outerSize: { height: mapSize.height + 2*mapBorder, width: mapSize.width + 2*mapBorder},
     cornerPointsAmount: 16,
-    cornerRadius: mapSize.width / 12,
+    cornerRadius: mapSize.width / 10,
     border: mapBorder
+}
+
+export const canvas_config = {
+    size: { width: mapSize.width + 2 * mapBorder, height: mapSize.height + 2*mapBorder }
 }
 
 export const map_style = {

@@ -7,7 +7,7 @@ import { Map } from './map';
 import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
-import { goal_config, map_config, player_config, ball_config } from './../../shared/callibration';
+import { goal_config, map_config, player_config, ball_config, canvas_config } from './../../shared/callibration';
 import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
@@ -115,13 +115,13 @@ export class Game {
         const rightTeam = this.players.filter(player => player.team === Team.Right);
         if (leftTeam.length > rightTeam.length) {
             // assing to right
-            newPlayer.body.position[0] = map_config.size.width - player_config.radius;
-            newPlayer.body.position[1] = map_config.size.height / 2
+            newPlayer.body.position[0] = canvas_config.size.width - map_config.border;
+            newPlayer.body.position[1] = canvas_config.size.height / 2;
             newPlayer.team = Team.Right;
         } else {
             // assign to left
-            newPlayer.body.position[0] = player_config.radius;
-            newPlayer.body.position[1] = map_config.size.height / 2;
+            newPlayer.body.position[0] = map_config.border;
+            newPlayer.body.position[1] = canvas_config.size.height / 2;
             newPlayer.team = Team.Left;
         }
     }
