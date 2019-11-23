@@ -67,5 +67,3 @@ export const player_style = {
     sprintingCooldownPlusRadius: 10,
     sprintingCooldownFillStyle: '#80FFFFFF'
 }
-
-// mozna tez tutaj dodać analogicznie player_style...

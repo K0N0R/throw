@@ -6,6 +6,3 @@ const socket = io({
 });
 
 new Game(socket);
-
-
-
