@@ -7,14 +7,14 @@ import { Map } from './map';
 import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
-import { goal_config, map_config, player_config, ball_config, canvas_config } from './../../shared/callibration';
+import { goal_config, map_config, player_config, ball_config, canvas_config, game_config } from './../../shared/callibration';
 import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
 import { Keys } from './../../shared/keys';
 import { isContact } from './../../shared/body';
-import { IPlayerDispose, IPlayerAdd, IPlayerInit, IPlayerKey, IPlayerMove, IPlayerShooting, IBallMove, IScoreLeft, IScoreRight } from './../../shared/events';
+import { IPlayerDispose, IPlayerAdd, IPlayerInit, IPlayerKey, IPlayerMove, IPlayerShooting, IBallMove, IScoreLeft, IScoreRight, IWorldReset } from './../../shared/events';
 
 export class Game {
     private io: io.Server;
@@ -39,7 +39,8 @@ export class Game {
     private ballEvents: (() => void)[] = [];
     private playerEvents: { player: Player, events: Function[] }[] = [];
 
-    private score = { left: 0, right: 0};
+    private score = { left: 0, right: 0 };
+    private reseting: boolean;
 
     constructor(io: io.Server, intervalTime: number) {
         this.step = {
@@ -195,11 +196,9 @@ export class Game {
 
         this.world.addBody(this.leftGoal.borderBody);
         this.world.addBody(this.leftGoal.postBody);
-        this.world.addBody(this.leftGoal.scoreBody);
 
         this.world.addBody(this.rightGoal.borderBody);
         this.world.addBody(this.rightGoal.postBody);
-        this.world.addBody(this.rightGoal.scoreBody);
         this.world.addBody(this.ball.body);
 
         this.initWorldEvents();
@@ -235,18 +234,59 @@ export class Game {
             if (isMoving(this.ball.body)) {
                 this.io.emit('ball::move', { position: this.ball.body.position } as IBallMove);
             }
+            if (this.ball.body.position[0] < this.map.pos.x && !this.reseting) {
+                this.io.emit('score::right', { right: ++this.score.right } as IScoreRight);
+                this.reseting = true;
+                setTimeout(() => {
+                    this.reset();
+                }, game_config.goalResetTimeout);
+            }
+            if (this.ball.body.position[0] > this.map.pos.x + map_config.size.width && !this.reseting) {
+                this.io.emit('score::left', { left: ++this.score.left } as IScoreLeft);
+                this.reseting = true;
+                setTimeout(() => {
+                    this.reset();
+                }, game_config.goalResetTimeout);
+            }
         })
     }
 
-    private initWorldEvents(): void {
-        this.world.on('beginContact', evt => {
-            if (isContact(evt, this.ball.body, this.leftGoal.scoreBody)) {
-                this.io.emit('score::right', { right: ++this.score.right} as IScoreRight);
-            }
-            if (isContact(evt, this.ball.body, this.rightGoal.scoreBody)) {
-                this.io.emit('score::left', { left: ++this.score.left } as IScoreLeft);
-            }
+    private initWorldEvents(): void {}
+
+    private reset(): void {
+        // ball reset
+        this.ball.body.position[0] = this.map.pos.x + map_config.size.width / 2;
+        this.ball.body.position[1] = this.map.pos.y + map_config.size.height / 2;
+        this.ball.body.velocity[0] = 0;
+        this.ball.body.velocity[1] = 0;
+
+        // players reset
+        const leftTeam = this.players.filter(player => player.team === Team.Left);
+        const leftTeamX = this.map.pos.x + goal_config.size.width + player_config.radius;
+        const leftTeamY = this.map.pos.y + map_config.size.height/2 - ((leftTeam.length -1) * (player_config.radius*2 + 10))/2
+        leftTeam.forEach((player, idx) => {
+            player.body.position[0] = leftTeamX;
+            player.body.position[1] = leftTeamY + (player_config.radius*2 + 10) * idx;
         });
+        const rightTeam = this.players.filter(player => player.team === Team.Right);
+        const rightTeamX = this.map.pos.x + map_config.size.width - goal_config.size.width - player_config.radius;
+        const rightTeamY = this.map.pos.y + map_config.size.height/2 - ((rightTeam.length -1) * (player_config.radius*2 + 10))/2
+        rightTeam.forEach((player, idx) => {
+            player.body.position[0] = rightTeamX;
+            player.body.position[1] = rightTeamY + (player_config.radius*2 + 10) * idx;
+        });
+
+        // event
+        this.io.emit('world::reset', ({
+            players: this.players.map(player => ({
+                socketId: player.socket.id,
+                position: player.body.position,
+            })),
+            ball: {
+                position: this.ball.body.position,
+            },
+        }) as IWorldReset);
+        this.reseting = false;
     }
 
     public run(time: number) {

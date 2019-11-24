@@ -16,7 +16,6 @@ export class LeftGoal {
 
     private topPostShape: p2.Circle;
     private bottomPostShape: p2.Circle;
-    private scoreShape: p2.Box;
 
     public constructor(pos: IPos, material: p2.Material) {
         this.pos = { x: pos.x, y: pos.y };
@@ -51,19 +50,6 @@ export class LeftGoal {
         });
         this.bottomPostShape.material = material;
         this.postBody.addShape(this.bottomPostShape, [goal_config.size.width, goal_config.size.height]);
-
-        this.scoreBody = new p2.Body({
-            position: [this.pos.x, this.pos.y],
-            mass: 0.1,
-        });
-
-        this.scoreShape = new p2.Box({
-            width: goal_config.size.width - ball_config.radius,
-            height: goal_config.size.height,
-            collisionGroup: GOAL_SCORE,
-            collisionMask: BALL
-        });
-        this.scoreBody.addShape(this.scoreShape, [(goal_config.size.width - ball_config.radius)/2, goal_config.size.height/2 ]);
     }
 
     private getPoints(pos = { x: 0, y: 0 }): ([number, number])[] {

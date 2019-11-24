@@ -4,13 +4,12 @@ import path from 'path';
 import socketIO from 'socket.io';
 
 import { Game } from './models/game';
+import { host, port } from './../shared/serverConfig';
 
 const app = express();
 const httpServer = http.createServer(app);
 const io = socketIO(httpServer);
 
-const PORT = 3000;
-const HOST = 'localhost';
 const ENV = process.argv.find((arg) => arg.includes('dist')) ? 'production' : 'development';
 const BASE_PATH = (ENV === 'production' ? __dirname + '/../' : __dirname + '/../../dist');
 
@@ -21,8 +20,8 @@ app.get('/', (_req: any, res: any) => {
 
 app.use(express.static(path.resolve(BASE_PATH + '/client')));
 
-httpServer.listen(PORT, HOST);
-console.log(`Running on http://${HOST}:${PORT}`);
+httpServer.listen(port, host);
+console.log(`Running on http://${host}:${port}`);
 
 // ---------------- GAME
 const interval = 4;

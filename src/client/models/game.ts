@@ -1,7 +1,7 @@
 import { goal_config, map_config, player_config } from './../../shared/callibration';
 import { getOffset } from './../../shared/offset';
 import { Keys } from './../../shared/keys';
-import { IPlayerInit, IPlayerAdd, IPlayerDispose, IPlayerKey, IPlayerShooting, IPlayerMove, IBallMove, IScoreLeft, IScoreRight } from './../../shared/events';
+import { IPlayerInit, IPlayerAdd, IPlayerDispose, IPlayerKey, IPlayerShooting, IPlayerMove, IBallMove, IScoreLeft, IScoreRight, IWorldReset } from './../../shared/events';
 
 import { Canvas } from './canvas';
 import { KeysHandler } from './keysHandler';
@@ -36,6 +36,17 @@ export class Game {
     }
 
     private initEvents(): void {
+        this.socket.on('world::reset', (data: IWorldReset) => {
+            this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
+            data.players.forEach(dataPlayer => {
+                const player = this.players.find(player => player.socketId === dataPlayer.socketId);
+                if (player) {
+                    player.pos.x = dataPlayer.position[0];
+                    player.pos.y = dataPlayer.position[1];
+                } 
+            });
+        });
+
         this.socket.on('player::init', (data: IPlayerInit) => {
             this.players.push(...data.players.map(p => new Player({ x: p.position[0], y: p.position[1] }, p.socketId, p.team)));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };

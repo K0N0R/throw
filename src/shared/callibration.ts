@@ -1,8 +1,11 @@
 
+export const game_config = {
+    goalResetTimeout: 3000,
+}
 
 export const ball_config = {
     radius: 17.5,
-    mass: 1,
+    mass: 2,
     damping: 0.1
 }
 

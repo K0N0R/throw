@@ -52,3 +52,15 @@ export interface IScoreRight {
     right: number;
 }
 //#endregion
+
+//#region WORLD
+export interface IWorldReset {
+    players: {
+        socketId: string;
+        position: [number, number];
+    }[];
+    ball: {
+        position: [number, number];
+    };
+}
+//#endregion
