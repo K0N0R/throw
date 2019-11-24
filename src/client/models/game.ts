@@ -1,7 +1,7 @@
 import { goal_config, map_config, player_config } from './../../shared/callibration';
 import { getOffset } from './../../shared/offset';
-import { Team } from './../../shared/team';
 import { Keys } from './../../shared/keys';
+import { IPlayerInit, IPlayerAdd, IPlayerDispose, IPlayerKey, IPlayerShooting, IPlayerMove, IBallMove, IScoreLeft, IScoreRight } from './../../shared/events';
 
 import { Canvas } from './canvas';
 import { KeysHandler } from './keysHandler';
@@ -36,25 +36,25 @@ export class Game {
     }
 
     private initEvents(): void {
-        this.socket.on('player::init', (data: { players: { socketId: string; team: Team; position: [number, number] }[]; ball: { position: [number, number] }; score: { left: number; right: number } }) => {
+        this.socket.on('player::init', (data: IPlayerInit) => {
             this.players.push(...data.players.map(p => new Player({ x: p.position[0], y: p.position[1] }, p.socketId, p.team)));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
             this.score.updateScore(data.score);
         });
 
-        this.socket.on('player::add', (data: { socketId: string; team: Team; position: [number, number] }) => {
+        this.socket.on('player::add', (data: IPlayerAdd) => {
             this.players.push(new Player({ x: data.position[0], y: data.position[1] }, data.socketId, data.team));
             if(data.socketId === this.socket.id) {
                 Camera.updatePos({ x: data.position[0], y: data.position[1] });
             }
         });
 
-        this.socket.on('player::dispose', (socketId: string) => {
-            const idx = this.players.findIndex(player => player.socketId === socketId);
+        this.socket.on('player::dispose', (data: IPlayerDispose) => {
+            const idx = this.players.findIndex(player => player.socketId === data.socketId);
             this.players.splice(idx, 1);
         });
 
-        this.socket.on('player::move', (data: { socketId: string, position: [number, number] }) => {
+        this.socket.on('player::move', (data: IPlayerMove) => {
             const player = this.players.find(player => player.socketId === data.socketId);
             if (player) {
                 player.pos.x = data.position[0];
@@ -65,7 +65,7 @@ export class Game {
             }
         });
 
-        this.socket.on('player::shooting', (data: { socketId: string, shootingWeak: boolean, shootingStrong: boolean }) => {
+        this.socket.on('player::shooting', (data: IPlayerShooting) => {
             const player = this.players.find(player => player.socketId === data.socketId);
             if (player) {
                 player.shootingStrong = data.shootingStrong !== void 0 ? data.shootingStrong : player.shootingStrong;
@@ -73,16 +73,16 @@ export class Game {
             }
         });
 
-        this.socket.on('ball::move', (data: { position: [number, number] }) => {
+        this.socket.on('ball::move', (data: IBallMove) => {
             this.ball.pos.x = data.position[0];
             this.ball.pos.y = data.position[1];
         });
 
-        this.socket.on('score::right', (data: { left: number; right: number }) => {
+        this.socket.on('score::right', (data: IScoreRight) => {
             this.score.updateScore(data);
         });
 
-        this.socket.on('score::left', (data: { left: number; right: number }) => {
+        this.socket.on('score::left', (data: IScoreLeft) => {
             this.score.updateScore(data);
         });
     }
@@ -115,7 +115,7 @@ export class Game {
                 handleShooting(player, pressed);
                 handleSprinting(player, pressed);
             }
-            this.socket.emit('player::key', pressed);
+            this.socket.emit('player::key', pressed as IPlayerKey);
         });
     }
     

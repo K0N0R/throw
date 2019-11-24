@@ -14,6 +14,7 @@ import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
 import { Keys } from './../../shared/keys';
 import { isContact } from './../../shared/body';
+import { IPlayerDispose, IPlayerAdd, IPlayerInit, IPlayerKey, IPlayerMove, IPlayerShooting, IBallMove, IScoreLeft, IScoreRight } from './../../shared/events';
 
 export class Game {
     private io: io.Server;
@@ -66,7 +67,7 @@ export class Game {
                     position: this.ball.body.position,
                 },
                 score: this.score
-            });
+            } as IPlayerInit);
             const newPlayer = new Player(socket, this.mat.player)
             this.players.push(newPlayer);
             this.playerAddToTeam(newPlayer);
@@ -77,14 +78,14 @@ export class Game {
                 socketId: newPlayer.socket.id,
                 team: newPlayer.team,
                 position: newPlayer.body.position,
-            });
+            } as IPlayerAdd);
 
             socket.on('disconnect', () => {
                 this.playerDispose(newPlayer);
-                io.emit('player::dispose', socket.id);
+                io.emit('player::dispose', { socketId: socket.id } as IPlayerDispose);
             });
 
-            socket.on('player::key', (data: { [param: number]: boolean }) => {
+            socket.on('player::key', (data: IPlayerKey) => {
                 for (let key in data) {
                     switch (Number(key)) {
                         case Keys.Up:
@@ -98,11 +99,11 @@ export class Game {
                             break;
                         case Keys.X:
                             newPlayer.shootingStrongHandler(data[key]);
-                            this.io.emit('player::shooting', { socketId: newPlayer.socket.id, shootingStrong: data[key]});
+                            this.io.emit('player::shooting', { socketId: newPlayer.socket.id, shootingStrong: data[key] } as IPlayerShooting);
                             break;
                         case Keys.C:
                             newPlayer.shootingWeakHandler(data[key]);
-                            this.io.emit('player::shooting', { socketId: newPlayer.socket.id, shootingWeak: data[key]});
+                            this.io.emit('player::shooting', { socketId: newPlayer.socket.id, shootingWeak: data[key] } as IPlayerShooting);
                             break;
                     }
                 }
@@ -137,7 +138,7 @@ export class Game {
         };
         playerEvents.events.push(() => {
             if (isMoving(newPlayer.body)) {
-                this.io.emit('player::move', { socketId: newPlayer.socket.id, position: newPlayer.body.position });
+                this.io.emit('player::move', { socketId: newPlayer.socket.id, position: newPlayer.body.position } as IPlayerMove);
             }
         });
         playerEvents.events.push(() => {
@@ -232,7 +233,7 @@ export class Game {
     private initBallEvents(): void {
         this.ballEvents.push(() => {
             if (isMoving(this.ball.body)) {
-                this.io.emit('ball::move', { position: this.ball.body.position });
+                this.io.emit('ball::move', { position: this.ball.body.position } as IBallMove);
             }
         })
     }
@@ -240,10 +241,10 @@ export class Game {
     private initWorldEvents(): void {
         this.world.on('beginContact', evt => {
             if (isContact(evt, this.ball.body, this.leftGoal.scoreBody)) {
-                this.io.emit('score::right', { right: ++this.score.right});
+                this.io.emit('score::right', { right: ++this.score.right} as IScoreRight);
             }
             if (isContact(evt, this.ball.body, this.rightGoal.scoreBody)) {
-                this.io.emit('score::left', { left: ++this.score.left });
+                this.io.emit('score::left', { left: ++this.score.left } as IScoreLeft);
             }
         });
     }
