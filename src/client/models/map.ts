@@ -89,5 +89,21 @@ export class Map {
         Canvas.ctx.strokeStyle = map_style.strokeStyle;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
+
+        Canvas.startDraw();
+            Canvas.ctx.moveTo(this.pos.x, this.pos.y + map_config.size.height/2 - goal_config.size.height/2);
+            Canvas.ctx.lineTo(this.pos.x, this.pos.y + map_config.size.height/2 + goal_config.size.height/2);
+            Canvas.ctx.lineWidth = map_style.lineWidth;
+            Canvas.ctx.strokeStyle = map_style.strokeStyle;
+            Canvas.ctx.stroke();
+        Canvas.stopDraw();
+
+        Canvas.startDraw();
+            Canvas.ctx.moveTo(this.pos.x + map_config.size.width, this.pos.y + map_config.size.height/2 - goal_config.size.height/2);
+            Canvas.ctx.lineTo(this.pos.x + map_config.size.width, this.pos.y + map_config.size.height/2 + goal_config.size.height/2);
+            Canvas.ctx.lineWidth = map_style.lineWidth;
+            Canvas.ctx.strokeStyle = map_style.strokeStyle;
+            Canvas.ctx.stroke();
+        Canvas.stopDraw();
     }
 }

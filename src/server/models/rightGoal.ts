@@ -17,7 +17,7 @@ export class RightGoal {
     private topPostShape: p2.Circle;
     private bottomPostShape: p2.Circle;
 
-    public constructor(pos: IPos, material: p2.Material) {
+    public constructor(pos: IPos, material: p2.Material, postMaterial: p2.Material) {
         this.pos = { x: pos.x, y: pos.y };
 
         this.borderBody = new p2.Body({
@@ -40,7 +40,7 @@ export class RightGoal {
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
-        this.topPostShape.material = material;
+        this.topPostShape.material = postMaterial;
         this.postBody.addShape(this.topPostShape, [0, 0]);
 
         this.bottomPostShape = new p2.Circle({
@@ -48,7 +48,7 @@ export class RightGoal {
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
-        this.bottomPostShape.material = material;
+        this.bottomPostShape.material = postMaterial;
         this.postBody.addShape(this.bottomPostShape, [0, goal_config.size.height]);
     }
 

@@ -147,7 +147,7 @@ export class Game {
                 const playerPos = { x: newPlayer.body.position[0], y: newPlayer.body.position[1] };
                 const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
                 const minDistance = player_config.radius + ball_config.radius;
-                const shootingDistance = 1;
+                const shootingDistance = 0.5;
                 if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
                     const shootingVector = getNormalizedVector(
                         { x: newPlayer.body.position[0], y: newPlayer.body.position[1] },
@@ -178,9 +178,10 @@ export class Game {
     }
 
     private initEntities(): void {
+        this.initMaterials();
         this.map = new Map(this.mat.map);
-        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal);
-        this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal);
+        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal, this.mat.map);
+        this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal, this.mat.map);
         this.ball = new Ball([this.map.pos.x + map_config.size.width / 2, this.map.pos.y + map_config.size.height / 2], this.mat.ball);
     }
 
@@ -188,7 +189,6 @@ export class Game {
         this.world = new p2.World({
             gravity: [0, 0]
         });
-        this.initMaterials();
 
         this.world.addBody(this.map.topBody);
         this.world.addBody(this.map.botBody);
@@ -201,8 +201,14 @@ export class Game {
         this.world.addBody(this.rightGoal.postBody);
         this.world.addBody(this.ball.body);
 
+        this.world.addContactMaterial(this.contactMat.mapBall);
+        this.world.addContactMaterial(this.contactMat.playerBall);
+        this.world.addContactMaterial(this.contactMat.goalBall);
+        this.world.addContactMaterial(this.contactMat.mapPlayer);
+
         this.initWorldEvents();
         this.initBallEvents();
+
     }
 
     private initMaterials(): void {
@@ -215,18 +221,16 @@ export class Game {
         });
         this.contactMat.mapBall = new p2.ContactMaterial(this.mat.map, this.mat.ball, {
             friction: 0,
-            restitution: 0.3
+            restitution: 0.5,
+            stiffness: Number.MAX_VALUE
         });
         this.contactMat.goalBall = new p2.ContactMaterial(this.mat.goal, this.mat.ball, {
-            friction: 2,
+            friction: 0,
+            restitution: -1,
         });
         this.contactMat.playerBall = new p2.ContactMaterial(this.mat.player, this.mat.ball, {
             friction: 1
         });
-        this.world.addContactMaterial(this.contactMat.mapBall);
-        this.world.addContactMaterial(this.contactMat.playerBall);
-        this.world.addContactMaterial(this.contactMat.goalBall);
-        this.world.addContactMaterial(this.contactMat.mapPlayer);
     }
 
     private initBallEvents(): void {

@@ -52,7 +52,7 @@ export class Player {
 
     public sprintHandler(pressed: boolean = false): void {
         if (pressed) {
-            this.movementIncrease = player_config.sprintMaxSpeed;
+            this.movementIncrease = player_config.sprintMovementIncrease;
             this.maxSpeed = player_config.sprintMaxSpeed;
         } else {
             this.movementIncrease = player_config.movementIncrease;

@@ -5,8 +5,8 @@ export const game_config = {
 
 export const ball_config = {
     radius: 17.5,
-    mass: 2,
-    damping: 0.1
+    mass: 1,
+    damping: 0.03
 }
 
 export const ball_style = {
@@ -23,7 +23,7 @@ export const goal_config = {
 }
 
 export const goal_style = {
-    strokeStyle: 'white',
+    strokeStyle: 'black',
     lineWidth: 3,
     postStrokeStyle: 'black',
     postFillStyle: '#D95A62',
@@ -52,13 +52,13 @@ export const map_style = {
 export const player_config = {
     radius: 25,
     mass: 2,
-    damping: 0.5,
-    movementIncrease: 2,
-    sprintMovementIncrease: 4,
-    maxSpeed: 20,
-    sprintMaxSpeed: 36,
-    shootingStrong: 100,
-    shootingWeak: 50,
+    damping: 0.15,
+    movementIncrease: 0.18,
+    sprintMovementIncrease: 0.25,
+    maxSpeed: 15,
+    sprintMaxSpeed: 20,
+    shootingStrong: 25,
+    shootingWeak: 12.5,
     sprinting: 2000,
     sprintingCooldown: 4000
 }
@@ -69,6 +69,6 @@ export const player_style = {
     strokeStyle: 'black',
     shootingStrokeStyle: 'white',
     lineWidth: 3,
-    sprintingCooldownPlusRadius: 10,
+    sprintingCooldownPlusRadius: 6,
     sprintingCooldownFillStyle: '#80FFFFFF'
 }
