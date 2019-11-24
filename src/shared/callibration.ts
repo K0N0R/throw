@@ -37,7 +37,8 @@ export const map_config = {
     outerSize: { height: mapSize.height + 2*mapBorder, width: mapSize.width + 2*mapBorder},
     cornerPointsAmount: 16,
     cornerRadius: mapSize.width / 10,
-    border: mapBorder
+    border: mapBorder,
+    middleRadius: 150
 }
 
 export const canvas_config = {

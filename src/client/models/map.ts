@@ -90,20 +90,40 @@ export class Map {
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
-        Canvas.startDraw();
-            Canvas.ctx.moveTo(this.pos.x, this.pos.y + map_config.size.height/2 - goal_config.size.height/2);
-            Canvas.ctx.lineTo(this.pos.x, this.pos.y + map_config.size.height/2 + goal_config.size.height/2);
-            Canvas.ctx.lineWidth = map_style.lineWidth;
-            Canvas.ctx.strokeStyle = map_style.strokeStyle;
-            Canvas.ctx.stroke();
+        // left goal line
+        Canvas.startDraw(); 
+        Canvas.ctx.moveTo(this.pos.x, this.pos.y + map_config.size.height / 2 - goal_config.size.height / 2);
+        Canvas.ctx.lineTo(this.pos.x, this.pos.y + map_config.size.height / 2 + goal_config.size.height / 2);
+        Canvas.ctx.lineWidth = map_style.lineWidth;
+        Canvas.ctx.strokeStyle = map_style.strokeStyle;
+        Canvas.ctx.stroke();
         Canvas.stopDraw();
 
+        // right goal line
+        Canvas.startDraw(); 
+        Canvas.ctx.moveTo(this.pos.x + map_config.size.width, this.pos.y + map_config.size.height / 2 - goal_config.size.height / 2);
+        Canvas.ctx.lineTo(this.pos.x + map_config.size.width, this.pos.y + map_config.size.height / 2 + goal_config.size.height / 2);
+        Canvas.ctx.lineWidth = map_style.lineWidth;
+        Canvas.ctx.strokeStyle = map_style.strokeStyle;
+        Canvas.ctx.stroke();
+        Canvas.stopDraw();
+
+        // middle line
+        Canvas.startDraw(); 
+        Canvas.ctx.moveTo(this.pos.x + map_config.size.width / 2, this.pos.y);
+        Canvas.ctx.lineTo(this.pos.x + map_config.size.width / 2, this.pos.y + map_config.size.height);
+        Canvas.ctx.lineWidth = map_style.lineWidth;
+        Canvas.ctx.strokeStyle = map_style.strokeStyle;
+        Canvas.ctx.stroke();
+        Canvas.stopDraw();
+
+         // middle circle
+        Canvas.ctx.moveTo(this.pos.x + map_config.size.width / 2, this.pos.y + map_config.size.height / 2);
         Canvas.startDraw();
-            Canvas.ctx.moveTo(this.pos.x + map_config.size.width, this.pos.y + map_config.size.height/2 - goal_config.size.height/2);
-            Canvas.ctx.lineTo(this.pos.x + map_config.size.width, this.pos.y + map_config.size.height/2 + goal_config.size.height/2);
-            Canvas.ctx.lineWidth = map_style.lineWidth;
-            Canvas.ctx.strokeStyle = map_style.strokeStyle;
-            Canvas.ctx.stroke();
+        Canvas.ctx.arc(this.pos.x + map_config.size.width / 2, this.pos.y + map_config.size.height / 2, map_config.middleRadius, 0, Math.PI * 2);
+        Canvas.ctx.lineWidth = map_style.lineWidth;
+        Canvas.ctx.strokeStyle = map_style.strokeStyle;
+        Canvas.ctx.stroke();
         Canvas.stopDraw();
     }
 }
