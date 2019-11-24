@@ -52,7 +52,7 @@ export class LeftGoal {
 
         Canvas.startDraw();
         Canvas.ctx.arc(this.topPostPosition.x, this.topPostPosition.y , goal_config.postRadius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = goal_style.postFillStyle;
+        Canvas.ctx.fillStyle = goal_style.leftPostFillStyle;
         Canvas.ctx.fill();
         Canvas.ctx.lineWidth = goal_style.postLineWidth;
         Canvas.ctx.strokeStyle = goal_style.postStrokeStyle;
@@ -61,7 +61,7 @@ export class LeftGoal {
 
         Canvas.startDraw();
         Canvas.ctx.arc(this.bottomPostPosition.x, this.bottomPostPosition.y, goal_config.postRadius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = goal_style.postFillStyle;
+        Canvas.ctx.fillStyle = goal_style.leftPostFillStyle;
         Canvas.ctx.fill();
         Canvas.ctx.lineWidth = goal_style.postLineWidth;
         Canvas.ctx.strokeStyle = goal_style.postStrokeStyle;

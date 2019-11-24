@@ -225,8 +225,8 @@ export class Game {
             stiffness: Number.MAX_VALUE
         });
         this.contactMat.goalBall = new p2.ContactMaterial(this.mat.goal, this.mat.ball, {
-            friction: 0,
-            restitution: -1,
+            friction: 5,
+            restitution: 0,
         });
         this.contactMat.playerBall = new p2.ContactMaterial(this.mat.player, this.mat.ball, {
             friction: 1

@@ -26,7 +26,8 @@ export const goal_style = {
     strokeStyle: 'black',
     lineWidth: 3,
     postStrokeStyle: 'black',
-    postFillStyle: '#D95A62',
+    leftPostFillStyle: '#ffcccc',
+    rightPostFillStyle: '#ccccff',
     postLineWidth: 3
 }
 
@@ -46,8 +47,8 @@ export const canvas_config = {
 }
 
 export const map_style = {
-    strokeStyle: 'white',
-    lineWidth: 3,
+    strokeStyle: '#c7e6bd',
+    lineWidth: 5,
 }
 
 export const player_config = {
@@ -65,11 +66,12 @@ export const player_config = {
 }
 
 export const player_style = {
-    leftFillStyle: '#8F1218',
-    rightFillStyle: '#4663A0',
+    leftFillStyle: '#e56e56',
+    rightFillStyle: '#5689e5',
     strokeStyle: 'black',
     shootingStrokeStyle: 'white',
     lineWidth: 3,
-    sprintingCooldownPlusRadius: 6,
-    sprintingCooldownFillStyle: '#80FFFFFF'
+    meIndicatorStrokeStyle: '#FFFFFF',
+    meIndicatorLineWidth: 5,
+    meIndicatorRadius: 40
 }

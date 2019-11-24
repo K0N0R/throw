@@ -8,6 +8,7 @@ export class Player {
     public socketId: string;
     public pos: IPos;
     public team: Team;
+    public me: boolean;
 
     public sprinting!: boolean;
     public sprintingCooldown!: boolean;
@@ -15,14 +16,15 @@ export class Player {
     public shootingStrong!: boolean;
     public shootingWeak!: boolean;
 
-    public constructor(pos: IPos, socketId: string, team: Team) {
+    public constructor(pos: IPos, socketId: string, team: Team, me = false) {
         this.pos = pos;
         this.socketId = socketId;
         this.team = team;
+        this.me = me;
     }
 
     public sprintingCooldownTimer() {
-        const animationTick = 100; // the smaller the smoother
+        const animationTick = 50; // the smaller the smoother
         this.sprintingCooldownLeft = player_config.sprintingCooldown; 
         const interval = setInterval(() => {
             this.sprintingCooldownLeft -= animationTick;
@@ -34,12 +36,24 @@ export class Player {
     }
 
     public render(): void {
-        if (this.sprintingCooldown) {
+        if (this.me) {
             Canvas.startDraw();
+            Canvas.ctx.globalAlpha = 0.2;
+            Canvas.ctx.arc(this.pos.x, this.pos.y, player_style.meIndicatorRadius, 0, 2 * Math.PI, true);
+            Canvas.ctx.strokeStyle = player_style.meIndicatorStrokeStyle;
+            Canvas.ctx.lineWidth = player_style.meIndicatorLineWidth;
+            Canvas.ctx.stroke();
+            Canvas.ctx.globalAlpha = 1;
+            Canvas.stopDraw();
+        }
+        if (this.sprintingCooldown) {
             Canvas.ctx.moveTo(this.pos.x, this.pos.y);
-            Canvas.ctx.arc(this.pos.x, this.pos.y, player_config.radius + player_style.sprintingCooldownPlusRadius, -Math.PI/2 + (-2 * Math.PI * this.sprintingCooldownLeft/player_config.sprintingCooldown), -Math.PI/2, false);
-            Canvas.ctx.fillStyle = player_style.sprintingCooldownFillStyle;
-            Canvas.ctx.fill();
+            Canvas.startDraw();
+            Canvas.ctx.globalAlpha = 0.5;
+            Canvas.ctx.arc(this.pos.x, this.pos.y, player_style.meIndicatorRadius, -Math.PI/2 + (-2 * Math.PI * this.sprintingCooldownLeft/player_config.sprintingCooldown), -Math.PI/2, false);
+            Canvas.ctx.lineWidth = player_style.meIndicatorLineWidth;
+            Canvas.ctx.stroke();
+            Canvas.ctx.globalAlpha = 1;
             Canvas.stopDraw();
         }
         Canvas.startDraw();
@@ -50,6 +64,8 @@ export class Player {
         Canvas.ctx.lineWidth = player_style.lineWidth;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
+
+
 
     }
 }

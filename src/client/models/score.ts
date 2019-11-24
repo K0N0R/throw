@@ -22,4 +22,8 @@ export class Score {
             rightScoreEl.innerHTML = `${score.right}`;
         }
     }
+
+    public render(): void {
+    }
+
 }

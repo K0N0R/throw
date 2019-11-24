@@ -54,7 +54,7 @@ export class Game {
         });
 
         this.socket.on('player::add', (data: IPlayerAdd) => {
-            this.players.push(new Player({ x: data.position[0], y: data.position[1] }, data.socketId, data.team));
+            this.players.push(new Player({ x: data.position[0], y: data.position[1] }, data.socketId, data.team, true));
             if(data.socketId === this.socket.id) {
                 Camera.updatePos({ x: data.position[0], y: data.position[1] });
             }
