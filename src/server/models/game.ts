@@ -1,4 +1,4 @@
-import * as p2 from 'p2';
+import p2 from 'p2';
 
 import io from 'socket.io';
 
@@ -13,7 +13,6 @@ import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
 import { Keys } from './../../shared/keys';
-import { isContact } from './../../shared/body';
 import { IPlayerDispose, IPlayerAdd, IPlayerInit, IPlayerKey, IPlayerMove, IPlayerShooting, IBallMove, IScoreLeft, IScoreRight, IWorldReset } from './../../shared/events';
 
 export class Game {
