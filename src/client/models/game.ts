@@ -1,7 +1,7 @@
 import { goal_config, map_config, player_config } from './../../shared/callibration';
 import { getOffset } from './../../shared/offset';
 import { Keys } from './../../shared/keys';
-import { IPlayerInit, IPlayerAdd, IPlayerDispose, IPlayerKey, IPlayerShooting, IPlayerMove, IBallMove, IScoreLeft, IScoreRight, IWorldReset } from './../../shared/events';
+import { IPlayerInit, IPlayerAdd, IPlayerDispose, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset } from './../../shared/events';
 
 import { Canvas } from './canvas';
 import { KeysHandler } from './keysHandler';
@@ -30,8 +30,27 @@ export class Game {
         this.initEntities();
         this.initCamera();
         this.initEvents();
-        this.socket.on('world::postStep', () => {
-            this.run();
+        this.socket.on('world::postStep', (data: IWorldPostStep) => {
+            data.playersMoving.forEach(dataPlayer => {
+                const player = this.players.find(player => player.socketId === dataPlayer.socketId);
+                if (player) {
+                    player.pos.x = dataPlayer.position[0];
+                    player.pos.y = dataPlayer.position[1];
+                    if (dataPlayer.socketId === this.socket.id) {
+                        Camera.updatePos({ ...player.pos });
+                    }
+                }
+            });
+            if (data.ballMoving) {
+                this.ball.pos.x = data.ballMoving.position[0];
+                this.ball.pos.y = data.ballMoving.position[1];
+            }
+            if (data.scoreLeft || data.scoreRight) {
+                this.score.updateScore({
+                    left: data.scoreLeft,
+                    right: data.scoreRight
+                });
+            }
         });
     }
 
@@ -65,43 +84,17 @@ export class Game {
             this.players.splice(idx, 1);
         });
 
-        this.socket.on('player::move', (data: IPlayerMove) => {
-            const player = this.players.find(player => player.socketId === data.socketId);
-            if (player) {
-                player.pos.x = data.position[0];
-                player.pos.y = data.position[1];
-                if (data.socketId === this.socket.id) {
-                    Camera.updatePos({ ...player.pos });
-                }
-            }
-        });
-
         this.socket.on('player::shooting', (data: IPlayerShooting) => {
             const player = this.players.find(player => player.socketId === data.socketId);
             if (player) {
-                player.shootingStrong = data.shootingStrong !== void 0 ? data.shootingStrong : player.shootingStrong;
-                player.shootingWeak = data.shootingWeak !== void 0 ? data.shootingWeak : player.shootingWeak;
+                player.shooting = data.shootingStrong !== void 0 ? data.shootingStrong : player.shooting;
             }
-        });
-
-        this.socket.on('ball::move', (data: IBallMove) => {
-            this.ball.pos.x = data.position[0];
-            this.ball.pos.y = data.position[1];
-        });
-
-        this.socket.on('score::right', (data: IScoreRight) => {
-            this.score.updateScore(data);
-        });
-
-        this.socket.on('score::left', (data: IScoreLeft) => {
-            this.score.updateScore(data);
         });
     }
 
     private initHandlers(): void {
         const handleShooting = (player: Player, pressed: { [param: number]: boolean }) => {
-            player.shootingWeak = pressed[Keys.C];
-            player.shootingStrong = pressed[Keys.X];
+            player.shooting = pressed[Keys.X];
         };
         const handleSprinting = (player: Player, pressed: { [param: number]: boolean }) => {
             if (player.sprintingCooldown) {

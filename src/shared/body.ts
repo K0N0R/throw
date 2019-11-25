@@ -4,5 +4,5 @@ export function isContact(evt: { bodyA: p2.Body, bodyB: p2.Body}, bodyA:p2.Body,
 }
 
 export function isMoving(body: p2.Body): boolean {
-    return Math.abs(body.velocity[0]) > 0.01 || Math.abs(body.velocity[1]) > 0.01;
+    return Math.abs(body.velocity[0]) > 0.1 || Math.abs(body.velocity[1]) > 0.1;
 }

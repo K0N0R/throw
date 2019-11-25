@@ -27,10 +27,6 @@ export interface IPlayerShooting {
     shootingStrong?: boolean;
 }
 
-export interface IPlayerMove {
-    socketId: string;
-    position: [number, number];
-}
 
 export interface IPlayerDispose {
     socketId: string;
@@ -38,19 +34,7 @@ export interface IPlayerDispose {
 //#endregion
 
 //#region BALL
-export interface IBallMove {
-    position: [number, number];
-}
-//#endregion
 
-//#region SCORE
-export interface IScoreLeft {
-    left: number;
-}
-
-export interface IScoreRight {
-    right: number;
-}
 //#endregion
 
 //#region WORLD
@@ -62,5 +46,15 @@ export interface IWorldReset {
     ball: {
         position: [number, number];
     };
+}
+
+export interface IWorldPostStep {
+    playersMoving: {
+        socketId: string;
+        position: [number, number];
+    }[];
+    ballMoving: { position: [number, number] } | null;
+    scoreRight: number | null;
+    scoreLeft: number | null;
 }
 //#endregion

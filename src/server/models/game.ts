@@ -13,7 +13,7 @@ import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
 import { Keys } from './../../shared/keys';
-import { IPlayerDispose, IPlayerAdd, IPlayerInit, IPlayerKey, IPlayerMove, IPlayerShooting, IBallMove, IScoreLeft, IScoreRight, IWorldReset } from './../../shared/events';
+import { IPlayerDispose, IPlayerAdd, IPlayerInit, IPlayerKey, IPlayerShooting, IWorldReset } from './../../shared/events';
 
 export class Game {
     private io: io.Server;
@@ -34,10 +34,6 @@ export class Game {
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
 
-    private worldEvents: (() => void)[] = [];
-    private ballEvents: (() => void)[] = [];
-    private playerEvents: { player: Player, events: Function[] }[] = [];
-
     private score = { left: 0, right: 0 };
     private reseting: boolean;
 
@@ -45,7 +41,7 @@ export class Game {
         this.step = {
             fixedTime: intervalTime / 60,
             lastTime: 0,
-            maxSteps: 10,
+            maxSteps: 100,
         };
 
         this.initEntities();
@@ -72,7 +68,6 @@ export class Game {
             this.players.push(newPlayer);
             this.playerAddToTeam(newPlayer);
             this.playerAddToWorld(newPlayer);
-            this.playerAddEvents(newPlayer);
 
             io.emit('player::add', {
                 socketId: newPlayer.socket.id,
@@ -101,10 +96,6 @@ export class Game {
                             newPlayer.shootingStrongHandler(data[key]);
                             this.io.emit('player::shooting', { socketId: newPlayer.socket.id, shootingStrong: data[key] } as IPlayerShooting);
                             break;
-                        case Keys.C:
-                            newPlayer.shootingWeakHandler(data[key]);
-                            this.io.emit('player::shooting', { socketId: newPlayer.socket.id, shootingWeak: data[key] } as IPlayerShooting);
-                            break;
                     }
                 }
             });
@@ -131,49 +122,10 @@ export class Game {
         this.world.addBody(newPlayer.body);
     }
 
-    private playerAddEvents(newPlayer: Player): void {
-        const playerEvents = {
-            player: newPlayer,
-            events: []
-        };
-        playerEvents.events.push(() => {
-            if (isMoving(newPlayer.body)) {
-                this.io.emit('player::move', { socketId: newPlayer.socket.id, position: newPlayer.body.position } as IPlayerMove);
-            }
-        });
-        playerEvents.events.push(() => {
-            if (newPlayer.shootingStrong || newPlayer.shootingWeak) {
-                const playerPos = { x: newPlayer.body.position[0], y: newPlayer.body.position[1] };
-                const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
-                const minDistance = player_config.radius + ball_config.radius;
-                const shootingDistance = 0.5;
-                if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
-                    const shootingVector = getNormalizedVector(
-                        { x: newPlayer.body.position[0], y: newPlayer.body.position[1] },
-                        { x: this.ball.body.position[0], y: this.ball.body.position[1] }
-                    );
-                    if (newPlayer.shootingStrong && newPlayer.shootingWeak) {
-                        this.ball.body.velocity[0] += shootingVector.x * (player_config.shootingStrong + player_config.shootingWeak) / 2;
-                        this.ball.body.velocity[1] += shootingVector.y * (player_config.shootingStrong + player_config.shootingWeak) / 2;
-                    } else if (newPlayer.shootingStrong) {
-                        this.ball.body.velocity[0] += shootingVector.x * player_config.shootingStrong;
-                        this.ball.body.velocity[1] += shootingVector.y * player_config.shootingStrong;
-                    } else if (newPlayer.shootingWeak) {
-                        this.ball.body.velocity[0] += shootingVector.x * player_config.shootingWeak;
-                        this.ball.body.velocity[1] += shootingVector.y * player_config.shootingWeak;
-                    }
-                }
-            }
-        });
-        this.playerEvents.push(playerEvents);
-    }
-
     private playerDispose(oldPlayer: Player): void {
         this.world.removeBody(oldPlayer.body);
         const playerIdx = this.players.indexOf(oldPlayer);
-        this.players.splice(playerIdx, 1)
-        const eventIdx = this.playerEvents.findIndex(playerEvent => playerEvent.player === oldPlayer);
-        this.playerEvents.splice(eventIdx, 1);
+        this.players.splice(playerIdx, 1);
     }
 
     private initEntities(): void {
@@ -204,10 +156,6 @@ export class Game {
         this.world.addContactMaterial(this.contactMat.playerBall);
         this.world.addContactMaterial(this.contactMat.goalBall);
         this.world.addContactMaterial(this.contactMat.mapPlayer);
-
-        this.initWorldEvents();
-        this.initBallEvents();
-
     }
 
     private initMaterials(): void {
@@ -231,30 +179,6 @@ export class Game {
             friction: 1
         });
     }
-
-    private initBallEvents(): void {
-        this.ballEvents.push(() => {
-            if (isMoving(this.ball.body)) {
-                this.io.emit('ball::move', { position: this.ball.body.position } as IBallMove);
-            }
-            if (this.ball.body.position[0] < this.map.pos.x && !this.reseting) {
-                this.io.emit('score::right', { right: ++this.score.right } as IScoreRight);
-                this.reseting = true;
-                setTimeout(() => {
-                    this.reset();
-                }, game_config.goalResetTimeout);
-            }
-            if (this.ball.body.position[0] > this.map.pos.x + map_config.size.width && !this.reseting) {
-                this.io.emit('score::left', { left: ++this.score.left } as IScoreLeft);
-                this.reseting = true;
-                setTimeout(() => {
-                    this.reset();
-                }, game_config.goalResetTimeout);
-            }
-        })
-    }
-
-    private initWorldEvents(): void {}
 
     private reset(): void {
         // ball reset
@@ -292,29 +216,58 @@ export class Game {
         this.reseting = false;
     }
 
-    public run(time: number) {
-        this.worldStep(time);
+    public run() {
+        this.worldStep();
 
-        if (this.worldEvents.length) {
-            this.worldEvents.forEach(event => event());
-        }
-        this.worldEvents.length = 0;
+        this.players
+            .filter((player) => player.shooting)
+            .forEach(player => {
+                const playerPos = { x: player.body.position[0], y: player.body.position[1] };
+                const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
+                const minDistance = player_config.radius + ball_config.radius;
+                const shootingDistance = 1;
+                if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
+                    const shootingVector = getNormalizedVector(
+                        { x: player.body.position[0], y: player.body.position[1] },
+                        { x: this.ball.body.position[0], y: this.ball.body.position[1] }
+                    );
+                    this.ball.body.velocity[0] += shootingVector.x * player_config.shooting;
+                    this.ball.body.velocity[1] += shootingVector.y * player_config.shooting;
 
-        if (this.playerEvents.length) {
-            this.playerEvents.forEach(playerEvent => {
-                playerEvent.events.forEach(event => event());
+                }
             });
+
+        const playersMoving = this.players
+            .filter(player => isMoving(player.body))
+            .map(player => ({ socketId: player.socket.id, position: player.body.position }));
+
+        const ballMoving = isMoving(this.ball.body)
+            ? { position: this.ball.body.position }
+            : null;
+
+        const scoreRight = !this.reseting && this.ball.body.position[0] < this.map.pos.x
+            ? ++this.score.right
+            : null;
+
+        const scoreLeft = !this.reseting && this.ball.body.position[0] > this.map.pos.x + map_config.size.width
+            ? ++this.score.left
+            : null;
+
+        if (scoreRight !== null || scoreLeft !== null) {
+            this.reseting = true;
+            setTimeout(() => {
+                this.reset();
+            }, game_config.goalResetTimeout);
         }
-        this.ballEvents.forEach(event => event());
-        this.io.emit('world::postStep');
+
+        this.io.emit('world::postStep', { playersMoving: playersMoving, ballMoving: ballMoving, scoreRight: scoreRight, scoreLeft: scoreLeft });
+        console.log({ playersMoving: playersMoving, ballMoving: ballMoving, scoreRight: scoreRight, scoreLeft: scoreLeft });
     }
 
-    private worldStep(time: number): void {
+    private worldStep(): void {
 
         // Move bodies forward in time
-        this.world.step(this.step.fixedTime) //deltaTime, this.step.maxSteps);
-
-        this.step.lastTime = time;
+        this.world.step(this.step.fixedTime);
     }
 
 }

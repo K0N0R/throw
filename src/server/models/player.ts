@@ -13,9 +13,7 @@ export class Player {
     public body!: p2.Body;
     private shape!: p2.Circle;
 
-        private keysPressed: { [param: number]: boolean };
-    public shootingStrong!: boolean;
-    public shootingWeak!: boolean;
+    public shooting!: boolean;
 
     public movementIncrease!: number;
     public maxSpeed!: number;
@@ -43,11 +41,7 @@ export class Player {
     }
 
     public shootingStrongHandler(pressed: boolean): void {
-        this.shootingStrong = pressed;
-    }
-
-    public shootingWeakHandler(pressed: boolean): void {
-        this.shootingWeak = pressed;
+        this.shooting = pressed;
     }
 
     public sprintHandler(pressed: boolean = false): void {

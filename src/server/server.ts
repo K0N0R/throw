@@ -13,7 +13,6 @@ const io = socketIO(httpServer);
 const ENV = process.argv.find((arg) => arg.includes('dist')) ? 'production' : 'development';
 const BASE_PATH = (ENV === 'production' ? __dirname + '/../' : __dirname + '/../../dist');
 
-
 app.get('/', (_req: any, res: any) => {
     res.sendFile(path.resolve(BASE_PATH + '/client/index.html'));
 });
@@ -26,7 +25,11 @@ console.log(`Running on http://${host}:${port}`);
 // ---------------- GAME
 const interval = 4;
 const game = new Game(io, interval);
-setInterval((time: number) => {
-    game.run(time);
+setInterval(() => {
+    game.run();
 }, interval);
+
+
+
+
 

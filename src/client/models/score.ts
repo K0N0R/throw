@@ -3,22 +3,22 @@ export class Score {
     public right!: number;
     constructor() {}
 
-    public updateScore(score: {left?: number; right?: number}): void {
-        if (score.left !== void 0) {
+    public updateScore(score: { left: number | null; right: number | null}): void {
+        if (score.left !== null) {
             this.left = score.left;
         }
 
-        if (score.right !== void 0) {
+        if (score.right !== null) {
             this.right = score.right;
         }
 
         const leftScoreEl = document.getElementById('score-left');
-        if (leftScoreEl && score.left !== void 0) {
+        if (leftScoreEl && score.left !== null) {
             leftScoreEl.innerHTML = `${score.left}`;
         }
         
         const rightScoreEl = document.getElementById('score-right');
-        if (rightScoreEl && score.right !== void 0) {
+        if (rightScoreEl && score.right !== null) {
             rightScoreEl.innerHTML = `${score.right}`;
         }
     }
