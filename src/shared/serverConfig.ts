@@ -1,2 +1,2 @@
-export const host = 'localhost';
-export const port = 3000;
+export const host = '51.83.128.137';
+export const port = 80;

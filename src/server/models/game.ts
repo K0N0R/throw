@@ -272,7 +272,6 @@ export class Game {
         }
         const data: IWorldPostStep = { playersToAdd: playersToAdd, playersToRemove: playersToRemove, playersMoving: playersMoving, ballMoving: ballMoving, scoreRight: scoreRight, scoreLeft: scoreLeft };
         this.io.emit('world::postStep', data);
-        console.log(data);
     }
 
     private worldStep(): void {
