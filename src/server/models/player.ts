@@ -9,7 +9,7 @@ import { Team } from './../../shared/team';
 import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
 
 export class Player {
-    public socket: io.Socket;
+    public socketId: string;
     public body!: p2.Body;
     private shape!: p2.Circle;
 
@@ -19,9 +19,9 @@ export class Player {
     public maxSpeed!: number;
     public team: Team
 
-    public constructor(socket: io.Socket, material: p2.Material) {
+    public constructor(socketId: string, material: p2.Material) {
 
-        this.socket = socket;
+        this.socketId = socketId;
         let options: p2.BodyOptions = {
             mass: player_config.mass,
             position: [0, 0],

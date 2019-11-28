@@ -13,7 +13,7 @@ import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
 import { Keys } from './../../shared/keys';
-import { IPlayerDispose, IPlayerAdd, IPlayerInit, IPlayerKey, IPlayerShooting, IWorldReset } from './../../shared/events';
+import { IPlayerDispose, IPlayerAdd, IPlayerInit, IPlayerKey, IPlayerShooting, IWorldReset, IWorldPostStep } from './../../shared/events';
 
 export class Game {
     private io: io.Server;
@@ -30,6 +30,8 @@ export class Game {
 
     private map!: Map;
     private players: Player[] = [];
+    private playersToAdd: Player[] = [];
+    private playersToRemove: Player[] = [];
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
@@ -55,7 +57,7 @@ export class Game {
         io.on('connection', (socket) => {
             socket.emit('player::init', {
                 players: this.players.map(player => ({
-                    socketId: player.socket.id,
+                    socketId: player.socketId,
                     team: player.team,
                     position: player.body.position,
                 })),
@@ -64,20 +66,11 @@ export class Game {
                 },
                 score: this.score
             } as IPlayerInit);
-            const newPlayer = new Player(socket, this.mat.player)
-            this.players.push(newPlayer);
-            this.playerAddToTeam(newPlayer);
-            this.playerAddToWorld(newPlayer);
-
-            io.emit('player::add', {
-                socketId: newPlayer.socket.id,
-                team: newPlayer.team,
-                position: newPlayer.body.position,
-            } as IPlayerAdd);
+            const newPlayer = new Player(socket.id, this.mat.player)
+            this.playersToAdd.push(newPlayer);
 
             socket.on('disconnect', () => {
-                this.playerDispose(newPlayer);
-                io.emit('player::dispose', { socketId: socket.id } as IPlayerDispose);
+                this.playersToRemove.push(newPlayer);
             });
 
             socket.on('player::key', (data: IPlayerKey) => {
@@ -94,7 +87,7 @@ export class Game {
                             break;
                         case Keys.X:
                             newPlayer.shootingStrongHandler(data[key]);
-                            this.io.emit('player::shooting', { socketId: newPlayer.socket.id, shootingStrong: data[key] } as IPlayerShooting);
+                            this.io.emit('player::shooting', { socketId: newPlayer.socketId, shooting: data[key] } as IPlayerShooting);
                             break;
                     }
                 }
@@ -190,23 +183,23 @@ export class Game {
         // players reset
         const leftTeam = this.players.filter(player => player.team === Team.Left);
         const leftTeamX = this.map.pos.x + goal_config.size.width + player_config.radius;
-        const leftTeamY = this.map.pos.y + map_config.size.height/2 - ((leftTeam.length -1) * (player_config.radius*2 + 10))/2
+        const leftTeamY = this.map.pos.y + map_config.size.height / 2 - ((leftTeam.length - 1) * (player_config.radius * 2 + 10)) / 2
         leftTeam.forEach((player, idx) => {
             player.body.position[0] = leftTeamX;
-            player.body.position[1] = leftTeamY + (player_config.radius*2 + 10) * idx;
+            player.body.position[1] = leftTeamY + (player_config.radius * 2 + 10) * idx;
         });
         const rightTeam = this.players.filter(player => player.team === Team.Right);
         const rightTeamX = this.map.pos.x + map_config.size.width - goal_config.size.width - player_config.radius;
-        const rightTeamY = this.map.pos.y + map_config.size.height/2 - ((rightTeam.length -1) * (player_config.radius*2 + 10))/2
+        const rightTeamY = this.map.pos.y + map_config.size.height / 2 - ((rightTeam.length - 1) * (player_config.radius * 2 + 10)) / 2
         rightTeam.forEach((player, idx) => {
             player.body.position[0] = rightTeamX;
-            player.body.position[1] = rightTeamY + (player_config.radius*2 + 10) * idx;
+            player.body.position[1] = rightTeamY + (player_config.radius * 2 + 10) * idx;
         });
 
         // event
         this.io.emit('world::reset', ({
             players: this.players.map(player => ({
-                socketId: player.socket.id,
+                socketId: player.socketId,
                 position: player.body.position,
             })),
             ball: {
@@ -218,6 +211,24 @@ export class Game {
 
     public run() {
         this.worldStep();
+
+        const playersToAdd = this.playersToAdd.map(player => {
+            this.players.push(player);
+            this.playerAddToTeam(player);
+            this.playerAddToWorld(player);
+            return {
+                socketId: player.socketId,
+                team: player.team,
+                position: player.body.position,
+            };
+        });
+        this.playersToAdd.length = 0;
+
+        const playersToRemove = this.playersToRemove.map(player => {
+            this.playerDispose(player);
+            return player.socketId;
+        })
+        this.playersToRemove.length = 0;
 
         this.players
             .filter((player) => player.shooting)
@@ -239,7 +250,7 @@ export class Game {
 
         const playersMoving = this.players
             .filter(player => isMoving(player.body))
-            .map(player => ({ socketId: player.socket.id, position: player.body.position }));
+            .map(player => ({ socketId: player.socketId, position: player.body.position }));
 
         const ballMoving = isMoving(this.ball.body)
             ? { position: this.ball.body.position }
@@ -259,9 +270,9 @@ export class Game {
                 this.reset();
             }, game_config.goalResetTimeout);
         }
-
-        this.io.emit('world::postStep', { playersMoving: playersMoving, ballMoving: ballMoving, scoreRight: scoreRight, scoreLeft: scoreLeft });
-        console.log({ playersMoving: playersMoving, ballMoving: ballMoving, scoreRight: scoreRight, scoreLeft: scoreLeft });
+        const data: IWorldPostStep = { playersToAdd: playersToAdd, playersToRemove: playersToRemove, playersMoving: playersMoving, ballMoving: ballMoving, scoreRight: scoreRight, scoreLeft: scoreLeft };
+        this.io.emit('world::postStep', data);
+        console.log(data);
     }
 
     private worldStep(): void {

@@ -23,8 +23,7 @@ export interface IPlayerKey {
 
 export interface IPlayerShooting {
     socketId: string;
-    shootingWeak?: boolean;
-    shootingStrong?: boolean;
+    shooting: boolean;
 }
 
 
@@ -49,6 +48,8 @@ export interface IWorldReset {
 }
 
 export interface IWorldPostStep {
+    playersToAdd: IPlayerAdd[];
+    playersToRemove: string[];
     playersMoving: {
         socketId: string;
         position: [number, number];

@@ -1,7 +1,7 @@
 import { goal_config, map_config, player_config } from './../../shared/callibration';
 import { getOffset } from './../../shared/offset';
 import { Keys } from './../../shared/keys';
-import { IPlayerInit, IPlayerAdd, IPlayerDispose, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset } from './../../shared/events';
+import { IPlayerInit, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset } from './../../shared/events';
 
 import { Canvas } from './canvas';
 import { KeysHandler } from './keysHandler';
@@ -31,6 +31,24 @@ export class Game {
         this.initCamera();
         this.initEvents();
         this.socket.on('world::postStep', (data: IWorldPostStep) => {
+            if (data.playersToAdd) {
+                data.playersToAdd.forEach(player => {
+                    const isMe = player.socketId === this.socket.id;
+                    this.players.push(new Player({ x: player.position[0], y: player.position[1] }, player.socketId, player.team, isMe));
+                    if (isMe) {
+                        Camera.updatePos({ x: player.position[0], y: player.position[1] });
+                    }
+                });
+            }
+
+            if (data.playersToRemove) {
+                data.playersToRemove.forEach(socketId => {
+                    const idx = this.players.findIndex(player => socketId === player.socketId);
+                    if (idx !== -1) {
+                        this.players.splice(idx, 1);
+                    }
+                });
+            }
             data.playersMoving.forEach(dataPlayer => {
                 const player = this.players.find(player => player.socketId === dataPlayer.socketId);
                 if (player) {
@@ -72,22 +90,10 @@ export class Game {
             this.score.updateScore(data.score);
         });
 
-        this.socket.on('player::add', (data: IPlayerAdd) => {
-            this.players.push(new Player({ x: data.position[0], y: data.position[1] }, data.socketId, data.team, data.socketId === this.socket.id));
-            if(data.socketId === this.socket.id) {
-                Camera.updatePos({ x: data.position[0], y: data.position[1] });
-            }
-        });
-
-        this.socket.on('player::dispose', (data: IPlayerDispose) => {
-            const idx = this.players.findIndex(player => player.socketId === data.socketId);
-            this.players.splice(idx, 1);
-        });
-
         this.socket.on('player::shooting', (data: IPlayerShooting) => {
             const player = this.players.find(player => player.socketId === data.socketId);
             if (player) {
-                player.shooting = data.shootingStrong !== void 0 ? data.shootingStrong : player.shooting;
+                player.shooting = data.shooting;
             }
         });
     }
