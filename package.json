@@ -7,7 +7,7 @@
         "start": "parcel ./src/client/index.html",
         "build": "parcel build ./src/client/index.html --out-dir dist/client && cd ./src/server && ts-node-dev --respawn --transpileOnly server.ts && cd ..",
         "prod": "parcel build ./src/client/index.html --out-dir dist/client && tsc -p ./src/server/tsconfig.json",
-        "prod:deploy": "forever --minUptime 10000 --spinSleepTime 10000 start ./dist/server/server/server.js"
+        "prod:deploy": "forever --minUptime 10000 --spinSleepTime 10000 start ./dist/server/server.js"
     },
     "dependencies": {
         "express": "^4.17.1",

@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "outDir": "../../dist/server",
+        "outDir": "../../dist",
         "esModuleInterop": true,
         "lib": [
             "dom",

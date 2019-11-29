@@ -11,10 +11,10 @@ const httpServer = http.createServer(app);
 const io = socketIO(httpServer);
 
 const ENV = process.argv.find((arg) => arg.includes('dist')) ? 'production' : 'development';
-const BASE_PATH = (ENV === 'production' ? __dirname + '/../' : __dirname + '/../../dist');
+const BASE_PATH = (ENV === 'production' ? __dirname + '/../' : __dirname + '/../../dist/');
 
 app.get('/', (_req: any, res: any) => {
-    res.sendFile(path.resolve(BASE_PATH + '/client/index.html'));
+    res.sendFile(path.resolve(BASE_PATH + 'client/index.html'));
 });
 
 app.use(express.static(path.resolve(BASE_PATH + '/client')));
