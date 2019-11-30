@@ -22,6 +22,7 @@ export class Game {
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
     private score!: Score;
+    private keyMap: IPlayerKey = {};
 
     constructor(socket: SocketIOClient.Socket) {
         this.socket = socket;
@@ -122,10 +123,25 @@ export class Game {
         KeysHandler.bindEvents((pressed: { [param: number]: boolean }) => {
             const player = this.players.find(player => player.socketId === this.socket.id);
             if (player) {
+                this.keyMap
                 handleShooting(player, pressed);
                 handleSprinting(player, pressed);
+
+                const deltaKeysMap: IPlayerKey = {};
+                for(const key in pressed) {
+                    if (this.keyMap[key] == void 0) {
+                        deltaKeysMap[key] = pressed[key];
+                    } else if (this.keyMap[key] !== pressed[key]) {
+                        deltaKeysMap[key] = pressed[key];
+                    }
+                }
+                this.keyMap = pressed;
+
+                if (Object.keys(deltaKeysMap).length > 0) {
+                    this.socket.emit('player::key', deltaKeysMap as IPlayerKey);
+                }
             }
-            this.socket.emit('player::key', pressed as IPlayerKey);
+            
         });
     }
     

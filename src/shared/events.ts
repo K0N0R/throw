@@ -26,7 +26,6 @@ export interface IPlayerShooting {
     shooting: boolean;
 }
 
-
 export interface IPlayerDispose {
     socketId: string;
 }
@@ -50,12 +49,12 @@ export interface IWorldReset {
 export interface IWorldPostStep {
     playersToAdd: IPlayerAdd[];
     playersToRemove: string[];
+    scoreRight: number | null;
+    scoreLeft: number | null;
     playersMoving: {
         socketId: string;
         position: [number, number];
     }[];
     ballMoving: { position: [number, number] } | null;
-    scoreRight: number | null;
-    scoreLeft: number | null;
 }
 //#endregion

@@ -12,8 +12,7 @@ import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
-import { Keys } from './../../shared/keys';
-import { IPlayerDispose, IPlayerAdd, IPlayerInit, IPlayerKey, IPlayerShooting, IWorldReset, IWorldPostStep } from './../../shared/events';
+import { IPlayerInit, IPlayerKey, IWorldReset, IWorldPostStep } from './../../shared/events';
 
 export class Game {
     private io: io.Server;
@@ -75,21 +74,7 @@ export class Game {
 
             socket.on('player::key', (data: IPlayerKey) => {
                 for (let key in data) {
-                    switch (Number(key)) {
-                        case Keys.Up:
-                        case Keys.Down:
-                        case Keys.Left:
-                        case Keys.Right:
-                            if (data[key]) newPlayer.movementKeysHandler(Number(key));
-                            break;
-                        case Keys.Shift:
-                            newPlayer.sprintHandler(data[key]);
-                            break;
-                        case Keys.X:
-                            newPlayer.shootingStrongHandler(data[key]);
-                            this.io.emit('player::shooting', { socketId: newPlayer.socketId, shooting: data[key] } as IPlayerShooting);
-                            break;
-                    }
+                    newPlayer.keyMap[key] = data[key];
                 }
             });
         });
@@ -211,6 +196,9 @@ export class Game {
 
     public run() {
         this.worldStep();
+        this.players.forEach(player => {
+            player.logic();
+        });
 
         const playersToAdd = this.playersToAdd.map(player => {
             this.players.push(player);
@@ -271,7 +259,9 @@ export class Game {
             }, game_config.goalResetTimeout);
         }
         const data: IWorldPostStep = { playersToAdd: playersToAdd, playersToRemove: playersToRemove, playersMoving: playersMoving, ballMoving: ballMoving, scoreRight: scoreRight, scoreLeft: scoreLeft };
-        this.io.emit('world::postStep', data);
+        if (data.playersToAdd.length || data.playersToRemove.length || data.playersMoving.length || data.ballMoving || data.scoreRight || data.scoreLeft) {
+            this.io.emit('world::postStep', data);
+        }
     }
 
     private worldStep(): void {

@@ -7,16 +7,27 @@ import { player_config } from './../../shared/callibration';
 import { Team } from './../../shared/team';
 
 import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
+import { IPlayerKey } from './../../shared/events';
 
 export class Player {
     public socketId: string;
     public body!: p2.Body;
     private shape!: p2.Circle;
+    public keyMap: IPlayerKey = {};
 
     public shooting!: boolean;
+    public sprinting!: boolean;
 
-    public movementIncrease!: number;
-    public maxSpeed!: number;
+    public get movementIncrease(): number {
+        return this.sprinting
+            ? player_config.sprintMovementIncrease
+            : player_config.movementIncrease
+    };
+    public get maxSpeed(): number {
+        return this.sprinting
+            ? player_config.sprintMaxSpeed
+            : player_config.maxSpeed
+    } 
     public team: Team
 
     public constructor(socketId: string, material: p2.Material) {
@@ -36,38 +47,9 @@ export class Player {
         this.shape.material = material;
         this.body.addShape(this.shape);
         this.body.damping = player_config.damping;
-
-        this.sprintHandler();
     }
 
-    public shootingStrongHandler(pressed: boolean): void {
-        this.shooting = pressed;
-    }
-
-    public sprintHandler(pressed: boolean = false): void {
-        if (pressed) {
-            this.movementIncrease = player_config.sprintMovementIncrease;
-            this.maxSpeed = player_config.sprintMaxSpeed;
-        } else {
-            this.movementIncrease = player_config.movementIncrease;
-            this.maxSpeed = player_config.maxSpeed;
-        }
-    }
-
-    public movementKeysHandler(key: Keys): void {
-        if (key == Keys.Up) {
-            this.body.velocity[1] -= this.movementIncrease;
-        }
-        if (key == Keys.Down) {
-            this.body.velocity[1] += this.movementIncrease;
-        }
-        if (key == Keys.Left) {
-            this.body.velocity[0] -= this.movementIncrease;
-        }
-        if (key == Keys.Right) {
-            this.body.velocity[0] += this.movementIncrease;
-        }
-
+    public onMovmentChange(): void {
         const moveVector = { x: this.body.velocity[0], y: this.body.velocity[1] };
         const movmentLength = calculateVectorLength(moveVector);
         if (movmentLength > this.maxSpeed) {
@@ -75,5 +57,32 @@ export class Player {
             this.body.velocity[0] = normalizedMoveVector.x * this.maxSpeed;
             this.body.velocity[1] = normalizedMoveVector.y * this.maxSpeed;
         }
+    }
+
+    public logic(): void {
+        for (let key in this.keyMap) {
+            switch (Number(key)) {
+                case Keys.Up:
+                    if (this.keyMap[key]) this.body.velocity[1] -= this.movementIncrease;
+                    break;
+                case Keys.Down:
+                    if (this.keyMap[key]) this.body.velocity[1] += this.movementIncrease;
+                    break;
+                case Keys.Left:
+                    if (this.keyMap[key]) this.body.velocity[0] -= this.movementIncrease;
+                    break;
+                case Keys.Right:
+                    if (this.keyMap[key]) this.body.velocity[0] += this.movementIncrease;
+                    break;
+                case Keys.Shift:
+                    this.sprinting = this.keyMap[key];
+                    break;
+                case Keys.X:
+                    this.shooting = this.keyMap[key];
+                    //this.io.emit('player::shooting', { socketId: newPlayer.socketId, shooting: data[key] } as IPlayerShooting);
+                    break;
+            }
+        }
+        this.onMovmentChange();
     }
 }

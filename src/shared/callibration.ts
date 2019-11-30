@@ -55,11 +55,11 @@ export const player_config = {
     radius: 25,
     mass: 2,
     damping: 0.15,
-    movementIncrease: 0.7,
-    sprintMovementIncrease: 0.9,
+    movementIncrease: 0.2,
+    sprintMovementIncrease: 0.3,
     maxSpeed: 15,
     sprintMaxSpeed: 20,
-    shooting: 25,
+    shooting: 35,
     sprinting: 2000,
     sprintingCooldown: 4000
 }
