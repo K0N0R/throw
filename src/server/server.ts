@@ -23,7 +23,7 @@ httpServer.listen(port, host);
 console.log(`Running on http://${host}:${port}`);
 
 // ---------------- GAME
-const interval = 4;
+const interval = 2;
 const game = new Game(io, interval);
 setInterval(() => {
     game.run();
