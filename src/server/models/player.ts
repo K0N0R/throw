@@ -1,5 +1,4 @@
 import * as p2 from 'p2';
-import io from 'socket.io';
 
 import { calculateVectorLength, normalizeVector } from './../../shared/vector';
 import { Keys } from './../../shared/keys';
