@@ -258,8 +258,14 @@ export class Game {
                 this.reset();
             }, game_config.goalResetTimeout);
         }
-        const data: IWorldPostStep = { playersToAdd: playersToAdd, playersToRemove: playersToRemove, playersMoving: playersMoving, ballMoving: ballMoving, scoreRight: scoreRight, scoreLeft: scoreLeft };
-        if (data.playersToAdd.length || data.playersToRemove.length || data.playersMoving.length || data.ballMoving || data.scoreRight || data.scoreLeft) {
+        const data: IWorldPostStep = {};
+        if (playersToAdd.length) data.playersToAdd = playersToAdd;
+        if (playersToRemove.length) data.playersToRemove = playersToRemove;
+        if (playersMoving.length) data.playersMoving = playersMoving;
+        if (ballMoving) data.ballMoving = ballMoving;
+        if (scoreRight) data.scoreRight = scoreRight;
+        if (scoreLeft) data.scoreLeft = scoreLeft;
+        if (Object.keys(data).length) {
             this.io.emit('world::postStep', data);
         }
     }

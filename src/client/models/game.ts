@@ -50,24 +50,26 @@ export class Game {
                     }
                 });
             }
-            data.playersMoving.forEach(dataPlayer => {
-                const player = this.players.find(player => player.socketId === dataPlayer.socketId);
-                if (player) {
-                    player.pos.x = dataPlayer.position[0];
-                    player.pos.y = dataPlayer.position[1];
-                    if (dataPlayer.socketId === this.socket.id) {
-                        Camera.updatePos({ ...player.pos });
+            if (data.playersMoving) {
+                data.playersMoving.forEach(dataPlayer => {
+                    const player = this.players.find(player => player.socketId === dataPlayer.socketId);
+                    if (player) {
+                        player.pos.x = dataPlayer.position[0];
+                        player.pos.y = dataPlayer.position[1];
+                        if (dataPlayer.socketId === this.socket.id) {
+                            Camera.updatePos({ ...player.pos });
+                        }
                     }
-                }
-            });
+                });
+            }
             if (data.ballMoving) {
                 this.ball.pos.x = data.ballMoving.position[0];
                 this.ball.pos.y = data.ballMoving.position[1];
             }
             if (data.scoreLeft || data.scoreRight) {
                 this.score.updateScore({
-                    left: data.scoreLeft,
-                    right: data.scoreRight
+                    left: data.scoreLeft || null,
+                    right: data.scoreRight || null
                 });
             }
         });
