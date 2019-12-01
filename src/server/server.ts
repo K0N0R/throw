@@ -4,7 +4,7 @@ import path from 'path';
 import socketIO from 'socket.io';
 
 import { Game } from './models/game';
-import { host, port } from './../shared/serverConfig';
+import { host, port, interval } from './../shared/serverConfig';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -23,8 +23,7 @@ httpServer.listen(port, host);
 console.log(`Running on http://${host}:${port}`);
 
 // ---------------- GAME
-const interval = 4;
-const game = new Game(io, interval);
+const game = new Game(io);
 setInterval(() => {
     game.run();
 }, interval);

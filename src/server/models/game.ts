@@ -13,6 +13,7 @@ import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
 import { IPlayerInit, IPlayerKey, IWorldReset, IWorldPostStep } from './../../shared/events';
 import { contact } from './../../shared/material';
+import { interval } from './../../shared/serverConfig';
 
 export class Game {
     private io: io.Server;
@@ -36,9 +37,9 @@ export class Game {
     private score = { left: 0, right: 0 };
     private reseting: boolean;
 
-    constructor(io: io.Server, intervalTime: number) {
+    constructor(io: io.Server) {
         this.step = {
-            fixedTime: intervalTime / 60,
+            fixedTime: interval / 60,
             lastTime: 0,
             maxSteps: 100,
         };
@@ -78,10 +79,11 @@ export class Game {
             });
 
             socket.on('player::key', (data: IPlayerKey) => {
+                console.log(new Date().getSeconds(), new Date().getMilliseconds());
+                io.emit('players::key', { socketId: newPlayer.socketId, keyMap: data });
                 for (let key in data) {
                     newPlayer.keyMap[key] = data[key];
                 }
-                io.emit('players::key', { socketId: newPlayer.socketId, keyMap: data });
             });
         });
     }
@@ -179,7 +181,6 @@ export class Game {
     }
 
     public run() {
-        this.world.step(this.step.fixedTime);
         this.players.forEach(player => {
             player.logic();
         });
@@ -241,6 +242,8 @@ export class Game {
         if (Object.keys(data).length) {
             this.io.emit('world::postStep', data);
         }
+
+        this.world.step(this.step.fixedTime);
     }
 
 }

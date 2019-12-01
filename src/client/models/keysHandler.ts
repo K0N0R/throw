@@ -1,7 +1,6 @@
 export class KeysHandler {
-    private static pressed: { [param: number]: boolean } = {};
-    private static handler: (pressed: { [param: number]: boolean }) => void;
-    public static bindEvents(handler: (pressed: { [param: number]: boolean }) => void) {
+    public static pressed: { [param: number]: boolean } = {};
+    public static bindEvents(): void {
         document.addEventListener('keydown', (event: KeyboardEvent) => {
             this.pressed[event.which] = true;
         });
@@ -9,10 +8,5 @@ export class KeysHandler {
             this.pressed[event.which] = false;
         });
 
-        this.handler = handler;
-    }
-
-    public static reactOnPressChange() {
-        this.handler({...this.pressed});
     }
 }

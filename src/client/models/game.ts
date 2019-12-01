@@ -16,6 +16,7 @@ import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
 import { Score } from './score';
+import { interval } from './../../shared/serverConfig';
 
 export class Game {
     private socket: SocketIOClient.Socket;
@@ -40,12 +41,11 @@ export class Game {
         this.socket = socket;
 
         this.step = {
-            fixedTime: 4 / 60,
+            fixedTime: interval / 60,
             lastTime: 0,
             maxSteps: 100,
         };
 
-        this.initHandlers();
         this.initCanvas();
         this.initEntities();
         this.initWorld();
@@ -82,6 +82,8 @@ export class Game {
     }
 
     private initEvents(): void {
+        KeysHandler.bindEvents();
+
         this.socket.on('world::reset', (data: IWorldReset) => {
             this.ball.body.position = data.ball.position;
             data.players.forEach(dataPlayer => {
@@ -119,18 +121,17 @@ export class Game {
         });
 
         this.socket.on('players::key', (data: { socketId: string, keyMap: IPlayerKey }) => {
-            //if (data.socketId !== this.socket.id) {
-                const player = this.players.find(player => player.socketId === data.socketId);
-                if (player) {
-                    for (let key in data.keyMap) {
-                        player.keyMap[key] = data.keyMap[key];
-                    }
+            console.log(new Date().getSeconds(), new Date().getMilliseconds());
+            const player = this.players.find(player => player.socketId === data.socketId);
+            if (player) {
+                for (let key in data.keyMap) {
+                    player.keyMap[key] = data.keyMap[key];
                 }
-            //}
+            }
         });
     }
 
-    private initHandlers(): void {
+    private handleKeys(): void {
         const handleShooting = (player: Player, pressed: { [param: number]: boolean }) => {
             player.shooting = pressed[Keys.X];
         };
@@ -151,31 +152,25 @@ export class Game {
                 }, player_config.sprinting);
             }
         };
-        KeysHandler.bindEvents((pressed: { [param: number]: boolean }) => {
-            const player = this.players.find(player => player.socketId === this.socket.id);
-            if (player) {
-                this.keyMap
-                handleShooting(player, pressed);
-                handleSprinting(player, pressed);
+        const player = this.players.find(player => player.socketId === this.socket.id);
+        if (player) {
+            handleShooting(player, KeysHandler.pressed);
+            handleSprinting(player, KeysHandler.pressed);
 
-                const deltaKeysMap: IPlayerKey = {};
-                for (const key in pressed) {
-                    if (this.keyMap[key] == void 0) {
-                        deltaKeysMap[key] = pressed[key];
-                    } else if (this.keyMap[key] !== pressed[key]) {
-                        deltaKeysMap[key] = pressed[key];
-                    }
-                }
-                this.keyMap = pressed;
-
-                if (Object.keys(deltaKeysMap).length > 0) {
-                    // for (let key in deltaKeysMap) {
-                    //     player.keyMap[key] = deltaKeysMap[key];
-                    // }
-                    this.socket.emit('player::key', deltaKeysMap as IPlayerKey);
+            const deltaKeysMap: IPlayerKey = {};
+            for (const key in KeysHandler.pressed) {
+                if (this.keyMap[key] == void 0) {
+                    deltaKeysMap[key] = KeysHandler.pressed[key];
+                } else if (this.keyMap[key] !== KeysHandler.pressed[key]) {
+                    deltaKeysMap[key] = KeysHandler.pressed[key];
                 }
             }
-        });
+            this.keyMap = {...KeysHandler.pressed};
+
+            if (Object.keys(deltaKeysMap).length > 0) {
+                this.socket.emit('player::key', deltaKeysMap as IPlayerKey);
+            }
+        }
     }
 
     private initCanvas(): void {
@@ -217,7 +212,8 @@ export class Game {
     }
 
     public run() {
-        this.world.step(this.step.fixedTime);
+        this.handleKeys();
+
         this.players.forEach(player => {
             player.logic();
         });
@@ -239,7 +235,7 @@ export class Game {
                 }
             });
 
-        KeysHandler.reactOnPressChange();
+        this.world.step(this.step.fixedTime);
         this.render();
     }
 
