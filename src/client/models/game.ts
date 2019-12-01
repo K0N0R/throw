@@ -88,7 +88,18 @@ export class Game {
                 const player = this.players.find(player => player.socketId === dataPlayer.socketId);
                 if (player) {
                     player.body.position = dataPlayer.position;
-                } 
+                }
+            });
+        });
+
+        this.socket.on('world::position', (data: IWorldReset) => {
+            this.ball.body.position = data.ball.position;
+            this.ball.body.velocity = data.ball.velocity;
+            data.players.forEach(dataPlayer => {
+                const player = this.players.find(player => player.socketId === dataPlayer.socketId);
+                if (player) {
+                    player.body.position = dataPlayer.position;
+                }
             });
         });
 
@@ -108,14 +119,14 @@ export class Game {
         });
 
         this.socket.on('players::key', (data: { socketId: string, keyMap: IPlayerKey }) => {
-            if (data.socketId !== this.socket.id) {
+            //if (data.socketId !== this.socket.id) {
                 const player = this.players.find(player => player.socketId === data.socketId);
                 if (player) {
                     for (let key in data.keyMap) {
                         player.keyMap[key] = data.keyMap[key];
                     }
                 }
-            }
+            //}
         });
     }
 
@@ -137,7 +148,7 @@ export class Game {
                     setTimeout(() => {
                         player.sprintingCooldown = false;
                     }, player_config.sprintingCooldown);
-               }, player_config.sprinting);
+                }, player_config.sprinting);
             }
         };
         KeysHandler.bindEvents((pressed: { [param: number]: boolean }) => {
@@ -148,7 +159,7 @@ export class Game {
                 handleSprinting(player, pressed);
 
                 const deltaKeysMap: IPlayerKey = {};
-                for(const key in pressed) {
+                for (const key in pressed) {
                     if (this.keyMap[key] == void 0) {
                         deltaKeysMap[key] = pressed[key];
                     } else if (this.keyMap[key] !== pressed[key]) {
@@ -158,15 +169,15 @@ export class Game {
                 this.keyMap = pressed;
 
                 if (Object.keys(deltaKeysMap).length > 0) {
-                    for (let key in deltaKeysMap) {
-                        player.keyMap[key] = deltaKeysMap[key];
-                    }
+                    // for (let key in deltaKeysMap) {
+                    //     player.keyMap[key] = deltaKeysMap[key];
+                    // }
                     this.socket.emit('player::key', deltaKeysMap as IPlayerKey);
                 }
             }
         });
     }
-    
+
     private initCanvas(): void {
         Canvas.createCanvas();
     }

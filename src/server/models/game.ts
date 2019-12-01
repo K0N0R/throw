@@ -46,6 +46,13 @@ export class Game {
         this.initEntities();
         this.initWorld();
         this.initConnection(io);
+
+        setInterval(() => {
+            this.io.emit('world::position', {
+                players: this.players.map(player => ({ position: player.body.position, socketId: player.socketId })),
+                ball: { position: this.ball.body.position, velocity: this.ball.body.velocity }
+            } as IWorldReset);
+        }, 250);
     }
 
     private initConnection(io: io.Server): void {
@@ -165,6 +172,7 @@ export class Game {
             })),
             ball: {
                 position: this.ball.body.position,
+                velocity: this.ball.body.velocity
             },
         }) as IWorldReset);
         this.reseting = false;

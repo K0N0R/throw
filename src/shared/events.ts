@@ -43,6 +43,7 @@ export interface IWorldReset {
     }[];
     ball: {
         position: [number, number];
+        velocity: [number, number];
     };
 }
 
