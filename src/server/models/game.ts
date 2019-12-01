@@ -52,7 +52,7 @@ export class Game {
                 players: this.players.map(player => ({ position: player.body.position, socketId: player.socketId })),
                 ball: { position: this.ball.body.position, velocity: this.ball.body.velocity }
             } as IWorldReset);
-        }, 250);
+        }, 25);
     }
 
     private initConnection(io: io.Server): void {
