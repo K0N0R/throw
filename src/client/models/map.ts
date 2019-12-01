@@ -1,6 +1,10 @@
+import * as p2 from 'p2';
+
 import { IPos } from './../../shared/model';
 import { getOffset } from './../../shared/offset';
 import { getCornerPoints } from './../../shared/vertices';
+import { PLAYER, MAP, MAP_BORDER, BALL } from '../../shared/collision';
+import { mapMaterial } from './../../shared/material';
 import { map_config, map_style, goal_config, canvas_config } from './../../shared/callibration';
 
 import { Canvas } from './canvas';
@@ -8,6 +12,11 @@ import { Canvas } from './canvas';
 export class Map {
     public pos: IPos;
     public outerPos: IPos;
+
+    public topBody: p2.Body;
+    public botBody: p2.Body;
+
+    public borderBody: p2.Body;
 
     public constructor() {
 
@@ -21,6 +30,39 @@ export class Map {
             y: this.pos.y - map_config.border
         };
 
+        this.topBody = new p2.Body({
+            mass: 0,
+            position: [this.pos.x, this.pos.y]
+        });
+
+        this.topBody.fromPolygon(this.getTopShapePoints());
+        this.topBody.shapes.forEach(shape => {
+            shape.material = mapMaterial;
+            shape.collisionGroup = MAP;
+            shape.collisionMask = BALL;
+        });
+
+        this.botBody = new p2.Body({
+            mass: 0,
+            position: [this.pos.x, this.pos.y]
+        });
+        this.botBody.fromPolygon(this.getBottomShapePoints());
+        this.botBody.shapes.forEach(shape => {
+            shape.material = mapMaterial;
+            shape.collisionGroup = MAP;
+            shape.collisionMask = BALL;
+        });
+
+        this.borderBody = new p2.Body({
+            mass: 0,
+            position: [this.pos.x, this.pos.y]
+        });
+        this.borderBody.fromPolygon(this.getBorderShapePoints());
+        this.borderBody.shapes.forEach(shape => {
+            shape.material = mapMaterial;
+            shape.collisionGroup = MAP_BORDER;
+            shape.collisionMask = PLAYER;
+        });
     }
 
     private getTopShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
@@ -60,6 +102,23 @@ export class Map {
             [offset.left - mapTickness, offset.bottom + mapTickness],
             [offset.right + mapTickness, offset.bottom + mapTickness],
             [offset.right + mapTickness, offset.midVert + goal_config.size.height / 2],
+        ];
+    }
+
+    private getBorderShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
+        const offset = getOffset(pos, map_config.size); // convex use relative position to body
+        const mapTickness = 10;
+        return [
+            [offset.left - map_config.border - mapTickness, offset.top - map_config.border], // top left corner
+            [offset.right + map_config.border, offset.top - map_config.border], // top right corner
+            [offset.right + map_config.border, offset.bottom + map_config.border], // bot right corner
+            [offset.left - map_config.border, offset.bottom + map_config.border], // bot left corner
+            [offset.left - map_config.border, offset.top - map_config.border + 1], // connector
+            [offset.left - map_config.border - mapTickness, offset.top - map_config.border + 1], // connector outer
+            [offset.left - map_config.border - mapTickness, offset.bottom + map_config.border + mapTickness], // bot left outer corner
+            [offset.right + map_config.border + mapTickness, offset.bottom + map_config.border + mapTickness], // bot right outer corner
+            [offset.right + map_config.border + mapTickness, offset.top - map_config.border - mapTickness], // top right outer corner
+            [offset.left - map_config.border - mapTickness, offset.top - map_config.border - mapTickness], // top left outer corner
         ];
     }
 

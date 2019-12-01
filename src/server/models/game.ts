@@ -8,11 +8,11 @@ import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
 import { goal_config, map_config, player_config, ball_config, canvas_config, game_config } from './../../shared/callibration';
-import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
 import { IPlayerInit, IPlayerKey, IWorldReset, IWorldPostStep } from './../../shared/events';
+import { contact } from './../../shared/material';
 
 export class Game {
     private io: io.Server;
@@ -24,8 +24,6 @@ export class Game {
     };
 
     private world!: p2.World;
-    private mat: Dictionary<p2.Material> = {};
-    private contactMat: Dictionary<p2.ContactMaterial> = {};
 
     private map!: Map;
     private players: Player[] = [];
@@ -65,7 +63,7 @@ export class Game {
                 },
                 score: this.score
             } as IPlayerInit);
-            const newPlayer = new Player(socket.id, this.mat.player)
+            const newPlayer = new Player(socket.id)
             this.playersToAdd.push(newPlayer);
 
             socket.on('disconnect', () => {
@@ -76,6 +74,7 @@ export class Game {
                 for (let key in data) {
                     newPlayer.keyMap[key] = data[key];
                 }
+                io.emit('players::key', { socketId: newPlayer.socketId, keyMap: data });
             });
         });
     }
@@ -107,11 +106,10 @@ export class Game {
     }
 
     private initEntities(): void {
-        this.initMaterials();
-        this.map = new Map(this.mat.map);
-        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal, this.mat.map);
-        this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal, this.mat.map);
-        this.ball = new Ball([this.map.pos.x + map_config.size.width / 2, this.map.pos.y + map_config.size.height / 2], this.mat.ball);
+        this.map = new Map();
+        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
+        this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
+        this.ball = new Ball([this.map.pos.x + map_config.size.width / 2, this.map.pos.y + map_config.size.height / 2]);
     }
 
     private initWorld(): void {
@@ -130,32 +128,10 @@ export class Game {
         this.world.addBody(this.rightGoal.postBody);
         this.world.addBody(this.ball.body);
 
-        this.world.addContactMaterial(this.contactMat.mapBall);
-        this.world.addContactMaterial(this.contactMat.playerBall);
-        this.world.addContactMaterial(this.contactMat.goalBall);
-        this.world.addContactMaterial(this.contactMat.mapPlayer);
-    }
-
-    private initMaterials(): void {
-        this.mat.map = new p2.Material();
-        this.mat.player = new p2.Material();
-        this.mat.ball = new p2.Material();
-        this.mat.goal = new p2.Material();
-        this.contactMat.mapPlayer = new p2.ContactMaterial(this.mat.map, this.mat.player, {
-            friction: 1
-        });
-        this.contactMat.mapBall = new p2.ContactMaterial(this.mat.map, this.mat.ball, {
-            friction: 0,
-            restitution: 0.5,
-            stiffness: Number.MAX_VALUE
-        });
-        this.contactMat.goalBall = new p2.ContactMaterial(this.mat.goal, this.mat.ball, {
-            friction: 5,
-            restitution: 0,
-        });
-        this.contactMat.playerBall = new p2.ContactMaterial(this.mat.player, this.mat.ball, {
-            friction: 1
-        });
+        this.world.addContactMaterial(contact.goalBallContactMaterial);
+        this.world.addContactMaterial(contact.mapBallContactMaterial);
+        this.world.addContactMaterial(contact.mapPlayerContactMaterial);
+        this.world.addContactMaterial(contact.playerBallContactMaterial);
     }
 
     private reset(): void {
@@ -195,7 +171,7 @@ export class Game {
     }
 
     public run() {
-        this.worldStep();
+        this.world.step(this.step.fixedTime);
         this.players.forEach(player => {
             player.logic();
         });
@@ -232,17 +208,8 @@ export class Game {
                     );
                     this.ball.body.velocity[0] += shootingVector.x * player_config.shooting;
                     this.ball.body.velocity[1] += shootingVector.y * player_config.shooting;
-
                 }
             });
-
-        const playersMoving = this.players
-            .filter(player => isMoving(player.body))
-            .map(player => ({ socketId: player.socketId, position: player.body.position }));
-
-        const ballMoving = isMoving(this.ball.body)
-            ? { position: this.ball.body.position }
-            : null;
 
         const scoreRight = !this.reseting && this.ball.body.position[0] < this.map.pos.x
             ? ++this.score.right
@@ -261,19 +228,11 @@ export class Game {
         const data: IWorldPostStep = {};
         if (playersToAdd.length) data.playersToAdd = playersToAdd;
         if (playersToRemove.length) data.playersToRemove = playersToRemove;
-        if (playersMoving.length) data.playersMoving = playersMoving;
-        if (ballMoving) data.ballMoving = ballMoving;
         if (scoreRight) data.scoreRight = scoreRight;
         if (scoreLeft) data.scoreLeft = scoreLeft;
         if (Object.keys(data).length) {
             this.io.emit('world::postStep', data);
         }
-    }
-
-    private worldStep(): void {
-
-        // Move bodies forward in time
-        this.world.step(this.step.fixedTime);
     }
 
 }

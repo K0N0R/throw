@@ -4,8 +4,8 @@ import { IPos } from './../../shared/model';
 import { getOffset } from './../../shared/offset';
 import { getCornerPoints } from './../../shared/vertices';
 import { map_config, goal_config, canvas_config } from './../../shared/callibration';
-
-import { PLAYER, MAP, MAP_BORDER, BALL } from './collision';
+import { PLAYER, MAP, MAP_BORDER, BALL } from '../../shared/collision';
+import { mapMaterial } from './../../shared/material';
 
 export class Map {
     public pos: IPos;
@@ -16,7 +16,7 @@ export class Map {
 
     public borderBody: p2.Body;
 
-    public constructor(material: p2.Material) {
+    public constructor() {
 
         this.pos = {
             x: canvas_config.size.width / 2 - map_config.size.width / 2,
@@ -35,7 +35,7 @@ export class Map {
 
         this.topBody.fromPolygon(this.getTopShapePoints());
         this.topBody.shapes.forEach(shape => {
-            shape.material = material;
+            shape.material = mapMaterial;
             shape.collisionGroup = MAP;
             shape.collisionMask = BALL;
         });
@@ -46,7 +46,7 @@ export class Map {
         });
         this.botBody.fromPolygon(this.getBottomShapePoints());
         this.botBody.shapes.forEach(shape => {
-            shape.material = material;
+            shape.material = mapMaterial;
             shape.collisionGroup = MAP;
             shape.collisionMask = BALL;
         });
@@ -57,7 +57,7 @@ export class Map {
         });
         this.borderBody.fromPolygon(this.getBorderShapePoints());
         this.borderBody.shapes.forEach(shape => {
-            shape.material = material;
+            shape.material = mapMaterial;
             shape.collisionGroup = MAP_BORDER;
             shape.collisionMask = PLAYER;
         });

@@ -1,7 +1,11 @@
-import { goal_config, map_config, player_config } from './../../shared/callibration';
+import p2 from 'p2';
+
+import { goal_config, map_config, player_config, ball_config } from './../../shared/callibration';
 import { getOffset } from './../../shared/offset';
 import { Keys } from './../../shared/keys';
 import { IPlayerInit, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset } from './../../shared/events';
+import { contact } from './../../shared/material';
+import { getDistance, getNormalizedVector } from './../../shared/vector';
 
 import { Canvas } from './canvas';
 import { KeysHandler } from './keysHandler';
@@ -16,6 +20,14 @@ import { Score } from './score';
 export class Game {
     private socket: SocketIOClient.Socket;
 
+    private step!: {
+        fixedTime: number;
+        lastTime: number;
+        maxSteps: number;
+    };
+
+    private world!: p2.World;
+
     private map!: Map;
     private players: Player[] = [];
     private ball!: Ball;
@@ -26,45 +38,39 @@ export class Game {
 
     constructor(socket: SocketIOClient.Socket) {
         this.socket = socket;
+
+        this.step = {
+            fixedTime: 4 / 60,
+            lastTime: 0,
+            maxSteps: 100,
+        };
+
         this.initHandlers();
         this.initCanvas();
         this.initEntities();
+        this.initWorld();
         this.initCamera();
         this.initEvents();
         this.socket.on('world::postStep', (data: IWorldPostStep) => {
             if (data.playersToAdd) {
                 data.playersToAdd.forEach(player => {
                     const isMe = player.socketId === this.socket.id;
-                    this.players.push(new Player({ x: player.position[0], y: player.position[1] }, player.socketId, player.team, isMe));
+                    const newPlayer = new Player(player.socketId, player.position, player.team, isMe);
+                    this.players.push(newPlayer);
+                    this.world.addBody(newPlayer.body);
                     if (isMe) {
                         Camera.updatePos({ x: player.position[0], y: player.position[1] });
                     }
                 });
             }
-
             if (data.playersToRemove) {
                 data.playersToRemove.forEach(socketId => {
                     const idx = this.players.findIndex(player => socketId === player.socketId);
+                    this.world.removeBody(this.players[idx].body);
                     if (idx !== -1) {
                         this.players.splice(idx, 1);
                     }
                 });
-            }
-            if (data.playersMoving) {
-                data.playersMoving.forEach(dataPlayer => {
-                    const player = this.players.find(player => player.socketId === dataPlayer.socketId);
-                    if (player) {
-                        player.pos.x = dataPlayer.position[0];
-                        player.pos.y = dataPlayer.position[1];
-                        if (dataPlayer.socketId === this.socket.id) {
-                            Camera.updatePos({ ...player.pos });
-                        }
-                    }
-                });
-            }
-            if (data.ballMoving) {
-                this.ball.pos.x = data.ballMoving.position[0];
-                this.ball.pos.y = data.ballMoving.position[1];
             }
             if (data.scoreLeft || data.scoreRight) {
                 this.score.updateScore({
@@ -77,19 +83,20 @@ export class Game {
 
     private initEvents(): void {
         this.socket.on('world::reset', (data: IWorldReset) => {
-            this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
+            this.ball.body.position = data.ball.position;
             data.players.forEach(dataPlayer => {
                 const player = this.players.find(player => player.socketId === dataPlayer.socketId);
                 if (player) {
-                    player.pos.x = dataPlayer.position[0];
-                    player.pos.y = dataPlayer.position[1];
+                    player.body.position = dataPlayer.position;
                 } 
             });
         });
 
         this.socket.on('player::init', (data: IPlayerInit) => {
-            this.players.push(...data.players.map(p => new Player({ x: p.position[0], y: p.position[1] }, p.socketId, p.team)));
-            this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
+            const players = data.players.map(p => new Player(p.socketId, p.position, p.team));
+            this.players.push(...players);
+            players.forEach(player => this.world.addBody(player.body));
+            this.ball.body.position = data.ball.position;
             this.score.updateScore(data.score);
         });
 
@@ -97,6 +104,17 @@ export class Game {
             const player = this.players.find(player => player.socketId === data.socketId);
             if (player) {
                 player.shooting = data.shooting;
+            }
+        });
+
+        this.socket.on('players::key', (data: { socketId: string, keyMap: IPlayerKey }) => {
+            if (data.socketId !== this.socket.id) {
+                const player = this.players.find(player => player.socketId === data.socketId);
+                if (player) {
+                    for (let key in data.keyMap) {
+                        player.keyMap[key] = data.keyMap[key];
+                    }
+                }
             }
         });
     }
@@ -140,10 +158,12 @@ export class Game {
                 this.keyMap = pressed;
 
                 if (Object.keys(deltaKeysMap).length > 0) {
+                    for (let key in deltaKeysMap) {
+                        player.keyMap[key] = deltaKeysMap[key];
+                    }
                     this.socket.emit('player::key', deltaKeysMap as IPlayerKey);
                 }
             }
-            
         });
     }
     
@@ -155,8 +175,30 @@ export class Game {
         this.map = new Map();
         this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
         this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
-        this.ball = new Ball({ x: this.map.pos.x + map_config.size.width / 2, y: this.map.pos.y + map_config.size.height / 2 });
+        this.ball = new Ball([this.map.pos.x + map_config.size.width / 2, this.map.pos.y + map_config.size.height / 2]);
         this.score = new Score();
+    }
+
+    private initWorld(): void {
+        this.world = new p2.World({
+            gravity: [0, 0]
+        });
+
+        this.world.addBody(this.map.topBody);
+        this.world.addBody(this.map.botBody);
+        this.world.addBody(this.map.borderBody);
+
+        this.world.addBody(this.leftGoal.borderBody);
+        this.world.addBody(this.leftGoal.postBody);
+
+        this.world.addBody(this.rightGoal.borderBody);
+        this.world.addBody(this.rightGoal.postBody);
+        this.world.addBody(this.ball.body);
+
+        this.world.addContactMaterial(contact.goalBallContactMaterial);
+        this.world.addContactMaterial(contact.mapBallContactMaterial);
+        this.world.addContactMaterial(contact.mapPlayerContactMaterial);
+        this.world.addContactMaterial(contact.playerBallContactMaterial);
     }
 
     private initCamera(): void {
@@ -164,6 +206,28 @@ export class Game {
     }
 
     public run() {
+        this.world.step(this.step.fixedTime);
+        this.players.forEach(player => {
+            player.logic();
+        });
+
+        this.players
+            .filter((player) => player.shooting)
+            .forEach(player => {
+                const playerPos = { x: player.body.position[0], y: player.body.position[1] };
+                const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
+                const minDistance = player_config.radius + ball_config.radius;
+                const shootingDistance = 1;
+                if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
+                    const shootingVector = getNormalizedVector(
+                        { x: player.body.position[0], y: player.body.position[1] },
+                        { x: this.ball.body.position[0], y: this.ball.body.position[1] }
+                    );
+                    this.ball.body.velocity[0] += shootingVector.x * player_config.shooting;
+                    this.ball.body.velocity[1] += shootingVector.y * player_config.shooting;
+                }
+            });
+
         KeysHandler.reactOnPressChange();
         this.render();
     }

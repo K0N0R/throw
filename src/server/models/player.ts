@@ -4,9 +4,9 @@ import { calculateVectorLength, normalizeVector } from './../../shared/vector';
 import { Keys } from './../../shared/keys';
 import { player_config } from './../../shared/callibration';
 import { Team } from './../../shared/team';
-
-import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
+import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from '../../shared/collision';
 import { IPlayerKey } from './../../shared/events';
+import { playerMaterial } from '../../shared/material';
 
 export class Player {
     public socketId: string;
@@ -29,7 +29,7 @@ export class Player {
     } 
     public team: Team
 
-    public constructor(socketId: string, material: p2.Material) {
+    public constructor(socketId: string) {
 
         this.socketId = socketId;
         let options: p2.BodyOptions = {
@@ -43,7 +43,7 @@ export class Player {
             collisionGroup: PLAYER,
             collisionMask: PLAYER | MAP_BORDER | BALL | GOAL_POST 
         });
-        this.shape.material = material;
+        this.shape.material = playerMaterial;
         this.body.addShape(this.shape);
         this.body.damping = player_config.damping;
     }

@@ -12,11 +12,9 @@ export default class StartPage extends Component {
 
     componentDidMount() {
         const game = new Game(socket);
-        const loop = () => {
-            requestAnimationFrame(loop);
+        setInterval(() => {
             game.run();
-        }
-        loop();
+        }, 4);
     }
 
     render() {

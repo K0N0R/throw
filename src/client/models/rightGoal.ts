@@ -1,7 +1,11 @@
+import * as p2 from 'p2';
+
 import { IPos } from './../../shared/model';
 import { getCornerPoints } from './../../shared/vertices';
 import { getOffset } from './../../shared/offset';
 import { goal_config, goal_style } from './../../shared/callibration';
+import { GOAL, BALL, GOAL_POST, PLAYER } from '../../shared/collision';
+import { mapMaterial, goalMaterial } from './../../shared/material';
 
 import { Canvas } from './canvas';
 
@@ -10,10 +14,47 @@ export class RightGoal {
     private topPostPosition: IPos;
     private bottomPostPosition: IPos;
 
+    public borderBody: p2.Body;
+    public postBody: p2.Body;
+
+    private topPostShape: p2.Circle;
+    private bottomPostShape: p2.Circle;
+
     public constructor(pos: IPos) {
         this.pos = { x: pos.x, y: pos.y };
         this.topPostPosition = { x: this.pos.x, y: this.pos.y };
         this.bottomPostPosition = { x: this.pos.x, y: this.pos.y + goal_config.size.height };
+
+        this.borderBody = new p2.Body({
+            position: [this.pos.x, this.pos.y],
+            mass: 0
+        });
+        this.borderBody.fromPolygon(this.getPoints());
+        this.borderBody.shapes.forEach(shape => {
+            shape.collisionGroup = GOAL;
+            shape.collisionMask = BALL;
+            shape.material = goalMaterial;
+        });
+
+        this.postBody = new p2.Body({
+            position: [this.pos.x, this.pos.y],
+            mass: 0
+        });
+        this.topPostShape = new p2.Circle({
+            radius: goal_config.postRadius,
+            collisionGroup: GOAL_POST,
+            collisionMask: PLAYER | BALL
+        });
+        this.topPostShape.material = mapMaterial;
+        this.postBody.addShape(this.topPostShape, [0, 0]);
+
+        this.bottomPostShape = new p2.Circle({
+            radius: goal_config.postRadius,
+            collisionGroup: GOAL_POST,
+            collisionMask: PLAYER | BALL
+        });
+        this.bottomPostShape.material = mapMaterial;
+        this.postBody.addShape(this.bottomPostShape, [0, goal_config.size.height]);
     }
 
     private getPoints(pos = { x: 0, y: 0 }): ([number, number])[] {

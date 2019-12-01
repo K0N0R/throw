@@ -3,9 +3,9 @@ import * as p2 from 'p2';
 import { getCornerPoints } from './../../shared/vertices';
 import { getOffset } from './../../shared/offset';
 import { IPos } from './../../shared/model';
-import { goal_config, ball_config } from './../../shared/callibration';
-
-import { PLAYER, GOAL, GOAL_SCORE, BALL, GOAL_POST } from './collision';
+import { goal_config } from './../../shared/callibration';
+import { PLAYER, GOAL, BALL, GOAL_POST } from '../../shared/collision';
+import { goalMaterial, mapMaterial } from '../../shared/material';
 
 export class LeftGoal {
     private pos: IPos;
@@ -17,7 +17,7 @@ export class LeftGoal {
     private topPostShape: p2.Circle;
     private bottomPostShape: p2.Circle;
 
-    public constructor(pos: IPos, material: p2.Material, postMaterial: p2.Material) {
+    public constructor(pos: IPos) {
         this.pos = { x: pos.x, y: pos.y };
 
         this.borderBody = new p2.Body({
@@ -28,7 +28,7 @@ export class LeftGoal {
         this.borderBody.shapes.forEach(shape => {
             shape.collisionGroup = GOAL;
             shape.collisionMask = BALL;
-            shape.material = material;
+            shape.material = goalMaterial;
         });
 
         this.postBody = new p2.Body({
@@ -40,7 +40,7 @@ export class LeftGoal {
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
-        this.topPostShape.material = postMaterial;
+        this.topPostShape.material = mapMaterial;
         this.postBody.addShape(this.topPostShape, [goal_config.size.width, 0]);
 
         this.bottomPostShape = new p2.Circle({
@@ -48,7 +48,7 @@ export class LeftGoal {
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
-        this.bottomPostShape.material = postMaterial;
+        this.bottomPostShape.material = mapMaterial;
         this.postBody.addShape(this.bottomPostShape, [goal_config.size.width, goal_config.size.height]);
     }
 
