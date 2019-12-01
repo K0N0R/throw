@@ -125,7 +125,6 @@ export class Game {
         KeysHandler.bindEvents((pressed: { [param: number]: boolean }) => {
             const player = this.players.find(player => player.socketId === this.socket.id);
             if (player) {
-                this.keyMap
                 handleShooting(player, pressed);
                 handleSprinting(player, pressed);
 

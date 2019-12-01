@@ -1,6 +1,7 @@
 
 export const game_config = {
     goalResetTimeout: 3000,
+    interval: 1000/60
 }
 
 export const ball_config = {
@@ -55,8 +56,8 @@ export const player_config = {
     radius: 25,
     mass: 2,
     damping: 0.15,
-    movementIncrease: 0.2,
-    sprintMovementIncrease: 0.3,
+    movementIncrease: 5,
+    sprintMovementIncrease: 1.2,
     maxSpeed: 15,
     sprintMaxSpeed: 20,
     shooting: 35,

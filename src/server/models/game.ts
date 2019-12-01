@@ -38,9 +38,9 @@ export class Game {
     private score = { left: 0, right: 0 };
     private reseting: boolean;
 
-    constructor(io: io.Server, intervalTime: number) {
+    constructor(io: io.Server) {
         this.step = {
-            fixedTime: intervalTime / 60,
+            fixedTime: game_config.interval / 60,
             lastTime: 0,
             maxSteps: 100,
         };
@@ -195,28 +195,9 @@ export class Game {
     }
 
     public run() {
-        this.worldStep();
         this.players.forEach(player => {
             player.logic();
         });
-
-        const playersToAdd = this.playersToAdd.map(player => {
-            this.players.push(player);
-            this.playerAddToTeam(player);
-            this.playerAddToWorld(player);
-            return {
-                socketId: player.socketId,
-                team: player.team,
-                position: player.body.position,
-            };
-        });
-        this.playersToAdd.length = 0;
-
-        const playersToRemove = this.playersToRemove.map(player => {
-            this.playerDispose(player);
-            return player.socketId;
-        })
-        this.playersToRemove.length = 0;
 
         this.players
             .filter((player) => player.shooting)
@@ -235,6 +216,26 @@ export class Game {
 
                 }
             });
+
+        this.worldStep();
+
+        const playersToAdd = this.playersToAdd.map(player => {
+            this.players.push(player);
+            this.playerAddToTeam(player);
+            this.playerAddToWorld(player);
+            return {
+                socketId: player.socketId,
+                team: player.team,
+                position: player.body.position,
+            };
+        });
+        this.playersToAdd.length = 0;
+
+        const playersToRemove = this.playersToRemove.map(player => {
+            this.playerDispose(player);
+            return player.socketId;
+        })
+        this.playersToRemove.length = 0;
 
         const playersMoving = this.players
             .filter(player => isMoving(player.body))
@@ -258,6 +259,7 @@ export class Game {
                 this.reset();
             }, game_config.goalResetTimeout);
         }
+        
         const data: IWorldPostStep = {};
         if (playersToAdd.length) data.playersToAdd = playersToAdd;
         if (playersToRemove.length) data.playersToRemove = playersToRemove;
@@ -268,6 +270,7 @@ export class Game {
         if (Object.keys(data).length) {
             this.io.emit('world::postStep', data);
         }
+        
     }
 
     private worldStep(): void {
