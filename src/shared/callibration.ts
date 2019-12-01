@@ -60,7 +60,7 @@ export const player_config = {
     sprintMovementIncrease: 1.2,
     maxSpeed: 15,
     sprintMaxSpeed: 20,
-    shooting: 35,
+    shooting: 25,
     sprinting: 2000,
     sprintingCooldown: 4000
 }
