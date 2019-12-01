@@ -3,16 +3,15 @@ import * as p2 from 'p2';
 import { getCornerPoints } from './../../shared/vertices';
 import { getOffset } from './../../shared/offset';
 import { IPos } from './../../shared/model';
-import { goal_config, ball_config } from './../../shared/callibration';
+import { goal_config } from './../../shared/callibration';
 
-import { PLAYER, GOAL, GOAL_SCORE, BALL, GOAL_POST } from './collision';
+import { PLAYER, GOAL, BALL, GOAL_POST } from './collision';
 
 export class LeftGoal {
     private pos: IPos;
 
     public borderBody: p2.Body;
     public postBody: p2.Body;
-    public scoreBody: p2.Body;
 
     private topPostShape: p2.Circle;
     private bottomPostShape: p2.Circle;

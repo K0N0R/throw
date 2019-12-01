@@ -4,9 +4,9 @@ import { calculateVectorLength, normalizeVector } from './../../shared/vector';
 import { Keys } from './../../shared/keys';
 import { player_config } from './../../shared/callibration';
 import { Team } from './../../shared/team';
+import { IPlayerKey } from './../../shared/events';
 
 import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
-import { IPlayerKey } from './../../shared/events';
 
 export class Player {
     public socketId: string;
