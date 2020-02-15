@@ -49,6 +49,7 @@ export interface IWorldReset {
 export interface IWorldPostStep {
     playersToAdd?: IPlayerAdd[];
     playersToRemove?: string[];
+    playersShooting?: { socketId: string; shooting: boolean }[];
     scoreRight?: number | null;
     scoreLeft?: number | null;
     playersMoving?: {

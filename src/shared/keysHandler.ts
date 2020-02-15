@@ -12,7 +12,7 @@ export class KeysHandler {
         this.handler = handler;
     }
 
-    public static reactOnPressChange() {
+    public static run(): void {
         this.handler({...this.pressed});
     }
 }

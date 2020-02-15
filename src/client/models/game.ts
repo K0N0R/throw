@@ -4,7 +4,7 @@ import { Keys } from './../../shared/keys';
 import { IPlayerInit, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset } from './../../shared/events';
 
 import { Canvas } from './canvas';
-import { KeysHandler } from './keysHandler';
+import { KeysHandler } from './../../shared/keysHandler';
 import { Player } from './player';
 import { Map } from './map';
 import { Ball } from './ball';
@@ -59,6 +59,14 @@ export class Game {
                         if (dataPlayer.socketId === this.socket.id) {
                             Camera.updatePos({ ...player.pos });
                         }
+                    }
+                });
+            }
+            if (data.playersShooting) {
+                data.playersShooting.forEach(dataPlayer => {
+                    const player = this.players.find(player => player.socketId === dataPlayer.socketId);
+                    if (player) {
+                        player.shooting = dataPlayer.shooting;
                     }
                 });
             }
@@ -163,7 +171,6 @@ export class Game {
     }
 
     public run() {
-        KeysHandler.reactOnPressChange();
         this.render();
     }
 

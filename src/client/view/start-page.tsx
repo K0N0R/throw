@@ -1,7 +1,10 @@
 import { h, Component } from 'preact';
 import io from 'socket.io-client';
 import { Game } from '../models/game';
-import { host, port } from '../../shared/serverConfig';
+
+import { host, port } from './../../shared/serverConfig';
+import { KeysHandler } from './../../shared/keysHandler'
+import { game_config } from './../../shared/callibration';
 
 const socket = io({
     host: `${host}:${port}`
@@ -17,7 +20,11 @@ export default class StartPage extends Component {
             game.run();
         }
         loop();
+        setInterval(() => {
+            KeysHandler.run();
+        }, game_config.interval);
     }
+    
 
     render() {
         return [

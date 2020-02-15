@@ -17,11 +17,6 @@ export class Player {
     public shooting!: boolean;
     public sprinting!: boolean;
 
-    public get movementIncrease(): number {
-        return this.sprinting
-            ? player_config.sprintMovementIncrease
-            : player_config.movementIncrease
-    };
     public get maxSpeed(): number {
         return this.sprinting
             ? player_config.sprintMaxSpeed
@@ -49,36 +44,35 @@ export class Player {
     }
 
     public onMovmentChange(): void {
-        const moveVector = { x: this.body.velocity[0], y: this.body.velocity[1] };
+        const moveVector = { x: this.body.force[0], y: this.body.force[1] };
         const movmentLength = calculateVectorLength(moveVector);
         if (movmentLength > this.maxSpeed) {
             const normalizedMoveVector = normalizeVector(moveVector);
-            this.body.velocity[0] = normalizedMoveVector.x * this.maxSpeed;
-            this.body.velocity[1] = normalizedMoveVector.y * this.maxSpeed;
+            this.body.force[0] = normalizedMoveVector.x * this.maxSpeed;
+            this.body.force[1] = normalizedMoveVector.y * this.maxSpeed;
         }
     }
-
+    public counter = 0;
     public logic(): void {
         for (let key in this.keyMap) {
             switch (Number(key)) {
                 case Keys.Up:
-                    if (this.keyMap[key]) this.body.velocity[1] -= this.movementIncrease;
+                    if (this.keyMap[key])  this.body.force[1] = -this.maxSpeed;
                     break;
                 case Keys.Down:
-                    if (this.keyMap[key]) this.body.velocity[1] += this.movementIncrease;
+                    if (this.keyMap[key]) this.body.force[1] = +this.maxSpeed;
                     break;
                 case Keys.Left:
-                    if (this.keyMap[key]) this.body.velocity[0] -= this.movementIncrease;
+                    if (this.keyMap[key]) this.body.force[0] = -this.maxSpeed;
                     break;
                 case Keys.Right:
-                    if (this.keyMap[key]) this.body.velocity[0] += this.movementIncrease;
+                    if (this.keyMap[key]) this.body.force[0] = +this.maxSpeed;
                     break;
                 case Keys.Shift:
                     this.sprinting = this.keyMap[key];
                     break;
                 case Keys.X:
                     this.shooting = this.keyMap[key];
-                    //this.io.emit('player::shooting', { socketId: newPlayer.socketId, shooting: data[key] } as IPlayerShooting);
                     break;
             }
         }

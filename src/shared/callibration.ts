@@ -7,7 +7,7 @@ export const game_config = {
 export const ball_config = {
     radius: 17.5,
     mass: 1,
-    damping: 0.04
+    damping: 0.5
 }
 
 export const ball_style = {
@@ -54,13 +54,11 @@ export const map_style = {
 
 export const player_config = {
     radius: 25,
-    mass: 2,
-    damping: 0.15,
-    movementIncrease: 5,
-    sprintMovementIncrease: 1.2,
-    maxSpeed: 15,
-    sprintMaxSpeed: 20,
-    shooting: 25,
+    mass: 5,
+    damping: 0.8,
+    maxSpeed: 2000,
+    sprintMaxSpeed: 3000,
+    shooting: 100000,
     sprinting: 2000,
     sprintingCooldown: 4000
 }

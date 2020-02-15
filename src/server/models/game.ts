@@ -12,7 +12,7 @@ import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
-import { IPlayerInit, IPlayerKey, IWorldReset, IWorldPostStep } from './../../shared/events';
+import { IPlayerInit, IPlayerKey, IWorldReset, IWorldPostStep, IPlayerShooting } from './../../shared/events';
 
 export class Game {
     private io: io.Server;
@@ -40,9 +40,9 @@ export class Game {
 
     constructor(io: io.Server) {
         this.step = {
-            fixedTime: game_config.interval / 60,
-            lastTime: 0,
-            maxSteps: 100,
+            fixedTime: 1 / 240,
+            lastTime: new Date().valueOf(),
+            maxSteps: 10,
         };
 
         this.initEntities();
@@ -134,6 +134,10 @@ export class Game {
         this.world.addContactMaterial(this.contactMat.playerBall);
         this.world.addContactMaterial(this.contactMat.goalBall);
         this.world.addContactMaterial(this.contactMat.mapPlayer);
+
+        this.world.on('postStep', () => {
+            this.logic();
+        });
     }
 
     private initMaterials(): void {
@@ -142,7 +146,7 @@ export class Game {
         this.mat.ball = new p2.Material();
         this.mat.goal = new p2.Material();
         this.contactMat.mapPlayer = new p2.ContactMaterial(this.mat.map, this.mat.player, {
-            friction: 1
+            friction: 0
         });
         this.contactMat.mapBall = new p2.ContactMaterial(this.mat.map, this.mat.ball, {
             friction: 0,
@@ -154,7 +158,7 @@ export class Game {
             restitution: 0,
         });
         this.contactMat.playerBall = new p2.ContactMaterial(this.mat.player, this.mat.ball, {
-            friction: 1
+            friction: 0
         });
     }
 
@@ -162,8 +166,8 @@ export class Game {
         // ball reset
         this.ball.body.position[0] = this.map.pos.x + map_config.size.width / 2;
         this.ball.body.position[1] = this.map.pos.y + map_config.size.height / 2;
-        this.ball.body.velocity[0] = 0;
-        this.ball.body.velocity[1] = 0;
+        this.ball.body.force = [0, 0];
+        this.ball.body.velocity = [0, 0];
 
         // players reset
         const leftTeam = this.players.filter(player => player.team === Team.Left);
@@ -172,6 +176,7 @@ export class Game {
         leftTeam.forEach((player, idx) => {
             player.body.position[0] = leftTeamX;
             player.body.position[1] = leftTeamY + (player_config.radius * 2 + 10) * idx;
+            player.body.force = [0, 0];
         });
         const rightTeam = this.players.filter(player => player.team === Team.Right);
         const rightTeamX = this.map.pos.x + map_config.size.width - goal_config.size.width - player_config.radius;
@@ -179,6 +184,8 @@ export class Game {
         rightTeam.forEach((player, idx) => {
             player.body.position[0] = rightTeamX;
             player.body.position[1] = rightTeamY + (player_config.radius * 2 + 10) * idx;
+            player.body.force = [0, 0];
+            player.body.velocity = [0, 0];
         });
 
         // event
@@ -194,10 +201,15 @@ export class Game {
         this.reseting = false;
     }
 
-    public run() {
+    public logic(): void {
+        const playersShootingMap = this.players.map(player => ({ socketId: player.socketId, shooting: player.shooting }));
         this.players.forEach(player => {
             player.logic();
         });
+
+        const playersShooting = this.players
+            .filter(player => player.shooting !== playersShootingMap.find(plr => plr.socketId === player.socketId).shooting)
+            .map(player => ({ socketId: player.socketId, shooting: player.shooting }))
 
         this.players
             .filter((player) => player.shooting)
@@ -211,13 +223,12 @@ export class Game {
                         { x: player.body.position[0], y: player.body.position[1] },
                         { x: this.ball.body.position[0], y: this.ball.body.position[1] }
                     );
-                    this.ball.body.velocity[0] += shootingVector.x * player_config.shooting;
-                    this.ball.body.velocity[1] += shootingVector.y * player_config.shooting;
+                    this.ball.body.force[0] += shootingVector.x * player_config.shooting;
+                    this.ball.body.force[1] += shootingVector.y * player_config.shooting;
 
                 }
             });
-
-        this.worldStep();
+            
 
         const playersToAdd = this.playersToAdd.map(player => {
             this.players.push(player);
@@ -239,10 +250,10 @@ export class Game {
 
         const playersMoving = this.players
             .filter(player => isMoving(player.body))
-            .map(player => ({ socketId: player.socketId, position: player.body.position }));
+            .map(player => ({ socketId: player.socketId, position: player.body.interpolatedPosition }));
 
         const ballMoving = isMoving(this.ball.body)
-            ? { position: this.ball.body.position }
+            ? { position: this.ball.body.interpolatedPosition }
             : null;
 
         const scoreRight = !this.reseting && this.ball.body.position[0] < this.map.pos.x
@@ -264,19 +275,22 @@ export class Game {
         if (playersToAdd.length) data.playersToAdd = playersToAdd;
         if (playersToRemove.length) data.playersToRemove = playersToRemove;
         if (playersMoving.length) data.playersMoving = playersMoving;
+        if (playersShooting.length) data.playersShooting = playersShooting;
         if (ballMoving) data.ballMoving = ballMoving;
         if (scoreRight) data.scoreRight = scoreRight;
         if (scoreLeft) data.scoreLeft = scoreLeft;
         if (Object.keys(data).length) {
             this.io.emit('world::postStep', data);
         }
-        
+
     }
 
-    private worldStep(): void {
-
+    public run() {
         // Move bodies forward in time
-        this.world.step(this.step.fixedTime);
+        const time = new Date().valueOf();
+        const deltaTime = time - this.step.lastTime;
+        this.step.lastTime = time;
+        this.world.step(this.step.fixedTime, deltaTime/1000, this.step.maxSteps);
     }
 
 }

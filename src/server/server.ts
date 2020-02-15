@@ -27,7 +27,7 @@ console.log(`Running on http://${host}:${port}`);
 const game = new Game(io);
 setInterval(() => {
     game.run();
-}, game_config.interval);
+}, 0);
 
 
 
