@@ -53,29 +53,37 @@ export class Game {
     private initConnection(io: io.Server): void {
         this.io = io;
         // mozliwe ze połączenie będzie jeszcze wczesniej nawiazywane
-        io.on('connection', (socket) => {
-            socket.emit('player::init', {
-                players: this.players.map(player => ({
-                    socketId: player.socketId,
-                    team: player.team,
-                    position: player.body.position,
-                })),
-                ball: {
-                    position: this.ball.body.position,
-                },
-                score: this.score
-            } as IPlayerInit);
-            const newPlayer = new Player(socket.id, this.mat.player)
-            this.playersToAdd.push(newPlayer);
+        this.io.on('connection', (socket) => {
+            socket.on('connection::data', (data) => {
+                const {socketId, name, avatar} = JSON.parse(data);
+                console.log(socketId, name, avatar);
+                if (socketId !== socket.id) return;
+                socket.emit('player::init', {
+                    players: this.players.map(player => ({
+                        socketId: player.socketId,
+                        name: player.name,
+                        avatar: player.avatar,
+                        team: player.team,
+                        position: player.body.position,
+                    })),
+                    ball: {
+                        position: this.ball.body.position,
+                    },
+                    score: this.score
+                } as IPlayerInit);
+                
+                const newPlayer = new Player(socketId, name, avatar, this.mat.player)
+                this.playersToAdd.push(newPlayer);
 
-            socket.on('disconnect', () => {
-                this.playersToRemove.push(newPlayer);
-            });
+                socket.on('disconnect', () => {
+                    this.playersToRemove.push(newPlayer);
+                });
 
-            socket.on('player::key', (data: IPlayerKey) => {
-                for (let key in data) {
-                    newPlayer.keyMap[key] = data[key];
-                }
+                socket.on('player::key', (data: IPlayerKey) => {
+                    for (let key in data) {
+                        newPlayer.keyMap[key] = data[key];
+                    }
+                });
             });
         });
     }
@@ -235,6 +243,8 @@ export class Game {
             this.playerAddToTeam(player);
             this.playerAddToWorld(player);
             return {
+                name: player.name,
+                avatar: player.avatar,
                 socketId: player.socketId,
                 team: player.team,
                 position: player.body.position,

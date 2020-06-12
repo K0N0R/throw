@@ -1,4 +1,4 @@
-import StartPage from './view/start-page'; 
+import LoginPage from './view/login-page'; 
 import { render, h } from 'preact';
 
-render(<StartPage />, document.getElementById('app') as Element);
+render(<LoginPage />, document.getElementById('app') as Element);

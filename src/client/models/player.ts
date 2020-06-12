@@ -15,7 +15,7 @@ export class Player {
     private sprintingCooldownLeft = player_config.sprintingCooldown;
     public shooting!: boolean;
 
-    public constructor(pos: IPos, socketId: string, team: Team, me = false) {
+    public constructor(public name: string, public avatar: string, pos: IPos, socketId: string, team: Team, me = false) {
         this.pos = pos;
         this.socketId = socketId;
         this.team = team;
@@ -64,7 +64,15 @@ export class Player {
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
+        Canvas.startDraw();
+        Canvas.ctx.textAlign = 'center';
+        Canvas.ctx.font = '18px consolas';
+        Canvas.ctx.fillStyle = 'white';
+        Canvas.ctx.fillText(this.name, this.pos.x, this.pos.y + player_config.radius + 18 + 2);
 
+        Canvas.ctx.font = '22px consolas';
+        Canvas.ctx.fillText(this.avatar, this.pos.x, this.pos.y + 9);
+        Canvas.stopDraw();
 
     }
 }

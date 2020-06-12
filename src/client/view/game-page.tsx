@@ -1,20 +1,15 @@
 import { h, Component } from 'preact';
-import io from 'socket.io-client';
+
 import { Game } from '../models/game';
 
-import { host, port } from './../../shared/serverConfig';
 import { KeysHandler } from './../../shared/keysHandler'
 import { game_config } from './../../shared/callibration';
 
-const socket = io({
-    host: `${host}:${port}`
-});
 
-
-export default class StartPage extends Component {
+export default class GamePage extends Component {
 
     componentDidMount() {
-        const game = new Game(socket);
+        const game = new Game();
         const loop = () => {
             requestAnimationFrame(loop);
             game.run();
@@ -36,7 +31,7 @@ export default class StartPage extends Component {
                 <div>-</div>
                 <div class="score-value">
                     
-                    <div id="score-right"></div>
+                    <div id="score-right">0</div>
                     <div class="team-cube team-cube--right"></div>
                 </div>
             </div>

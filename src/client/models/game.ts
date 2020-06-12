@@ -1,3 +1,4 @@
+import io from 'socket.io-client';
 import { goal_config, map_config, player_config } from './../../shared/callibration';
 import { getOffset } from './../../shared/offset';
 import { Keys } from './../../shared/keys';
@@ -13,6 +14,8 @@ import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
 import { Score } from './score';
 
+import { host, port } from './../../shared/serverConfig';
+
 export class Game {
     private socket: SocketIOClient.Socket;
 
@@ -24,8 +27,15 @@ export class Game {
     private score!: Score;
     private keyMap: IPlayerKey = {};
 
-    constructor(socket: SocketIOClient.Socket) {
+    constructor() {
+        const socket = io({
+            host: `${host}:${port}`
+        });
         this.socket = socket;
+        this.socket.on('connect', (socket) => {
+            this.socket.emit('connection::data', JSON.stringify({socketId: this.socket.id, name: window.localStorage.getItem('throw_nick'), avatar: window.localStorage.getItem('throw_avatar')}));
+        });
+
         this.initHandlers();
         this.initCanvas();
         this.initEntities();
@@ -35,7 +45,7 @@ export class Game {
             if (data.playersToAdd) {
                 data.playersToAdd.forEach(player => {
                     const isMe = player.socketId === this.socket.id;
-                    this.players.push(new Player({ x: player.position[0], y: player.position[1] }, player.socketId, player.team, isMe));
+                    this.players.push(new Player(player.name, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team, isMe));
                     if (isMe) {
                         Camera.updatePos({ x: player.position[0], y: player.position[1] });
                     }
@@ -96,7 +106,7 @@ export class Game {
         });
 
         this.socket.on('player::init', (data: IPlayerInit) => {
-            this.players.push(...data.players.map(p => new Player({ x: p.position[0], y: p.position[1] }, p.socketId, p.team)));
+            this.players.push(...data.players.map(p => new Player(p.name, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team)));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
             this.score.updateScore(data.score);
         });

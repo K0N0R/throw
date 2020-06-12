@@ -1,6 +1,8 @@
 import { Team } from "./team";
 //#region PLAYER
 export interface IPlayerAdd {
+    name: string;
+    avatar: string;
     socketId: string;
     team: Team;
     position: [number, number];

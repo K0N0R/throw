@@ -24,7 +24,7 @@ export class Player {
     } 
     public team: Team
 
-    public constructor(socketId: string, material: p2.Material) {
+    public constructor(socketId: string, public name: string, public avatar: string, material: p2.Material) {
 
         this.socketId = socketId;
         let options: p2.BodyOptions = {
