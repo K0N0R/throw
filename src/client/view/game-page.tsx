@@ -17,7 +17,7 @@ export default class GamePage extends Component {
         loop();
         setInterval(() => {
             KeysHandler.run();
-        }, game_config.interval);
+        }, 4);
     }
     
 

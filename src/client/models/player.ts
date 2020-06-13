@@ -66,12 +66,12 @@ export class Player {
 
         Canvas.startDraw();
         Canvas.ctx.textAlign = 'center';
-        Canvas.ctx.font = '18px consolas';
+        Canvas.ctx.font = `${player_config.radius*0.8}px consolas`;
         Canvas.ctx.fillStyle = 'white';
-        Canvas.ctx.fillText(this.name, this.pos.x, this.pos.y + player_config.radius + 18 + 2);
+        Canvas.ctx.fillText(this.name, this.pos.x, this.pos.y + player_config.radius + player_config.radius/2 + player_config.radius*0.4);
 
-        Canvas.ctx.font = '22px consolas';
-        Canvas.ctx.fillText(this.avatar, this.pos.x, this.pos.y + 9);
+        Canvas.ctx.font = `${player_config.radius*1.2}px consolas`;
+        Canvas.ctx.fillText(this.avatar, this.pos.x, this.pos.y + (player_config.radius*1.2)/3);
         Canvas.stopDraw();
 
     }

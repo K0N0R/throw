@@ -14,6 +14,7 @@ export class Player {
     private shape!: p2.Circle;
     public keyMap: IPlayerKey = {};
 
+    public shootingCooldown: boolean;
     public shooting!: boolean;
     public sprinting!: boolean;
 
@@ -41,6 +42,13 @@ export class Player {
         this.shape.material = material;
         this.body.addShape(this.shape);
         this.body.damping = player_config.damping;
+    }
+
+    public shoot(): void {
+        this.shootingCooldown = true;
+        setTimeout(() => {
+            this.shootingCooldown = false;
+        }, player_config.shootingCooldown);
     }
 
     public onMovmentChange(): void {

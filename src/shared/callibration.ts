@@ -1,4 +1,4 @@
-const scale = 1;
+const scale = 2;
 export const game_config = {
     goalResetTimeout: 3000,
     interval: 1000/60
@@ -13,7 +13,7 @@ export const ball_config = {
 export const ball_style = {
     fillStyle: 'white',
     strokeStyle: 'black',
-    lineWidth: 3
+    lineWidth: 3 * scale
 }
 
 export const goal_config = {
@@ -32,8 +32,8 @@ export const goal_style = {
     postLineWidth: 3 * scale
 }
 
-const mapSize = { height: 586 * scale, width: 1280 * scale };
-const mapBorder = 2*goal_config.size.width * scale; 
+const mapSize = { height: 586, width: 1280 };
+const mapBorder = 2*goal_config.size.width; 
 export const map_config = {
     size: { height: mapSize.height * scale, width: mapSize.width * scale },
     outerSize: { height: (mapSize.height + 2*mapBorder) * scale, width: (mapSize.width + 2*mapBorder) * scale},
@@ -55,12 +55,13 @@ export const map_style = {
 export const player_config = {
     radius: 25 * scale,
     mass: 5,
-    damping: 0.8,
-    maxSpeed: 2000,
-    sprintMaxSpeed: 3000,
-    shooting: 100000,
-    sprinting: 2000,
-    sprintingCooldown: 4000
+    damping: 0.9,
+    maxSpeed: 2500 * scale,
+    sprintMaxSpeed: 5000 * scale,
+    shooting: 100000 * scale,
+    shootingCooldown: 100,
+    sprinting: 2000 * scale,
+    sprintingCooldown: 4000 * scale
 }
 
 export const player_style = {

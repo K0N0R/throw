@@ -22,7 +22,7 @@ export class Game {
         lastTime: number;
         maxSteps: number;
     };
-
+    
     private world!: p2.World;
     private mat: Dictionary<p2.Material> = {};
     private contactMat: Dictionary<p2.ContactMaterial> = {};
@@ -42,9 +42,8 @@ export class Game {
         this.step = {
             fixedTime: 1 / 240,
             lastTime: new Date().valueOf(),
-            maxSteps: 10,
+            maxSteps: 3,
         };
-
         this.initEntities();
         this.initWorld();
         this.initConnection(io);
@@ -220,23 +219,24 @@ export class Game {
             .map(player => ({ socketId: player.socketId, shooting: player.shooting }))
 
         this.players
-            .filter((player) => player.shooting)
+            .filter((player) => player.shooting && !player.shootingCooldown)
             .forEach(player => {
                 const playerPos = { x: player.body.position[0], y: player.body.position[1] };
                 const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
                 const minDistance = player_config.radius + ball_config.radius;
-                const shootingDistance = 1;
+                const shootingDistance = 5;
                 if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
+                    player.shoot();
+
                     const shootingVector = getNormalizedVector(
                         { x: player.body.position[0], y: player.body.position[1] },
                         { x: this.ball.body.position[0], y: this.ball.body.position[1] }
                     );
-                    this.ball.body.force[0] += shootingVector.x * player_config.shooting;
-                    this.ball.body.force[1] += shootingVector.y * player_config.shooting;
-
+                    this.ball.body.force[0] += player.body.velocity[0]*0.2 + shootingVector.x * player_config.shooting;
+                    this.ball.body.force[1] += player.body.velocity[1]*0.2 + shootingVector.y * player_config.shooting;
                 }
             });
-            
+
 
         const playersToAdd = this.playersToAdd.map(player => {
             this.players.push(player);
