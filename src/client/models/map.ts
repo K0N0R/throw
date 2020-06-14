@@ -1,3 +1,4 @@
+import './../assets/images/grass.png';
 import { IPos } from './../../shared/model';
 import { getOffset } from './../../shared/offset';
 import { getCornerPoints } from './../../shared/vertices';
@@ -8,6 +9,7 @@ import { Canvas } from './canvas';
 export class Map {
     public pos: IPos;
     public outerPos: IPos;
+    public bcgrImg: any;
 
     public constructor() {
 
@@ -20,6 +22,21 @@ export class Map {
             x: this.pos.x - map_config.border,
             y: this.pos.y - map_config.border
         };
+
+        this.setBcgrImg();
+
+    }
+
+    private setBcgrImg(): void {
+        const imageObj = new Image();
+
+        imageObj.onload = () => {
+            this.bcgrImg = imageObj;
+        };
+        imageObj.onerror = () => {
+            console.log('image cant load');
+        }
+        imageObj.src = './grass.179c6edd.png';
 
     }
 
@@ -64,6 +81,20 @@ export class Map {
     }
 
     public render(): void {
+
+
+        // background
+        if (this.bcgrImg) {
+            Canvas.startDraw();
+            Canvas.ctx.moveTo(0, 0);
+            for (let i = 0; i < 30; i++) {
+                for (let j = 0; j < 30; j++) {
+                    Canvas.ctx.drawImage(this.bcgrImg, i * 128, j*128);
+                }
+            }
+            Canvas.stopDraw();
+        }
+
         Canvas.startDraw();
         const verticesTop = this.getTopShapePoints(this.pos);
         Canvas.ctx.moveTo(verticesTop[0][0], verticesTop[0][1]);
@@ -117,7 +148,7 @@ export class Map {
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
-         // middle circle
+        // middle circle
         Canvas.ctx.moveTo(this.pos.x + map_config.size.width / 2, this.pos.y + map_config.size.height / 2);
         Canvas.startDraw();
         Canvas.ctx.arc(this.pos.x + map_config.size.width / 2, this.pos.y + map_config.size.height / 2, map_config.middleRadius + (map_style.lineWidth/2), 0, Math.PI * 2);
