@@ -195,6 +195,7 @@ export class Game {
             player.render();
         });
         this.ball.render();
+        this.score.render();
 
         Camera.translateEnd();
 

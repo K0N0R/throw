@@ -19,9 +19,13 @@ export class Player {
     public sprinting!: boolean;
 
     public get maxSpeed(): number {
-        return this.sprinting
-            ? player_config.sprintMaxSpeed
-            : player_config.maxSpeed
+        if (this.shooting) {
+            return player_config.shootingMaxSpeed;
+        } else {
+            return this.sprinting
+                ? player_config.sprintMaxSpeed
+                : player_config.maxSpeed
+        }
     } 
     public team: Team
 

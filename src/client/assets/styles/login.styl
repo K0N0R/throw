@@ -71,13 +71,17 @@
 	border: none;
 	text-transform: uppercase;
 	outline: none;
+	cursor pointer
 }
 
-.form-btn-submit {
+.form-btn-submit
 	background-color: #718c5a;
 	color: white;
 	font-weight: 800;
-}
+	transition background 0.3s
+	&:hover
+		background lightness(#718c5a, 40)
+
 
 .display--flex {
 	display: flex;

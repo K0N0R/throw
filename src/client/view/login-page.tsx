@@ -1,5 +1,5 @@
 import { render, h, Component } from 'preact';
-import LobbyPage from './lobby-page';
+import ListPage from './list-page';
 
 export default class StartPage extends Component {
     state = {
@@ -15,7 +15,7 @@ export default class StartPage extends Component {
         if (this.state.nick && this.state.avatar) {
             window.localStorage.setItem('throw_avatar', this.state.avatar);
             window.localStorage.setItem('throw_nick', this.state.nick);
-            render(<LobbyPage />, document.getElementById('app') as Element);
+            render(<ListPage />, document.getElementById('app') as Element);
         }
     }
 

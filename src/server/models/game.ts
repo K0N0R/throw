@@ -73,7 +73,7 @@ export class Game {
                 
                 const newPlayer = new Player(socketId, name, avatar, this.mat.player)
                 this.playersToAdd.push(newPlayer);
-
+                
                 socket.on('disconnect', () => {
                     this.playersToRemove.push(newPlayer);
                 });
@@ -129,6 +129,8 @@ export class Game {
         this.world.addBody(this.map.topBody);
         this.world.addBody(this.map.botBody);
         this.world.addBody(this.map.borderBody);
+        //this.world.addBody(this.map.leftHalfBody); LEFT TEAM START GAME
+        this.world.addBody(this.map.rightHalfBody);
 
         this.world.addBody(this.leftGoal.borderBody);
         this.world.addBody(this.leftGoal.postBody);
@@ -169,7 +171,7 @@ export class Game {
         });
     }
 
-    private reset(): void {
+    private reset(teamWhoScored: Team): void {
         // ball reset
         this.ball.body.position[0] = this.map.pos.x + map_config.size.width / 2;
         this.ball.body.position[1] = this.map.pos.y + map_config.size.height / 2;
@@ -194,6 +196,13 @@ export class Game {
             player.body.force = [0, 0];
             player.body.velocity = [0, 0];
         });
+
+        // map reset
+        if (teamWhoScored === Team.Left) {
+             this.world.addBody(this.map.leftHalfBody);
+        } else {
+            this.world.addBody(this.map.rightHalfBody);
+        }
 
         // event
         this.io.emit('world::reset', ({
@@ -227,13 +236,12 @@ export class Game {
                 const shootingDistance = 5;
                 if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
                     player.shoot();
-
                     const shootingVector = getNormalizedVector(
                         { x: player.body.position[0], y: player.body.position[1] },
                         { x: this.ball.body.position[0], y: this.ball.body.position[1] }
                     );
-                    this.ball.body.force[0] += player.body.velocity[0]*0.2 + shootingVector.x * player_config.shooting;
-                    this.ball.body.force[1] += player.body.velocity[1]*0.2 + shootingVector.y * player_config.shooting;
+                    this.ball.body.force[0] += (player.body.velocity[0]*0.5) + (shootingVector.x * player_config.shooting);
+                    this.ball.body.force[1] += (player.body.velocity[1]*0.5) + (shootingVector.y * player_config.shooting);
                 }
             });
 
@@ -266,6 +274,17 @@ export class Game {
             ? { position: this.ball.body.interpolatedPosition }
             : null;
 
+        if (ballMoving) {
+            const rightIdx = this.world.bodies.indexOf(this.map.rightHalfBody)
+            if (rightIdx != -1) {
+                this.world.removeBody(this.map.rightHalfBody);
+            }
+            const leftIdx = this.world.bodies.indexOf(this.map.leftHalfBody)
+            if (leftIdx != -1) {
+                this.world.removeBody(this.map.leftHalfBody);
+            }
+        }
+
         const scoreRight = !this.reseting && this.ball.body.position[0] < this.map.pos.x
             ? ++this.score.right
             : null;
@@ -275,9 +294,10 @@ export class Game {
             : null;
 
         if (scoreRight !== null || scoreLeft !== null) {
+            const teamWhoScored = scoreRight ? Team.Right : Team.Left;
             this.reseting = true;
             setTimeout(() => {
-                this.reset();
+                this.reset(teamWhoScored);
             }, game_config.goalResetTimeout);
         }
         

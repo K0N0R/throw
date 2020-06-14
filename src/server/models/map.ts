@@ -3,7 +3,7 @@ import * as p2 from 'p2';
 import { IPos } from './../../shared/model';
 import { getOffset } from './../../shared/offset';
 import { getCornerPoints } from './../../shared/vertices';
-import { map_config, goal_config, canvas_config } from './../../shared/callibration';
+import { map_config, goal_config, canvas_config, map_style } from './../../shared/callibration';
 
 import { PLAYER, MAP, MAP_BORDER, BALL } from './collision';
 
@@ -15,6 +15,9 @@ export class Map {
     public botBody: p2.Body;
 
     public borderBody: p2.Body;
+
+    public leftHalfBody: p2.Body;
+    public rightHalfBody: p2.Body;
 
     public constructor(material: p2.Material) {
 
@@ -57,6 +60,27 @@ export class Map {
         });
         this.borderBody.fromPolygon(this.getBorderShapePoints());
         this.borderBody.shapes.forEach(shape => {
+            shape.material = material;
+            shape.collisionGroup = MAP_BORDER;
+            shape.collisionMask = PLAYER;
+        });
+
+        this.leftHalfBody = new p2.Body({
+            mass: 0,
+            position: [this.pos.x, this.pos.y]
+        });
+        this.leftHalfBody.fromPolygon(this.getLeftHalfBorderShapePoints());
+        this.leftHalfBody.shapes.forEach(shape => {
+            shape.material = material;
+            shape.collisionGroup = MAP_BORDER;
+            shape.collisionMask = PLAYER;
+        });
+        this.rightHalfBody = new p2.Body({
+            mass: 0,
+            position: [this.pos.x, this.pos.y]
+        });
+        this.rightHalfBody.fromPolygon(this.getRightHalfBorderShapePoints());
+        this.rightHalfBody.shapes.forEach(shape => {
             shape.material = material;
             shape.collisionGroup = MAP_BORDER;
             shape.collisionMask = PLAYER;
@@ -118,5 +142,43 @@ export class Map {
             [offset.right + map_config.border + mapTickness, offset.top - map_config.border - mapTickness], // top right outer corner
             [offset.left - map_config.border - mapTickness, offset.top - map_config.border - mapTickness], // top left outer corner
         ];
+    }
+
+    private getLeftHalfBorderShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
+        const offset = getOffset(pos, map_config.size); // convex use relative position to body
+        const mapTickness = map_style.lineWidth;
+        const absolute0 = -(canvas_config.size.height / 2 - map_config.size.height / 2);
+        return [
+            [offset.midHori - mapTickness/2, absolute0], // top left corner
+            [offset.midHori + mapTickness/2, absolute0], // top right corner
+            [offset.midHori + mapTickness/2, offset.midVert - map_config.middleRadius], // middle angle start
+            ...getCornerPoints(map_config.cornerPointsAmount * 2, -Math.PI/2, { x: offset.midHori, y: offset.midVert }, map_config.middleRadius, { clockWise: -1, angleToTake: Math.PI }),
+            [offset.midHori + mapTickness/2, offset.midVert + map_config.middleRadius], // middle angle end
+            [offset.midHori + mapTickness/2, canvas_config.size.height], // bottom right corner
+            [offset.midHori - mapTickness/2, canvas_config.size.height], // bottom left corner
+            // second layer
+            [offset.midHori - mapTickness/2, offset.midVert + map_config.middleRadius + mapTickness],
+            ...getCornerPoints(map_config.cornerPointsAmount * 2, Math.PI/2, { x: offset.midHori, y: offset.midVert }, map_config.middleRadius + mapTickness, { clockWise: 1, angleToTake: Math.PI }),
+            [offset.midHori - mapTickness/2, offset.midVert - map_config.middleRadius - mapTickness],
+        ]
+    }
+
+    private getRightHalfBorderShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
+        const offset = getOffset(pos, map_config.size); // convex use relative position to body
+        const mapTickness = map_style.lineWidth;
+        const absolute0 = -(canvas_config.size.height / 2 - map_config.size.height / 2);
+        return [
+            [offset.midHori + mapTickness/2, absolute0], // top right corner
+            [offset.midHori - mapTickness/2, absolute0], // top left corner
+            [offset.midHori - mapTickness/2, offset.midVert - map_config.middleRadius], // middle angle start
+            ...getCornerPoints(map_config.cornerPointsAmount * 2, -Math.PI/2, { x: offset.midHori, y: offset.midVert }, map_config.middleRadius, { clockWise: 1, angleToTake: Math.PI }),
+            [offset.midHori - mapTickness/2, offset.midVert + map_config.middleRadius], // middle angle end
+            [offset.midHori - mapTickness/2, canvas_config.size.height], // bottom left corner
+            [offset.midHori + mapTickness/2, canvas_config.size.height], // bottom left corner
+            // second layer
+            [offset.midHori + mapTickness/2, offset.midVert + map_config.middleRadius + mapTickness],
+            ...getCornerPoints(map_config.cornerPointsAmount * 2, Math.PI/2, { x: offset.midHori, y: offset.midVert }, map_config.middleRadius + mapTickness, { clockWise: -1, angleToTake: Math.PI }),
+            [offset.midHori + mapTickness/2, offset.midVert - map_config.middleRadius - mapTickness],
+        ]
     }
 }

@@ -55,10 +55,11 @@ export const map_style = {
 export const player_config = {
     radius: 25 * scale,
     mass: 5,
-    damping: 0.9,
-    maxSpeed: 2500 * scale,
-    sprintMaxSpeed: 5000 * scale,
-    shooting: 100000 * scale,
+    damping: 0.92,
+    shootingMaxSpeed: 1750 * scale,
+    maxSpeed: 2750 * scale,
+    sprintMaxSpeed: 4750 * scale,
+    shooting: 125000 * scale,
     shootingCooldown: 100,
     sprinting: 2000 * scale,
     sprintingCooldown: 4000 * scale

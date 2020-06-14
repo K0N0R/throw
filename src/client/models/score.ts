@@ -1,14 +1,32 @@
+import { game_config, player_config, canvas_config, map_config, player_style } from './../../shared/callibration';
+import { Canvas } from './canvas';
+import { IPos } from './../../shared/model';
+
 export class Score {
+    public scoreInfo: {
+        text: string;
+        fillStyle: string;
+        scale: number;
+    } | null = null;
     public left!: number;
     public right!: number;
-    constructor() {}
+    public pos: IPos;
+    constructor() {
+        this.pos = {
+            x: canvas_config.size.width / 2,
+            y: canvas_config.size.height / 2
+        };
+    }
 
     public updateScore(score: { left: number | null; right: number | null}): void {
         if (score.left !== null) {
+            if (this.left != null) this.showScoreInfo('Red team scores!', player_style.leftFillStyle);
             this.left = score.left;
+            
         }
 
         if (score.right !== null) {
+            if (this.right != null) this.showScoreInfo('Blue team scores!', player_style.rightFillStyle);
             this.right = score.right;
         }
 
@@ -23,7 +41,31 @@ export class Score {
         }
     }
 
+    public showScoreInfo(text: string, fillStyle: string): void {
+        this.scoreInfo = {
+            text,
+            fillStyle,
+            scale: 1
+        };
+        setTimeout(() => {
+            this.scoreInfo = null;
+        }, game_config.goalResetTimeout);
+    }
+
     public render(): void {
+        if (this.scoreInfo) {
+            Canvas.startDraw();
+            Canvas.ctx.textAlign = 'center';
+            const font = player_config.radius * this.scoreInfo.scale >  player_config.radius*5 ? player_config.radius*5 : player_config.radius * this.scoreInfo.scale;
+            Canvas.ctx.font = `${font }px consolas`;
+            Canvas.ctx.lineWidth = font*0.05;
+            Canvas.ctx.strokeStyle = '#333';
+            Canvas.ctx.strokeText(this.scoreInfo.text, this.pos.x, this.pos.y);
+            Canvas.ctx.fillStyle = this.scoreInfo.fillStyle;
+            Canvas.ctx.fillText(this.scoreInfo.text, this.pos.x, this.pos.y);
+            Canvas.stopDraw();
+            this.scoreInfo.scale += 0.05;
+        }
     }
 
 }

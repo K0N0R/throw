@@ -22,10 +22,10 @@ export class RightGoal {
         return [
             [offset.left, offset.bottom],
             [offset.right - goal_config.cornerRadius, offset.bottom],
-            ...getCornerPoints(goal_config.cornerPointsAmount, Math.PI / 2, { x: offset.right - goal_config.cornerRadius, y: offset.bottom - goal_config.cornerRadius }, goal_config.cornerRadius, -1),
+            ...getCornerPoints(goal_config.cornerPointsAmount, Math.PI / 2, { x: offset.right - goal_config.cornerRadius, y: offset.bottom - goal_config.cornerRadius }, goal_config.cornerRadius, {clockWise: -1}),
             [offset.right, offset.bottom - goal_config.cornerRadius],
             [offset.right, offset.top + goal_config.cornerRadius],
-            ...getCornerPoints(goal_config.cornerPointsAmount, 0, { x: offset.right - goal_config.cornerRadius, y: offset.top + goal_config.cornerRadius }, goal_config.cornerRadius, -1),
+            ...getCornerPoints(goal_config.cornerPointsAmount, 0, { x: offset.right - goal_config.cornerRadius, y: offset.top + goal_config.cornerRadius }, goal_config.cornerRadius, {clockWise: -1}),
             [offset.right - goal_config.cornerRadius, offset.top],
             [offset.left, offset.top],
             [offset.left, offset.top - goalTickness],
