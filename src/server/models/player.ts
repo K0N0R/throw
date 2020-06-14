@@ -1,6 +1,6 @@
 import * as p2 from 'p2';
 
-import { calculateVectorLength, normalizeVector } from './../../shared/vector';
+import { calculateVectorLength, normalizeVector, getNormalizedVector } from './../../shared/vector';
 import { Keys } from './../../shared/keys';
 import { player_config } from './../../shared/callibration';
 import { Team } from './../../shared/team';
@@ -16,16 +16,14 @@ export class Player {
 
     public shootingCooldown: boolean;
     public shooting!: boolean;
-    public sprinting!: boolean;
+    public dashing!: boolean;
 
     public get maxSpeed(): number {
         if (this.shooting) {
             return player_config.shootingMaxSpeed;
-        } else {
-            return this.sprinting
-                ? player_config.sprintMaxSpeed
-                : player_config.maxSpeed
         }
+
+        return player_config.maxSpeed;
     } 
     public team: Team
 
@@ -55,6 +53,26 @@ export class Player {
         }, player_config.shootingCooldown);
     }
 
+    public dash(): void {
+        if (!this.dashing) {
+            this.dashing = true;
+            const initVelocity = {x: this.body.velocity[0], y: this.body.velocity[1]};
+            const dashingVector = getNormalizedVector(
+                { x: this.body.position[0], y: this.body.position[1] },
+                { x: this.body.position[0] + initVelocity.x, y: this.body.position[1] + initVelocity.y }
+            ); 
+            this.body.velocity[0] = (dashingVector.x * player_config.dashing);
+            this.body.velocity[1] = (dashingVector.y * player_config.dashing);
+            setTimeout(() => {
+                this.body.velocity[0] = initVelocity.x;
+                this.body.velocity[1] = initVelocity.y;
+                setTimeout(() => {
+                    this.dashing = false;
+                }, player_config.dashCooldown)
+            }, player_config.dashDuration);
+        }
+    }
+
     public onMovmentChange(): void {
         const moveVector = { x: this.body.force[0], y: this.body.force[1] };
         const movmentLength = calculateVectorLength(moveVector);
@@ -66,25 +84,51 @@ export class Player {
     }
     public counter = 0;
     public logic(): void {
+        const direction = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        };
         for (let key in this.keyMap) {
             switch (Number(key)) {
                 case Keys.Up:
-                    if (this.keyMap[key])  this.body.force[1] = -this.maxSpeed;
+                    if (this.keyMap[key]) {
+                        this.body.force[1] = -this.maxSpeed;
+                        direction.up = true;
+                    }
                     break;
                 case Keys.Down:
-                    if (this.keyMap[key]) this.body.force[1] = +this.maxSpeed;
+                    if (this.keyMap[key]) {
+                        this.body.force[1] = +this.maxSpeed;
+                        direction.down = true;
+                    }
                     break;
                 case Keys.Left:
-                    if (this.keyMap[key]) this.body.force[0] = -this.maxSpeed;
+                    if (this.keyMap[key]) {
+                        this.body.force[0] = -this.maxSpeed;
+                        direction.left = true;
+                    }
                     break;
                 case Keys.Right:
-                    if (this.keyMap[key]) this.body.force[0] = +this.maxSpeed;
-                    break;
-                case Keys.Shift:
-                    this.sprinting = this.keyMap[key];
+                    if (this.keyMap[key]) {
+                        this.body.force[0] = +this.maxSpeed;
+                        direction.right = true;
+                    }
                     break;
                 case Keys.X:
                     this.shooting = this.keyMap[key];
+                    break;
+            }
+        }
+        for (let key in this.keyMap) {
+            switch (Number(key)) {
+                case Keys.Shift:
+                    if  (this.keyMap[key]) {
+                        if (direction.up || direction.down || direction.left || direction.right) {
+                            this.dash();
+                        }
+                    }
                     break;
             }
         }

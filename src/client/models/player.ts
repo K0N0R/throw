@@ -10,9 +10,9 @@ export class Player {
     public team: Team;
     public me: boolean;
 
-    public sprinting!: boolean;
-    public sprintingCooldown!: boolean;
-    private sprintingCooldownLeft = player_config.sprintingCooldown;
+    public dashing!: boolean;
+    public dashCooldown!: boolean;
+    private dashCooldownLeft = player_config.dashCooldown;
     public shooting!: boolean;
 
     public constructor(public name: string, public avatar: string, pos: IPos, socketId: string, team: Team, me = false) {
@@ -22,13 +22,26 @@ export class Player {
         this.me = me;
     }
 
+    public dash(dashing: boolean): void {
+        if (!this.dashing && dashing) {
+            this.dashing = true;
+            setTimeout(() => {
+                this.sprintingCooldownTimer();
+                this.dashCooldown = true;
+                setTimeout(() => {
+                    this.dashing = false;
+                    this.dashCooldown = false;
+                }, player_config.dashCooldown);
+            }, player_config.dashDuration)
+        }
+    }
     public sprintingCooldownTimer() {
         const animationTick = 50; // the smaller the smoother
-        this.sprintingCooldownLeft = player_config.sprintingCooldown; 
+        this.dashCooldownLeft = player_config.dashCooldown; 
         const interval = setInterval(() => {
-            this.sprintingCooldownLeft -= animationTick;
-            if (this.sprintingCooldownLeft < 0 ) {
-                this.sprintingCooldownLeft = player_config.sprintingCooldown;
+            this.dashCooldownLeft -= animationTick;
+            if (this.dashCooldownLeft < 0 ) {
+                this.dashCooldownLeft = player_config.dashCooldown;
                 clearInterval(interval);
             }
         }, animationTick);
@@ -45,11 +58,11 @@ export class Player {
             Canvas.ctx.globalAlpha = 1;
             Canvas.stopDraw();
         }
-        if (this.sprintingCooldown) {
+        if (this.dashCooldown) {
             Canvas.ctx.moveTo(this.pos.x, this.pos.y);
             Canvas.startDraw();
             Canvas.ctx.globalAlpha = 0.5;
-            Canvas.ctx.arc(this.pos.x, this.pos.y, player_style.meIndicatorRadius, -Math.PI/2 + (-2 * Math.PI * this.sprintingCooldownLeft/player_config.sprintingCooldown), -Math.PI/2, false);
+            Canvas.ctx.arc(this.pos.x, this.pos.y, player_style.meIndicatorRadius, -Math.PI/2 + (-2 * Math.PI * this.dashCooldownLeft/player_config.dashCooldown), -Math.PI/2, false);
             Canvas.ctx.lineWidth = player_style.meIndicatorLineWidth;
             Canvas.ctx.stroke();
             Canvas.ctx.globalAlpha = 1;

@@ -123,28 +123,14 @@ export class Game {
         const handleShooting = (player: Player, pressed: { [param: number]: boolean }) => {
             player.shooting = pressed[Keys.X];
         };
-        const handleSprinting = (player: Player, pressed: { [param: number]: boolean }) => {
-            if (player.sprintingCooldown) {
-                pressed[Keys.Shift] = false;
-            } else if (player.sprinting) {
-                pressed[Keys.Shift] = true;
-            } else if (pressed[Keys.Shift] && !player.sprintingCooldown) {
-                player.sprinting = true;
-                setTimeout(() => {
-                    player.sprinting = false;
-                    player.sprintingCooldown = true;
-                    player.sprintingCooldownTimer();
-                    setTimeout(() => {
-                        player.sprintingCooldown = false;
-                    }, player_config.sprintingCooldown);
-               }, player_config.sprinting);
-            }
+        const handleDashing = (player: Player, pressed: { [param: number]: boolean }) => {
+            player.dash(pressed[Keys.Shift]);
         };
         KeysHandler.bindEvents((pressed: { [param: number]: boolean }) => {
             const player = this.players.find(player => player.socketId === this.socket.id);
             if (player) {
                 handleShooting(player, pressed);
-                handleSprinting(player, pressed);
+                handleDashing(player, pressed);
 
                 const deltaKeysMap: IPlayerKey = {};
                 for(const key in pressed) {

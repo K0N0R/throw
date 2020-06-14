@@ -58,11 +58,12 @@ export const player_config = {
     damping: 0.92,
     shootingMaxSpeed: 1750 * scale,
     maxSpeed: 2750 * scale,
-    sprintMaxSpeed: 4750 * scale,
     shooting: 125000 * scale,
     shootingCooldown: 100,
-    sprinting: 2000 * scale,
-    sprintingCooldown: 4000 * scale
+    dashing: 1250,
+    dashDuration: 200,
+    dashCooldown: 2000,
+    dashMaxSpeed: 9000 * scale
 }
 
 export const player_style = {
