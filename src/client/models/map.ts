@@ -1,4 +1,4 @@
-import './../assets/images/grass.png';
+import './../assets/images/grass_big.png';
 import { IPos } from './../../shared/model';
 import { getOffset } from './../../shared/offset';
 import { getCornerPoints } from './../../shared/vertices';
@@ -36,7 +36,7 @@ export class Map {
         imageObj.onerror = () => {
             console.log('image cant load');
         }
-        imageObj.src = './grass.179c6edd.png';
+        imageObj.src = './grass_big.7a6b015b.png';
 
     }
 
@@ -85,11 +85,12 @@ export class Map {
 
         // background
         if (this.bcgrImg) {
+            const imgSize = 225;
             Canvas.startDraw();
             Canvas.ctx.moveTo(0, 0);
-            for (let i = 0; i < 30; i++) {
-                for (let j = 0; j < 30; j++) {
-                    Canvas.ctx.drawImage(this.bcgrImg, i * 128, j*128);
+            for (let i = 0; i < 20; i++) {
+                for (let j = 0; j < 20; j++) {
+                    Canvas.ctx.drawImage(this.bcgrImg, i * imgSize, j * imgSize);
                 }
             }
             Canvas.stopDraw();
