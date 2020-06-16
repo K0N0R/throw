@@ -1,7 +1,6 @@
 import p2 from 'p2';
 
 import io from 'socket.io';
-
 import { Player } from './player';
 import { Map } from './map';
 import { Ball } from './ball';
@@ -13,6 +12,14 @@ import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
 import { IPlayerInit, IPlayerKey, IWorldReset, IWorldPostStep, IPlayerShooting } from './../../shared/events';
+import { User } from './../lobby/user';
+
+export interface IGameConfig {
+    leftTeam: User[];
+    rightTeam: User[];
+    timeLimit: number;
+    scoreLimit: number;
+}
 
 export class Game {
     private io: io.Server;
@@ -38,80 +45,60 @@ export class Game {
     private score = { left: 0, right: 0 };
     private reseting: boolean;
 
-    constructor(io: io.Server) {
+    constructor(config: IGameConfig, public roomId: string) {
         this.step = {
             fixedTime: 1 / 240,
             lastTime: new Date().valueOf(),
-            maxSteps: 3,
+            maxSteps: 10,
         };
         this.initEntities();
         this.initWorld();
-        this.initConnection(io);
+        this.initPlayers(config);
+        this.reset();
     }
 
-    private initConnection(io: io.Server): void {
-        this.io = io;
-        // mozliwe ze połączenie będzie jeszcze wczesniej nawiazywane
-        this.io.on('connection', (socket) => {
-            socket.on('connection::data', (data) => {
-                const {socketId, name, avatar} = JSON.parse(data);
-                console.log(socketId, name, avatar);
-                if (socketId !== socket.id) return;
-                socket.emit('player::init', {
-                    players: this.players.map(player => ({
-                        socketId: player.socketId,
-                        name: player.name,
-                        avatar: player.avatar,
-                        team: player.team,
-                        position: player.body.position,
-                    })),
-                    ball: {
-                        position: this.ball.body.position,
-                    },
-                    score: this.score
-                } as IPlayerInit);
-                
-                const newPlayer = new Player(socketId, name, avatar, this.mat.player)
-                this.playersToAdd.push(newPlayer);
-                
-                socket.on('disconnect', () => {
-                    this.playersToRemove.push(newPlayer);
-                });
-
-                socket.on('player::key', (data: IPlayerKey) => {
-                    for (let key in data) {
-                        newPlayer.keyMap[key] = data[key];
-                    }
-                });
-            });
+    //#region player
+    private initPlayers(config: IGameConfig): void {
+        config.leftTeam.forEach(item => {
+            this.addPlayer(item, Team.Left);
+        });
+        config.rightTeam.forEach(item => {
+            this.addPlayer(item, Team.Right);
         });
     }
 
-    private playerAddToTeam(newPlayer: Player): void {
-        const leftTeam = this.players.filter(player => player.team === Team.Left);
-        const rightTeam = this.players.filter(player => player.team === Team.Right);
-        if (leftTeam.length > rightTeam.length) {
-            // assing to right
-            newPlayer.body.position[0] = canvas_config.size.width - map_config.border;
-            newPlayer.body.position[1] = canvas_config.size.height / 2;
-            newPlayer.team = Team.Right;
-        } else {
-            // assign to left
-            newPlayer.body.position[0] = map_config.border;
-            newPlayer.body.position[1] = canvas_config.size.height / 2;
-            newPlayer.team = Team.Left;
-        }
+    private addPlayer(user: User, team: Team): void {
+        const player = new Player(user.socket.id, user.nick, user.avatar, team, this.mat.player);
+        this.players.push(player);
+        this.world.addBody(player.body);
+        this.bindPlayerEvents(user.socket, player);
     }
 
-    private playerAddToWorld(newPlayer: Player): void {
-        this.world.addBody(newPlayer.body);
+    public assingUserToTeam(user: User, team: Team): void {
+        const player = new Player(user.socket.id, user.nick, user.avatar, team, this.mat.player);
+        this.playersToAdd.push(player);
+        this.bindPlayerEvents(user.socket, player);
     }
 
-    private playerDispose(oldPlayer: Player): void {
-        this.world.removeBody(oldPlayer.body);
-        const playerIdx = this.players.indexOf(oldPlayer);
-        this.players.splice(playerIdx, 1);
+    private bindPlayerEvents(socket, player): void {
+        socket.on('disconnect', () => {
+            this.playersToRemove.push(player);
+        });
+
+        socket.on('player::key', (data: IPlayerKey) => {
+            for (let key in data) {
+                player.keyMap[key] = data[key];
+            }
+        });
     }
+
+    public removePlayer(user: User): void {
+        const player = this.players.find(item => item.socketId === user.socket.id);
+        this.playersToRemove.push(player);
+        user.socket.removeAllListeners('player::key');
+        user.socket.removeAllListeners('disconnect');
+    }
+    //#endregion 
 
     private initEntities(): void {
         this.initMaterials();
@@ -171,7 +158,7 @@ export class Game {
         });
     }
 
-    private reset(teamWhoScored: Team): void {
+    private reset(teamWhoScored?: Team): void {
         // ball reset
         this.ball.body.position[0] = this.map.pos.x + map_config.size.width / 2;
         this.ball.body.position[1] = this.map.pos.y + map_config.size.height / 2;
@@ -205,7 +192,7 @@ export class Game {
         }
 
         // event
-        this.io.emit('world::reset', ({
+        this.io.to(this.roomId).emit('world::reset', ({
             players: this.players.map(player => ({
                 socketId: player.socketId,
                 position: player.body.position,
@@ -248,8 +235,7 @@ export class Game {
 
         const playersToAdd = this.playersToAdd.map(player => {
             this.players.push(player);
-            this.playerAddToTeam(player);
-            this.playerAddToWorld(player);
+            this.world.addBody(player.body);
             return {
                 name: player.name,
                 avatar: player.avatar,
@@ -261,7 +247,9 @@ export class Game {
         this.playersToAdd.length = 0;
 
         const playersToRemove = this.playersToRemove.map(player => {
-            this.playerDispose(player);
+            this.world.removeBody(player.body);
+            const playerIdx = this.players.indexOf(player);
+            this.players.splice(playerIdx, 1);
             return player.socketId;
         })
         this.playersToRemove.length = 0;
@@ -310,7 +298,7 @@ export class Game {
         if (scoreRight) data.scoreRight = scoreRight;
         if (scoreLeft) data.scoreLeft = scoreLeft;
         if (Object.keys(data).length) {
-            this.io.emit('world::postStep', data);
+            this.io.to(this.roomId).emit('world::postStep', data);
         }
 
     }
@@ -318,9 +306,9 @@ export class Game {
     public run() {
         // Move bodies forward in time
         const time = new Date().valueOf();
-        const deltaTime = time - this.step.lastTime;
+        const timeSinceLastCall = time - this.step.lastTime;
         this.step.lastTime = time;
-        this.world.step(this.step.fixedTime, deltaTime/1000, this.step.maxSteps);
+        this.world.step(this.step.fixedTime, timeSinceLastCall/1000, this.step.maxSteps);
     }
 
 }

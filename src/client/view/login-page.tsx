@@ -1,5 +1,6 @@
 import { render, h, Component } from 'preact';
 import ListPage from './list-page';
+import { User } from './../models/user';
 
 export default class StartPage extends Component {
     state = {
@@ -15,7 +16,9 @@ export default class StartPage extends Component {
         if (this.state.nick && this.state.avatar) {
             window.localStorage.setItem('throw_avatar', this.state.avatar);
             window.localStorage.setItem('throw_nick', this.state.nick);
-            render(<ListPage />, document.getElementById('app') as Element);
+            User.connect(this.state.nick, this.state.avatar, () => {
+                render(<ListPage />, document.getElementById('app') as Element);
+            });
         }
     }
 

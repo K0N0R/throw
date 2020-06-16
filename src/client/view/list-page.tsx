@@ -1,23 +1,32 @@
 import { render, h, Component } from 'preact';
-import GamePage from './game-page';
+import CreateRoomPage from './create-room-page';
+import JoinRoomPage from './join-room-page';
+import { User } from './../models/user';
+import { ILobbyRoom } from './../../shared/events';
+
 
 export default class ListPage extends Component {
-    
-    nick: string = window.localStorage.getItem('throw_nick') || '';
-    avatar: string = window.localStorage.getItem('throw_avatar') || '';
     componentDidMount() {
-
+        User.enterLobby();
+        User.setAvailableRoomsCallback(() => {
+            this.forceUpdate();
+        });
     }
 
-    runGame() {
-        render(<GamePage />, document.getElementById('app') as Element);
+    componentWillUnmount() {
+        User.leaveLobby();
+    }
+
+    joinRoom(room: ILobbyRoom) {
+        render(<JoinRoomPage {...{ room: room }} />, document.getElementById('app') as Element);
+
     }
 
     createNewGame() {
-        
+        render(<CreateRoomPage />, document.getElementById('app') as Element);
     }
 
-    render() {
+    render(_,) {
         return [
             <div class="centered">
                 <div class="list">
@@ -28,11 +37,13 @@ export default class ListPage extends Component {
                             Create game
                         </button>
                     </div>
-                    <div class="list-item"
-                        onClick={() => this.runGame()}>
-                        <div class="list-item__column">Server Name</div>
-                        <div class="list-item__column list-item__column--small">1/20</div>
-                    </div>
+                    {...(User.availableRooms.map(room =>
+                        <div class="list-item"
+                            onClick={() => this.joinRoom(room)}>
+                            <div class="list-item__column">{room.name}</div>
+                            <div class="list-item__column list-item__column--small">{room.players}</div>
+                        </div>))
+                    }
                     <div class="list-footer">
                         Click on item in the list to join you dumb ass!
                     </div>

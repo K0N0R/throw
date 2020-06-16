@@ -61,3 +61,32 @@ export interface IWorldPostStep {
     ballMoving?: { position: [number, number] } | null;
 }
 //#endregion
+
+//#region lobby
+export interface IConnectionData {
+    nick: string;
+    avatar: string;
+}
+
+export interface ILobbyRoom {
+    id: string;
+    name: string;
+    players: number;
+}
+
+export interface IRoomCreate {
+    name: string;
+    password: string;
+    maxPlayersAmount: number;
+}
+
+export interface IRoomLeave {
+    id: string;
+}
+
+export interface IRoomJoin {
+    id: string;
+    password: string;
+}
+
+//#endregion

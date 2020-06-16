@@ -3,9 +3,10 @@ import http from 'http';
 import path from 'path';
 import socketIO from 'socket.io';
 
-import { Game } from './models/game';
+import { Game } from './game/game';
 import { host, port } from './../shared/serverConfig';
 import { game_config } from './../shared/callibration';
+import { Lobby } from './lobby/lobby';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -23,13 +24,7 @@ app.use(express.static(path.resolve(BASE_PATH + '/client')));
 httpServer.listen(port, host);
 console.log(`Running on http://${host}:${port}`);
 
-// ---------------- GAME
-const game = new Game(io);
-setInterval(() => {
-    game.run();
-}, 0);
-
-
+new Lobby(io);
 
 
 
