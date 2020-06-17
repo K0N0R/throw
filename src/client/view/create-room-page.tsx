@@ -1,7 +1,8 @@
 import { render, h, Component } from 'preact';
-import ListPage from './list-page';
+import ListPage from './lobby-page';
 import RoomPage from './room-page';
 import { User } from './../models/user';
+import { ILobbyRoom } from 'shared/events';
 
 export default class CreateRoomPage extends Component {
     state = {
@@ -16,8 +17,9 @@ export default class CreateRoomPage extends Component {
     
     onConfirm(): void {
         if (this.state.name) {
-            User.createRoom(this.state);
-            render(<RoomPage />, document.getElementById('app') as Element);
+            User.createRoom(this.state, (room: ILobbyRoom) => {
+                render(<RoomPage room={room}/>, document.getElementById('app') as Element);
+            });
         }
     }
     onCancel(): void {

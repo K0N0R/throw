@@ -1,25 +1,25 @@
 import { render, h, Component } from 'preact';
 import CreateRoomPage from './create-room-page';
 import JoinRoomPage from './join-room-page';
-import { User } from './../models/user';
-import { ILobbyRoom } from './../../shared/events';
+import { User } from '../models/user';
+import { ILobbyRoom } from '../../shared/events';
 
 
 export default class ListPage extends Component {
     componentDidMount() {
         User.enterLobby();
-        User.setAvailableRoomsCallback(() => {
+        User.setLobbyRoomsChange(() => {
             this.forceUpdate();
         });
     }
 
     componentWillUnmount() {
+        User.setLobbyRoomsChange(null);
         User.leaveLobby();
     }
 
     joinRoom(room: ILobbyRoom) {
         render(<JoinRoomPage {...{ room: room }} />, document.getElementById('app') as Element);
-
     }
 
     createNewGame() {
@@ -37,12 +37,13 @@ export default class ListPage extends Component {
                             Create game
                         </button>
                     </div>
-                    {...(User.availableRooms.map(room =>
+                    {...(User.lobbyRooms.map(room =>
                         <div class="list-item"
                             onClick={() => this.joinRoom(room)}>
                             <div class="list-item__column">{room.name}</div>
                             <div class="list-item__column list-item__column--small">{room.players}</div>
-                        </div>))
+                        </div>
+                        ))
                     }
                     <div class="list-footer">
                         Click on item in the list to join you dumb ass!

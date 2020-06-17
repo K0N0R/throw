@@ -1,4 +1,5 @@
 import { Team } from "./team";
+import { User } from './../server/lobby/user';
 //#region PLAYER
 export interface IPlayerAdd {
     name: string;
@@ -72,6 +73,21 @@ export interface ILobbyRoom {
     id: string;
     name: string;
     players: number;
+    data?: IRoomData;
+}
+
+export interface IRoomData {
+    adminId: string;
+    left: { socketId: string, nick: string, avatar: string}[];
+    right: { socketId: string, nick: string, avatar: string}[];
+    spectators: { socketId: string, nick: string, avatar: string}[];
+    timeLimit: number;
+    scoreLimit: number;
+    messages?: {
+        nick: string;
+        avatar: string;
+        value: string;
+    }[]
 }
 
 export interface IRoomCreate {
@@ -88,5 +104,4 @@ export interface IRoomJoin {
     id: string;
     password: string;
 }
-
 //#endregion

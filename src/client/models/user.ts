@@ -6,9 +6,9 @@ export class User {
     public static socket: SocketIOClient.Socket;
     public static nick: string;
     public static avatar: string;
-    public static availableRooms: ILobbyRoom[] = [];
+    public static lobbyRooms: ILobbyRoom[] = [];
 
-    public static connect(nick, avatar, callback): void {
+    public static connect(nick: string, avatar: string, connected: () => void): void {
         this.nick = nick;
         this.avatar = avatar;
         this.socket = io({
@@ -21,12 +21,22 @@ export class User {
             };
             // stringify prevents from avatar send issue
             this.socket.emit('connection::data', JSON.stringify(connectionData));
-            callback();
+            connected();
         });
         this.socket.on('lobby::room-list', (data: ILobbyRoom[]) => {
-            this.availableRooms = data;
-            this.onAvailableRoomsChangeCallback();
+            this.lobbyRooms = data;
+            if (this.onLobbyRoomsChange) this.onLobbyRoomsChange();
         });
+    }
+
+    public static onLobbyRoomsChange: (() => void) | null;
+    public static setLobbyRoomsChange(onLobbyRoomsChange: (() => void) | null) {
+        this.onLobbyRoomsChange = onLobbyRoomsChange;
+    }
+
+    public static onRoomChanges: ((room: ILobbyRoom) => void) | null;
+    public static setRoomChange(onRoomChanges: ((room: ILobbyRoom) => void) | null) {
+        this.onRoomChanges = onRoomChanges;
     }
 
     public static enterLobby(): void {
@@ -37,21 +47,28 @@ export class User {
         this.socket.emit('lobby::leave');
     }
 
-    public static createRoom(data: IRoomCreate): void {
+    public static createRoom(data: IRoomCreate, created: (room: ILobbyRoom) => void): void {
         this.socket.emit('room::create', data);
-    }
-
-    public static joinRoom(room: ILobbyRoom, password: string, successCallback): void {
-        this.socket.emit('room::join', {id: room.id, password });
-        this.socket.on('room::joined', () => {
-            successCallback();
-            this.socket.removeListener('room::joined');
+        this.socket.on('room::created', (room: ILobbyRoom) => {
+            created(room);
+            this.socket.removeListener('room::created');
         });
     }
 
-    public static onAvailableRoomsChangeCallback: () => void;
-    public static setAvailableRoomsCallback(callback) {
-        this.onAvailableRoomsChangeCallback = callback;
+    public static leaveRoom(room: ILobbyRoom): void {
+        this.socket.emit('room::leave', { id: room.id });
+        this.socket.removeListener('room::changed');
+    }
+
+    public static joinRoom(room: ILobbyRoom, password: string, joined: (room: ILobbyRoom) => void): void {
+        this.socket.emit('room::join', {id: room.id, password });
+        this.socket.on('room::joined', (room: ILobbyRoom) => {
+            joined(room);
+            this.socket.removeListener('room::joined');
+        });
+        this.socket.on('room::changed', (room: ILobbyRoom) => {
+            if (this.onRoomChanges) this.onRoomChanges(room);
+        });
     }
 
 }

@@ -1,5 +1,5 @@
 import { render, h, Component } from 'preact';
-import ListPage from './list-page';
+import ListPage from './lobby-page';
 import { User } from './../models/user';
 
 export default class StartPage extends Component {

@@ -1,5 +1,5 @@
 import { render, h, Component } from 'preact';
-import ListPage from './list-page';
+import ListPage from './lobby-page';
 import RoomPage from './room-page';
 import { User } from './../models/user';
 import { ILobbyRoom } from './../../shared/events';
@@ -13,8 +13,8 @@ export default class JoinRoomPage extends Component<{ room: ILobbyRoom}> {
     }
     
     onConfirm(): void {
-        User.joinRoom(this.props.room, this.state.password, () => {
-            render(<RoomPage />, document.getElementById('app') as Element);
+        User.joinRoom(this.props.room, this.state.password, (room: ILobbyRoom) => {
+            render(<RoomPage room={room}/>, document.getElementById('app') as Element);
         });
     }
     onCancel(): void {
