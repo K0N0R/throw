@@ -1,7 +1,9 @@
-requires node in 8.4v
+#Throw - game
+---
+**Requires node in 8.4v**
 
+Instalation - ``npm install``
 
-npm install
+Development server - ``npm start``
 
-
-npm run build
+Production build - ``npm run build``

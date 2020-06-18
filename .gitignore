@@ -1,5 +1,9 @@
 node_modules
 dist
+<<<<<<< HEAD
+=======
+build
+>>>>>>> 3dd82d05600bbfedbbd658fed593ae56e241cffb
 .cache
 package-lock.json
 .vs/throw/v16/.suo

@@ -1,0 +1,53 @@
+.centered
+    display flex
+    flex-direction column
+    justify-content center
+    margin auto
+
+.list
+    width 700px
+
+.list-header
+    display flex
+    align-items center
+    font-weight 600
+    font-size 1.2rem
+    margin 10px;
+
+    &__button
+        text-transform uppercase
+        border none
+        line-height 2
+        color white
+        padding 2px 15px
+        margin-left auto
+        background-color rgba(0, 0, 0, 0.2)
+        border-radius 5px
+        cursor pointer
+        outline none
+        &:hover
+            background rgba(0, 0, 0, 0.3)
+
+.list-item
+    padding 15px 20px
+    margin-bottom 3px
+    display flex
+    line-height 2
+    background rgba(0, 0, 0, 0.1)
+    color white
+    flex 1
+    border-radius 5px
+    cursor pointer
+    transition background 0.3s
+    &:hover
+        background rgba(0, 0, 0, 0.2)
+
+    &__column
+        flex 1
+    
+        &--small
+            max-width 50px
+
+.list-footer
+    font-size 0.9rem
+    margin 10px;
