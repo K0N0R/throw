@@ -1,7 +1,7 @@
 import io from 'socket.io';
 import uuid from 'uuid';
 
-import { IConnectionData, IRoomCreate, IRoomLeave, IRoomJoin } from './../../shared/events';
+import { IConnectionData, IRoomCreate, IRoomLeave, IRoomJoin, ILobbyRoom } from './../../shared/events';
 
 import { User } from './user';
 import { Room } from './room';
@@ -92,6 +92,10 @@ export class Lobby {
         this.updateLobbyList();
         user.socket.emit('room::joined');
         user.socket.emit('room::changed', room.getData(true));
+        user.socket.on('room::update', (lobbyRoom: ILobbyRoom) => {
+            room.update(lobbyRoom)
+            this.io.to(this.lobbyId).emit('room::changed');
+        });
     }
 
     private updateLobbyList(): void {

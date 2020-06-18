@@ -1,0 +1,83 @@
+.room
+    position fixed
+    width 900px
+    left s("calc(50% - 450px)")
+    top s("calc(50% - 250px)")
+    display flex
+    flex-direction column
+    background rgba(0, 0, 0, 0.2)
+    border-radius 5px
+    padding 5px
+
+    &__head
+        display flex
+
+        &__title
+            flex 1
+            font-size 18px
+            font-weight 900
+            border-bottom 1px solid
+
+            color white
+
+    &__body
+        display flex
+        padding-top 50px
+
+        &__actions
+            display flex
+            flex-direction column
+            justify-content center
+            width 100px
+
+        &__team
+            flex 1
+            margin 5px
+            background rgba(0, 0, 0, 0.6)
+            color white
+            min-height 300px
+
+            &__label
+                text-align center
+                text-transform uppercase
+                border-bottom 1px solid
+
+                &--red
+                    color #e56e56
+
+                &--blue
+                    color #5689e5
+
+            &__members
+                display flex
+                flex-direction column
+
+            &__member
+                display flex
+                padding 5px
+
+    &__foot
+        display flex
+        flex-direction column
+        justify-content center
+        margin-top 60px
+
+        &__option
+            display flex
+            width 300px
+            margin auto
+
+            &__label
+                flex 1
+
+            &__input
+                flex 1
+
+            &__button
+                margin-top 15px
+                flex 1
+                padding 5px
+                border none
+                border-radius 3px
+                background rgba(0, 0, 0, 0.3)
+                color white

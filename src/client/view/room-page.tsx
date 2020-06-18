@@ -19,6 +19,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
             this.state.room.data.timeLimit = e.target.value;
         }
         this.setState({ room: this.state.room});
+        User.updateRoom(this.state.room);
     };
     
     onScoreLimitChange(e: any): void {
@@ -26,6 +27,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
             this.state.room.data.scoreLimit = e.target.value;
         }
         this.setState({ room: this.state.room});
+        User.updateRoom(this.state.room);
     };
 
     rand(): void {}
@@ -36,12 +38,12 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
         if (!room) return;
         const isUserAdmin = room.data.adminId === User.socket.id;
         return [
-            <div class="lobby">
-                <div class="lobby__head">
-                    <div class="lobby__head__title">{room.name}</div>
+            <div class="room">
+                <div class="room__head">
+                    <div class="room__head__title">{room.name}</div>
                 </div>
-                <div class="lobby__body">
-                    <div class="lobby__body__actions">
+                <div class="room__body">
+                    <div class="room__body__actions">
                         <button
                             onClick={() => this.rand()}
                             disabled={!isUserAdmin}>
@@ -53,11 +55,11 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                             Reset
                         </button>
                     </div>
-                    <div class="lobby__body__team">
-                        <div class="lobby__body__team__label">Red</div>
-                        <div class="lobby__body__team__members">
+                    <div class="room__body__team">
+                        <div class="room__body__team__label room__body__team__label--red">Red</div>
+                        <div class="room__body__team__members">
                             {   ...(room.data.left.map(item => 
-                                <div class="lobby__body__team__member">
+                                <div class="room__body__team__member">
                                     <div>{item.avatar}</div>
                                     <div>{item.nick}</div>
                                 </div>
@@ -65,11 +67,11 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                             }
                         </div>
                     </div>
-                    <div class="lobby__body__team">
-                        <div class="lobby__body__team__label">Spectators</div>
-                        <div class="lobby__body__team__members">
+                    <div class="room__body__team">
+                        <div class="room__body__team__label">Spectators</div>
+                        <div class="room__body__team__members">
                             {   ...(room.data.spectators.map(item => 
-                                <div class="lobby__body__team__member">
+                                <div class="room__body__team__member">
                                     <div>{item.avatar}</div>
                                     <div>{item.nick}</div>
                                 </div>
@@ -77,10 +79,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                             }
                         </div>
                     </div>
-                    <div class="lobby__body__team">
-                        <div class="lobby__body__team__label">Blue</div>
+                    <div class="room__body__team">
+                        <div class="room__body__team__label room__body__team__label--blue">Blue</div>
                         {   ...(room.data.right.map(item => 
-                            <div class="lobby__body__team__member">
+                            <div class="room__body__team__member">
                                 <div>{item.avatar}</div>
                                 <div>{item.nick}</div>
                             </div>
@@ -88,35 +90,35 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                         }
                     </div>
                 </div>
-                <div class="lobby__foot">
-                    <div class="lobby__foot__option">
-                        <label>Time limit</label>
-                        <input
+                <div class="room__foot">
+                    <div class="room__foot__option">
+                        <label class="room__foot__option__label">Time limit</label>
+                        <input class="room__foot__option__input"
                             value={room.data.timeLimit}
                             readOnly={!isUserAdmin}
                             onInput={(e) => this.onTimeLimitChange(e)}/>
                     </div>
-                    <div class="lobby__foot__option">
-                        <label>Score limit</label>
-                        <input
+                    <div class="room__foot__option">
+                        <label class="room__foot__option__label">Score limit</label>
+                        <input class="room__foot__option__input"
                             value={room.data.scoreLimit}
                             readOnly={!isUserAdmin}
                             onInput={(e) => this.onScoreLimitChange(e)}/>
                     </div>
-                    <div class="lobby__foot__option">
-                        <label>Map</label>
-                        <input
+                    <div class="room__foot__option">
+                        <label class="room__foot__option__label">Map</label>
+                        <input class="room__foot__option__input"
                             value={'Rounded'}
                             readOnly={true}/>
                     </div>
-                    <div>
-                        <button>
+                    <div class="room__foot__option">
+                        <button class="room__foot__option__button">
                             Start Game!
                         </button>
                     </div>
                 </div>
 
-                <div class="lobby-chat">
+                <div class="room-chat">
 
                 </div>
             </div>

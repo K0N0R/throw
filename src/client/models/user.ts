@@ -53,6 +53,7 @@ export class User {
             created(room);
             this.socket.removeListener('room::created');
         });
+        this.onRoomJoin();
     }
 
     public static leaveRoom(room: ILobbyRoom): void {
@@ -66,9 +67,17 @@ export class User {
             joined(room);
             this.socket.removeListener('room::joined');
         });
+        this.onRoomJoin();
+    }
+
+    private static onRoomJoin(): void {
         this.socket.on('room::changed', (room: ILobbyRoom) => {
             if (this.onRoomChanges) this.onRoomChanges(room);
         });
+    }
+
+    public static updateRoom(room: ILobbyRoom): void {
+         this.socket.emit('room::update', room);
     }
 
 }
