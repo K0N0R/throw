@@ -65,17 +65,18 @@ export class Lobby {
     }
 
     private userLeaveRoom(user: User): void {
-        const room = this.rooms.find(item => item.id === user.socket.id);
+        const room = this.rooms.find(room => room.users.find(roomUser => roomUser.socket.id === user.socket.id));
         if (!room) return; // user wasnt in room
 
         // admin of room leave
         if (user.socket.id === room.adminId) {
-            this.io.to(room.id).emit('room::destroyed');
             room.users.forEach(user => {
                 user.socket.leave(room.id);
+                room.removeUser(user);
             });
             const idx = this.rooms.indexOf(room);
             this.rooms.splice(idx, 1);
+            this.io.to(room.id).emit('room::destroyed');
         } else { // user of room leave
             user.socket.leave(room.id);
             room.removeUser(user);
@@ -86,13 +87,15 @@ export class Lobby {
 
     private userJoinRoom(user: User, room: Room): void {
         room.join(user);
-        this.updateLobbyList();
-        user.socket.emit('room::joined', room.getData(true));
         this.updateRoom(room);
+        user.socket.emit('room::joined', room.getData(true));
+        this.updateLobbyList();
+
         user.socket.on('room::update', (lobbyRoom: ILobbyRoom) => {
             if (user.socket.id === room.adminId) {
                 room.update(lobbyRoom)
                 this.updateRoom(room);
+                this.updateLobbyList();
             }
         });
     }

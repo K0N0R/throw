@@ -39,6 +39,11 @@ export class User {
         this.onRoomChanges = onRoomChanges;
     }
 
+    public static onRoomDestroyed: ((room: ILobbyRoom) => void) | null;
+    public static setRoomDestroyed(onRoomDestroyed: ((room: ILobbyRoom) => void) | null) {
+        this.onRoomDestroyed = onRoomDestroyed;
+    }
+
     public static enterLobby(): void {
         this.socket.emit('lobby::enter');
     }
@@ -74,6 +79,9 @@ export class User {
         this.socket.on('room::changed', (room: ILobbyRoom) => {
             if (this.onRoomChanges) this.onRoomChanges(room);
         });
+        this.socket.on('room::destroyed', (room: ILobbyRoom) => {
+            if (this.onRoomDestroyed) this.onRoomDestroyed(room);
+        })
     }
 
     public static updateRoom(room: ILobbyRoom): void {

@@ -3,6 +3,8 @@ import { ILobbyRoom } from './../../shared/events';
 import { User } from './../models/user';
 import { Team } from '../../shared/team';
 import GamePage from './game-page';
+import { goTo } from './utils';
+import ListPage from './lobby-page';
 
 export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILobbyRoom }> {
     componentDidMount() {
@@ -17,7 +19,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
             }
             this.setState({ room });
             this.forceUpdate();
-        })
+        });
+        User.setRoomDestroyed(() => {
+            goTo(<ListPage/>)
+        });
     }
 
     onTimeLimitChange(e: any): void {
