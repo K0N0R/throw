@@ -54,6 +54,7 @@ export class User {
             this.socket.removeListener('room::created');
         });
         this.onRoomJoin();
+
     }
 
     public static leaveRoom(room: ILobbyRoom): void {
@@ -69,7 +70,6 @@ export class User {
         });
         this.onRoomJoin();
     }
-
     private static onRoomJoin(): void {
         this.socket.on('room::changed', (room: ILobbyRoom) => {
             if (this.onRoomChanges) this.onRoomChanges(room);

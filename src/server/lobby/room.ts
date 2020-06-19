@@ -29,6 +29,7 @@ export class Room {
 
     public join(user: User) {
         this.users.push(user);
+        user.socket.join(this.id);
     }
 
     public update(room: ILobbyRoom): void {
