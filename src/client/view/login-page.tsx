@@ -1,4 +1,4 @@
-import { render, h } from 'preact';
+import { h } from 'preact';
 import ListPage from './lobby-page';
 import { User } from './../models/user';
 import { useLocalStorage } from './hooks';

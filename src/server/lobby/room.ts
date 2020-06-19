@@ -3,6 +3,7 @@ import uuid from 'uuid';
 import { User } from './user';
 import { Game, IGameConfig } from './../game/game';
 import { ILobbyRoom } from '../../shared/events';
+import { Team } from '../../shared/team';
 
 export class Room {
     public id: string;
@@ -10,6 +11,7 @@ export class Room {
     public timeLimit = 6;
     public scoreLimit = 10;
     public messages = [];
+
     public constructor(
         public adminId: string,
         public name: string,
@@ -33,8 +35,8 @@ export class Room {
         if (room?.data?.adminId) {
             this.adminId = room.data.adminId;
             this.users.forEach(user => {
-                const userTeam = room.data.users.find(item => item.socketId === user.socket.id)?.team;
-                user.team = userTeam
+                const userTeam = room?.data?.users.find(item => item.socketId === user.socket.id)?.team;
+                user.team = userTeam ?? Team.Spectator;
             });
             this.timeLimit = room.data.timeLimit;
             this.scoreLimit = room.data.scoreLimit;

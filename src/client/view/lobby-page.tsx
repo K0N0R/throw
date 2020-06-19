@@ -3,19 +3,20 @@ import CreateRoomPage from './create-room-page';
 import JoinRoomPage from './join-room-page';
 import { User } from '../models/user';
 import { ILobbyRoom } from '../../shared/events';
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { useForceUpdate } from './hooks';
 import { goTo } from './utils';
 
 
-export default function ListPage {
+export default function ListPage() {
 
-    const forceUpdate = useForceUpdate;
+    // const forceUpdate = useForceUpdate;
+    const [rooms, setRooms] = useState(User.lobbyRooms);
 
     useEffect(() => {
         User.enterLobby();
         User.setLobbyRoomsChange(() => {
-            forceUpdate();
+            setRooms(User.lobbyRooms);
         });
 
         return () => {
@@ -25,7 +26,7 @@ export default function ListPage {
     });
 
     const joinRoom = (room: ILobbyRoom) => {
-        goTo(<JoinRoomPage {...{ room: room }} />);
+        goTo(<JoinRoomPage {...room } />);
     }
 
     const createNewGame = () => {
@@ -42,12 +43,12 @@ export default function ListPage {
                         Create game
                     </button>
                 </div>
-                {...(User.lobbyRooms.map(room =>
-                    <div class="list-item"
-                        onClick={() => joinRoom(room)}>
-                        <div class="list-item__column">{room.name}</div>
-                        <div class="list-item__column list-item__column--small">{room.players}</div>
-                    </div>
+                {...(rooms.map(room =>
+                        <div class="list-item"
+                            onClick={() => joinRoom(room)}>
+                            <div class="list-item__column">{room.name}</div>
+                            <div class="list-item__column list-item__column--small">{room.players}</div>
+                        </div>
                     ))
                 }
                 <div class="list-footer">
