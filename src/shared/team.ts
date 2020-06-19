@@ -1,4 +1,5 @@
 export enum Team {
     Left,
-    Right
+    Right,
+    Spectator
 }

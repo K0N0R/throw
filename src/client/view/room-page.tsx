@@ -1,6 +1,7 @@
 import { render, h, Component } from 'preact';
 import { ILobbyRoom } from './../../shared/events';
 import { User } from './../models/user';
+import { Team } from '../../shared/team';
 
 
 export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILobbyRoom }> {
@@ -30,6 +31,19 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
         User.updateRoom(this.state.room);
     };
 
+    onUserMoveInit(eMouseDown: MouseEvent, user: User): void {
+        const onMouseMove  = (eMouseMove) => {
+
+        };
+        const onMouseUp = (eMouseUp) => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+
+    }
+
     rand(): void {}
 
     reset(): void {}
@@ -58,7 +72,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                     <div class="room__body__team">
                         <div class="room__body__team__label room__body__team__label--red">Red</div>
                         <div class="room__body__team__members">
-                            {   ...(room.data.left.map(item => 
+                            {   ...(room.data.users.filter(user => user.team === Team.Left).map(item => 
                                 <div class="room__body__team__member">
                                     <div>{item.avatar}</div>
                                     <div>{item.nick}</div>
@@ -70,7 +84,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                     <div class="room__body__team">
                         <div class="room__body__team__label">Spectators</div>
                         <div class="room__body__team__members">
-                            {   ...(room.data.spectators.map(item => 
+                            {   ...(room.data.users.filter(user => user.team === Team.Spectator).map(item => 
                                 <div class="room__body__team__member">
                                     <div>{item.avatar}</div>
                                     <div>{item.nick}</div>
@@ -81,8 +95,9 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                     </div>
                     <div class="room__body__team">
                         <div class="room__body__team__label room__body__team__label--blue">Blue</div>
-                        {   ...(room.data.right.map(item => 
-                            <div class="room__body__team__member">
+                        {   ...(room.data.users.filter(user => user.team === Team.Right).map(item => 
+                            <div class="room__body__team__member"
+                                onMouseDown={(e) => this.onUserMoveInit(e, item)}>
                                 <div>{item.avatar}</div>
                                 <div>{item.nick}</div>
                             </div>

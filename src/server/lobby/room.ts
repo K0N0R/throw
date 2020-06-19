@@ -6,9 +6,7 @@ import { ILobbyRoom } from '../../shared/events';
 
 export class Room {
     public id: string;
-    public left: User[] = [];
-    public right: User[] = [];
-    public spectators: User[] = [];
+    public users: User[] = [];
     public timeLimit = 6;
     public scoreLimit = 10;
     public messages = [];
@@ -20,39 +18,24 @@ export class Room {
         this.id = uuid();
     }
 
-    public get allUsers(): User[] {
-        return [...this.left, ...this.spectators, ...this.right];
-    }
-
     public removeUser(user: User): void {
-        const spectatorsIdx = this.spectators.indexOf(user);
-        if (spectatorsIdx !== -1) {
-            this.spectators.splice(spectatorsIdx,1);
-            return;
-        }
-        const leftIdx = this.left.indexOf(user);
-        if (spectatorsIdx !== -1) {
-            this.left.splice(leftIdx,1);
-            return;
-        }
-        const rightIdx = this.right.indexOf(user);
-        if (spectatorsIdx !== -1) {
-            this.right.splice(rightIdx,1);
-            return;
+        const idx = this.users.indexOf(user);
+        if (idx !== -1) {
+            this.users.splice(idx,1);
         }
     }
 
     public join(user: User) {
-        this.spectators.push(user);
+        this.users.push(user);
     }
 
     public update(room: ILobbyRoom): void {
         if (room.data.adminId) {
             this.adminId = room.data.adminId;
-            const allUsers = this.allUsers;
-            this.left = this.allUsers.filter(user => room.data.left.find(leftUser => leftUser.socketId === user.socket.id));
-            this.right = this.allUsers.filter(user => room.data.right.find(rightUser => rightUser.socketId === user.socket.id));
-            this.spectators = this.allUsers.filter(user => room.data.spectators.find(spectatorUser => spectatorUser.socketId === user.socket.id));
+            this.users.forEach(user => {
+                const userTeam = room.data.users.find(item => item.socketId === user.socket.id)?.team;
+                user.team = userTeam
+            });
             this.timeLimit = room.data.timeLimit;
             this.scoreLimit = room.data.scoreLimit;
             this.messages = [];
@@ -70,19 +53,18 @@ export class Room {
         const lobbyRoom: ILobbyRoom = {
             id: this.id,
             name: this.name,
-            players: this.left.length + this.right.length + this.spectators.length,
+            players: this.users.length,
         };
         if (detailed) {
             const mapUser = (user: User) => ({
                 socketId: user.socket.id,
                 nick: user.nick,
-                avatar: user.avatar
+                avatar: user.avatar,
+                team: user.team
             });
             lobbyRoom.data = {
                 adminId: this.adminId,
-                left: this.left.map(mapUser),
-                right: this.right.map(mapUser),
-                spectators: this.spectators.map(mapUser),
+                users: this.users.map(mapUser),
                 timeLimit: this.timeLimit,
                 scoreLimit: this.scoreLimit,
                 messages: this.messages

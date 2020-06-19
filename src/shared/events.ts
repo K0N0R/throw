@@ -78,9 +78,7 @@ export interface ILobbyRoom {
 
 export interface IRoomData {
     adminId: string;
-    left: { socketId: string, nick: string, avatar: string}[];
-    right: { socketId: string, nick: string, avatar: string}[];
-    spectators: { socketId: string, nick: string, avatar: string}[];
+    users: { socketId: string, nick: string, avatar: string; team: Team}[]
     timeLimit: number;
     scoreLimit: number;
     messages?: {

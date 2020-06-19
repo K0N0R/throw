@@ -56,7 +56,7 @@ export class Lobby {
         //#region lobby
         user.socket.on('lobby::enter', () => {
             user.socket.join(this.lobbyId);
-            user.socket.emit('lobby::room-list', this.rooms.map(item => ({ id: item.id, name: item.name, players: item.spectators.length})));
+            user.socket.emit('lobby::room-list', this.rooms.map(item => ({ id: item.id, name: item.name, players: item.users.length})));
         });
         user.socket.on('lobby::leave', () => {
             user.socket.leave(this.lobbyId);
@@ -71,7 +71,7 @@ export class Lobby {
         // admin of room leave
         if (user.socket.id === room.adminId) {
             this.io.to(room.id).emit('room::destroyed');
-            room.allUsers.forEach(user => {
+            room.users.forEach(user => {
                 user.socket.leave(room.id);
             });
             const idx = this.rooms.indexOf(room);
@@ -79,8 +79,6 @@ export class Lobby {
         } else { // user of room leave
             user.socket.leave(room.id);
             room.removeUser(user);
-            const idx = room.spectators.indexOf(user);
-            room.spectators.splice(idx, 1);
         }
         this.updateLobbyList();
         user.socket.emit('room::changed', room.getData(true));
