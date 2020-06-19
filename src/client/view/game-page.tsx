@@ -1,14 +1,15 @@
-import { h, Component } from 'preact';
+import { h } from 'preact';
 
 import { Game } from '../models/game';
 
 import { KeysHandler } from './../../shared/keysHandler'
 import { game_config } from './../../shared/callibration';
+import { useEffect } from 'preact/hooks';
 
 
 export default function GamePage() {
 
-    componentDidMount() {
+    useEffect(() => {
         const game = new Game();
         const loop = () => {
             requestAnimationFrame(loop);
@@ -18,8 +19,7 @@ export default function GamePage() {
         setInterval(() => {
             KeysHandler.run();
         }, 4);
-    }
-    
+    }, []);
 
     return (
         <div>
