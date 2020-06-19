@@ -1,10 +1,5 @@
 import { useState } from "preact/hooks";
 
-export function useForceUpdate() {
-    const [, setIt] = useState(false);
-    return () => setIt(it => !it);
-}
-
 export function useLocalStorage(key: string, initialValue: string) {
     const [storedValue, setStoredValue] = useState(() => {
         try {

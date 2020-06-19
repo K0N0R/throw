@@ -7,9 +7,8 @@ import { useState } from 'preact/hooks';
 import { goTo } from './utils';
 
 export default function JoinRoomPage(room: ILobbyRoom) {
-
     const [password, setPassword] = useState('');
-    
+
     const onConfirm = () => {
         User.joinRoom(room, password, (room: ILobbyRoom) => {
             goTo(<RoomPage room={room}/>);

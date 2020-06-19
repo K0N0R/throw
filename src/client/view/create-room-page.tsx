@@ -11,7 +11,6 @@ export default function CreateRoomPage() {
     const [name, setName] = useLocalStorage('throw_nick', '');
     const [password, setPassword] = useState('');
     const maxPlayersAmount = 20;
-    
 
     const onConfirm = () => {
         if (name) {
@@ -20,6 +19,7 @@ export default function CreateRoomPage() {
             });
         }
     }
+
     const onCancel = () => {
         goTo(<ListPage />);
     }
