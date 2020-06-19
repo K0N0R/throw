@@ -31,16 +31,25 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
         User.updateRoom(this.state.room);
     };
 
-    onUserMoveInit(eMouseDown: MouseEvent, user: User): void {
-        const onMouseMove  = (eMouseMove) => {
+    drag(ev, user): void {
+        if (this.state.room.data?.adminId !== User.socket.id) return;
+        ev.dataTransfer.setData('userId', user.socketId);
+    }
 
-        };
-        const onMouseUp = (eMouseUp) => {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-        };
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
+    dragOver(ev): void {
+        if (this.state.room.data?.adminId !== User.socket.id) return;
+        ev.preventDefault();
+    }
+
+    drop(ev, team): void {
+        if (this.state.room.data?.adminId !== User.socket.id) return;
+        ev.preventDefault();
+        const userId = ev.dataTransfer.getData('userId')
+        const user = this.state.room.data?.users.find(user => user.socketId === userId);
+        if (!user) return;
+        user.team = team;
+        this.setState({ room: this.state.room});
+        User.updateRoom(this.state.room);
 
     }
 
@@ -69,11 +78,15 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                             Reset
                         </button>
                     </div>
-                    <div class="room__body__team">
+                    <div class="room__body__team"
+                        onDrop={(ev) => this.drop(ev, Team.Left)}
+                        onDragOver={(ev) => this.dragOver(ev)}>
                         <div class="room__body__team__label room__body__team__label--red">Red</div>
-                        <div class="room__body__team__members">
+                        <div class="room__body__team__members"
+                            >
                             {   ...(room.data.users.filter(user => user.team === Team.Left).map(item => 
-                                <div class="room__body__team__member">
+                                <div class="room__body__team__member"
+                                    onDragStart={(e) => this.drag(e, item)} draggable={true}>
                                     <div>{item.avatar}</div>
                                     <div>{item.nick}</div>
                                 </div>
@@ -81,11 +94,14 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                             }
                         </div>
                     </div>
-                    <div class="room__body__team">
+                    <div class="room__body__team"
+                        onDragOver={(ev) => this.dragOver(ev)}
+                        onDrop={(ev) => this.drop(ev, Team.Spectator)}>
                         <div class="room__body__team__label">Spectators</div>
                         <div class="room__body__team__members">
                             {   ...(room.data.users.filter(user => user.team === Team.Spectator).map(item => 
-                                <div class="room__body__team__member">
+                                <div class="room__body__team__member"
+                                    onDragStart={(e) => this.drag(e, item)} draggable={true}>
                                     <div>{item.avatar}</div>
                                     <div>{item.nick}</div>
                                 </div>
@@ -93,16 +109,20 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                             }
                         </div>
                     </div>
-                    <div class="room__body__team">
+                    <div class="room__body__team"
+                        onDragOver={(ev) => this.dragOver(ev)}
+                        onDrop={(ev) => this.drop(ev, Team.Right)}>
                         <div class="room__body__team__label room__body__team__label--blue">Blue</div>
-                        {   ...(room.data.users.filter(user => user.team === Team.Right).map(item => 
-                            <div class="room__body__team__member"
-                                onMouseDown={(e) => this.onUserMoveInit(e, item)}>
-                                <div>{item.avatar}</div>
-                                <div>{item.nick}</div>
-                            </div>
-                            ))
-                        }
+                            <div class="room__body__team__members">
+                            {   ...(room.data.users.filter(user => user.team === Team.Right).map(item => 
+                                <div class="room__body__team__member"
+                                    onDragStart={(e) => this.drag(e, item)} draggable={true}>
+                                    <div>{item.avatar}</div>
+                                    <div>{item.nick}</div>
+                                </div>
+                                ))
+                            }
+                        </div>
                     </div>
                 </div>
                 <div class="room__foot">

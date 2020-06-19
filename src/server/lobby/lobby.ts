@@ -81,23 +81,30 @@ export class Lobby {
             room.removeUser(user);
         }
         this.updateLobbyList();
-        user.socket.emit('room::changed', room.getData(true));
-
+        this.updateRoom(room);
     }
 
     private userJoinRoom(user: User, room: Room): void {
         room.join(user);
         this.updateLobbyList();
-        user.socket.emit('room::joined');
-        user.socket.emit('room::changed', room.getData(true));
+        user.socket.emit('room::joined', room.getData(true));
+        this.updateRoom(room);
         user.socket.on('room::update', (lobbyRoom: ILobbyRoom) => {
-            room.update(lobbyRoom)
-            this.io.to(this.lobbyId).emit('room::changed');
+            if (user.socket.id === room.adminId) {
+                room.update(lobbyRoom)
+                this.updateRoom(room);
+            }
         });
     }
 
     private updateLobbyList(): void {
         this.io.to(this.lobbyId).emit('lobby::room-list', this.rooms.map(item => item.getData()));
+    }
+
+    private roomUpdateCounter = 0;
+    private updateRoom(room: Room): void {
+        console.log('room', this.roomUpdateCounter++);
+        this.io.to(room.id).emit('room::changed', room.getData(true));
     }
     
 }
