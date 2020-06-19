@@ -47,12 +47,12 @@ export class Room {
     }
 
     public update(room: ILobbyRoom): void {
-        if (room.data.adminId) {
+        if (room?.data?.adminId) {
             this.adminId = room.data.adminId;
             const allUsers = this.allUsers;
-            this.left = this.allUsers.filter(user => room.data.left.find(leftUser => leftUser.socketId === user.socket.id));
-            this.right = this.allUsers.filter(user => room.data.right.find(rightUser => rightUser.socketId === user.socket.id));
-            this.spectators = this.allUsers.filter(user => room.data.spectators.find(spectatorUser => spectatorUser.socketId === user.socket.id));
+            this.left = this.allUsers.filter(user => room.data?.left.find(leftUser => leftUser.socketId === user.socket.id));
+            this.right = this.allUsers.filter(user => room.data?.right.find(rightUser => rightUser.socketId === user.socket.id));
+            this.spectators = this.allUsers.filter(user => room.data?.spectators.find(spectatorUser => spectatorUser.socketId === user.socket.id));
             this.timeLimit = room.data.timeLimit;
             this.scoreLimit = room.data.scoreLimit;
             this.messages = [];

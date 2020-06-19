@@ -11,7 +11,7 @@ export class Lobby {
     private lobbyId = uuid();
     public users: User[] = []
     public rooms: Room[] = [];
-    public io: io.Server;
+    public io!: io.Server;
     public constructor(io: io.Server) {
         this.initConnection(io);
     }

@@ -14,7 +14,7 @@ export class Player {
     private shape!: p2.Circle;
     public keyMap: IPlayerKey = {};
 
-    public shootingCooldown: boolean;
+    public shootingCooldown!: boolean;
     public shooting!: boolean;
     public dashing!: boolean;
 

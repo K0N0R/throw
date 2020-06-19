@@ -22,7 +22,7 @@ export interface IGameConfig {
 }
 
 export class Game {
-    private io: io.Server;
+    private io!: io.Server;
 
     private step: {
         fixedTime: number;
@@ -43,7 +43,7 @@ export class Game {
     private rightGoal!: RightGoal;
 
     private score = { left: 0, right: 0 };
-    private reseting: boolean;
+    private reseting!: boolean;
 
     constructor(config: IGameConfig, public roomId: string) {
         this.step = {
@@ -94,7 +94,9 @@ export class Game {
 
     public removePlayer(user: User): void {
         const player = this.players.find(item => item.socketId === user.socket.id);
-        this.playersToRemove.push(player);
+        if (player) {
+            this.playersToRemove.push(player);
+        }
         user.socket.removeAllListeners('player::key');
         user.socket.removeAllListeners('disconnect');
     }
@@ -211,7 +213,7 @@ export class Game {
         });
 
         const playersShooting = this.players
-            .filter(player => player.shooting !== playersShootingMap.find(plr => plr.socketId === player.socketId).shooting)
+            .filter(player => player.shooting !== playersShootingMap.find(plr => plr.socketId === player.socketId)?.shooting)
             .map(player => ({ socketId: player.socketId, shooting: player.shooting }))
 
         this.players
