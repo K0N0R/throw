@@ -51,10 +51,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
     render(_, { room }) {
         if (!room) return;
         const isUserAdmin = room.data.adminId === User.socket.id;
-        return [
-            <div class="room">
-                <div class="room__head">
-                    <div class="room__head__title">{room.name}</div>
+        return (
+            <div class="lobby">
+                <div class="lobby__head">
+                    <div class="lobby__head__title">{room.name}</div>
                 </div>
                 <div class="room__body">
                     <div class="room__body__actions">
@@ -137,6 +137,6 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
 
                 </div>
             </div>
-        ];
+        );
     }
 }

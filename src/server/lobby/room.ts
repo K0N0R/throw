@@ -30,7 +30,7 @@ export class Room {
     }
 
     public update(room: ILobbyRoom): void {
-        if (room.data.adminId) {
+        if (room?.data?.adminId) {
             this.adminId = room.data.adminId;
             this.users.forEach(user => {
                 const userTeam = room.data.users.find(item => item.socketId === user.socket.id)?.team;
