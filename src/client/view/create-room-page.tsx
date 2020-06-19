@@ -5,10 +5,10 @@ import { User } from './../models/user';
 import { ILobbyRoom } from 'shared/events';
 import { goTo } from './utils';
 import { useLocalStorage } from './hooks';
-import { useState, useEffect } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 export default function CreateRoomPage() {
-    const [name, setName] = useLocalStorage('throw_nick', '');
+    const [name] = useLocalStorage('throw_nick', '');
     const [roomName, setRoomName] = useLocalStorage('throw_room', `${name}'s room`);
     const [password, setPassword] = useState('');
     const maxPlayersAmount = 20;
