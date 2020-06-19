@@ -47,6 +47,7 @@ export default function ListPage() {
                         <div class="list-item"
                             onClick={() => joinRoom(room)}>
                             <div class="list-item__column">{room.name}</div>
+                            <div class="list-item__column">{room.playing ? 'Game is currently running!': ''}</div>
                             <div class="list-item__column list-item__column--small">{room.players}</div>
                         </div>
                     ))

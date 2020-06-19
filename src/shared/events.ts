@@ -73,6 +73,7 @@ export interface ILobbyRoom {
     id: string;
     name: string;
     players: number;
+    playing: boolean;
     data?: IRoomData;
 }
 

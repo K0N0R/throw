@@ -1,29 +1,20 @@
 import p2 from 'p2';
-
 import io from 'socket.io';
+
 import { Player } from './player';
 import { Map } from './map';
 import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
-import { goal_config, map_config, player_config, ball_config, canvas_config, game_config } from './../../shared/callibration';
+import { goal_config, map_config, player_config, ball_config, game_config } from './../../shared/callibration';
 import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
-import { IPlayerInit, IPlayerKey, IWorldReset, IWorldPostStep, IPlayerShooting } from './../../shared/events';
+import { IPlayerKey, IWorldReset, IWorldPostStep } from './../../shared/events';
 import { User } from './../lobby/user';
 
-export interface IGameConfig {
-    leftTeam: User[];
-    rightTeam: User[];
-    timeLimit: number;
-    scoreLimit: number;
-}
-
 export class Game {
-    private io!: io.Server;
-
     private step: {
         fixedTime: number;
         lastTime: number;
@@ -45,7 +36,9 @@ export class Game {
     private score = { left: 0, right: 0 };
     private reseting!: boolean;
 
-    constructor(config: IGameConfig, public roomId: string) {
+    private initStage: boolean;
+    constructor(private io: io.Server, private users: User[], timeLimit, scoreLimit, public roomId: string) {
+        this.initStage = true;
         this.step = {
             fixedTime: 1 / 240,
             lastTime: new Date().valueOf(),
@@ -53,39 +46,36 @@ export class Game {
         };
         this.initEntities();
         this.initWorld();
-        this.initPlayers(config);
-        this.reset();
+        this.initPlayers();
     }
 
     //#region player
-    private initPlayers(config: IGameConfig): void {
-        config.leftTeam.forEach(item => {
-            this.addPlayer(item, Team.Left);
-        });
-        config.rightTeam.forEach(item => {
-            this.addPlayer(item, Team.Right);
+    private initPlayers(): void {
+        this.users.filter(item => item.team !== Team.Spectator).forEach((item) => {
+             this.addNewPlayer(item);
         });
     }
 
-    private addPlayer(user: User, team: Team): void {
-        const player = new Player(user.socket.id, user.nick, user.avatar, team, this.mat.player);
-        this.players.push(player);
-        this.world.addBody(player.body);
-        this.bindPlayerEvents(user.socket, player);
-    }
-
-    public assingUserToTeam(user: User, team: Team): void {
-        const player = new Player(user.socket.id, user.nick, user.avatar, team, this.mat.player);
+    public addNewPlayer(user: User): void {
+        const player = new Player(user.socket.id, user.nick, user.avatar, user.team, this.mat.player);
         this.playersToAdd.push(player);
-        this.bindPlayerEvents(user.socket, player);
     }
 
-    private bindPlayerEvents(socket, player): void {
-        socket.on('disconnect', () => {
+    private addPlayerToWorld(player: Player): void {
+        this.playersToAdd.push(player);
+        this.world.addBody(player.body);
+        this.bindPlayerEvents(player);
+    }
+
+
+    private bindPlayerEvents(player: Player): void {
+        const user = this.users.find(item => item.socket.id === player.socketId);
+        if (!user) return;
+        user.socket.on('disconnect', () => {
             this.playersToRemove.push(player);
         });
 
-        socket.on('player::key', (data: IPlayerKey) => {
+        user.socket.on('player::key', (data: IPlayerKey) => {
             for (let key in data) {
                 player.keyMap[key] = data[key];
             }
@@ -236,7 +226,9 @@ export class Game {
 
 
         const playersToAdd = this.playersToAdd.map(player => {
+            this.addPlayerToWorld(player);
             this.players.push(player);
+
             this.world.addBody(player.body);
             return {
                 name: player.name,
@@ -290,6 +282,11 @@ export class Game {
                 this.reset(teamWhoScored);
             }, game_config.goalResetTimeout);
         }
+
+        if (this.initStage) {
+            this.reset();
+            this.initStage = false;
+        }
         
         const data: IWorldPostStep = {};
         if (playersToAdd.length) data.playersToAdd = playersToAdd;
@@ -306,6 +303,7 @@ export class Game {
     }
 
     public run() {
+        console.log(this.players);
         // Move bodies forward in time
         const time = new Date().valueOf();
         const timeSinceLastCall = time - this.step.lastTime;

@@ -20,7 +20,9 @@ export class Canvas {
         if (ctx !== null) {
             this._ctx = ctx;
         }
-        document.body.appendChild(this.element);
+        const element = document.querySelector('#game');
+        if(!element) return;
+            element.appendChild(this.element);
     }
 
 

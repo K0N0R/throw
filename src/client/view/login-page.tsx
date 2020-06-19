@@ -22,6 +22,7 @@ export default function StartPage() {
                 <label>Nick</label>
                 <input
                     value={nick}
+                    maxLength={20}
                     onInput={(e) => setNick((e.target as HTMLInputElement).value)}/>
             </div>
             <div class="form-field-avatar">
@@ -29,6 +30,7 @@ export default function StartPage() {
                 <div class="display--flex">
                     <input
                         value={avatar}
+                        maxLength={2}
                         onInput={(e) => setAvatar((e.target as HTMLInputElement).value)}/>
                     <a class="link"
                         target="_blank"

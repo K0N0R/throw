@@ -3,13 +3,13 @@ import { h, Component } from 'preact';
 import { Game } from '../models/game';
 
 import { KeysHandler } from './../../shared/keysHandler'
-import { game_config } from './../../shared/callibration';
+import { ILobbyRoom } from './../../shared/events';
 
 
-export default class GamePage extends Component {
+export default class GamePage extends Component<{ room: ILobbyRoom }> {
 
     componentDidMount() {
-        const game = new Game();
+        const game = new Game(this.props.room);
         const loop = () => {
             requestAnimationFrame(loop);
             game.run();

@@ -2,7 +2,7 @@ import { render, h, Component } from 'preact';
 import { ILobbyRoom } from './../../shared/events';
 import { User } from './../models/user';
 import { Team } from '../../shared/team';
-
+import GamePage from './game-page';
 
 export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILobbyRoom }> {
     componentDidMount() {
@@ -10,6 +10,11 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
         this.forceUpdate();
 
         User.setRoomChange((room: ILobbyRoom) => {
+            if (!this.state.room.playing && room.playing) {
+                this.gameRunning();
+            } else if(this.state.room.playing && !room.playing) {
+                this.gameStopped();
+            }
             this.setState({ room });
             this.forceUpdate();
         })
@@ -48,10 +53,35 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
         const user = this.state.room.data?.users.find(user => user.socketId === userId);
         if (!user) return;
         user.team = team;
-        this.setState({ room: this.state.room});
         User.updateRoom(this.state.room);
-
     }
+
+    startGame(): void {
+        if (this.state.room.data?.adminId !== User.socket.id) return;
+        this.state.room.playing = true;
+        this.gameRunning();
+        User.updateRoom(this.state.room);
+    }
+
+    endGame(): void {
+        if (this.state.room.data?.adminId !== User.socket.id) return;
+        this.state.room.playing = false;
+        this.gameStopped();
+        User.updateRoom(this.state.room);
+    }
+
+    gameRunning(): void {
+        const element = document.getElementById('game');
+        if(!element) return;
+        render(<GamePage room={this.state.room}/>, element);
+    }
+
+    gameStopped(): void {
+        // remove GamePage
+    }
+
+
+
 
     rand(): void {}
 
@@ -61,9 +91,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
         if (!room) return;
         const isUserAdmin = room.data.adminId === User.socket.id;
         return (
-            <div class="lobby">
-                <div class="lobby__head">
-                    <div class="lobby__head__title">{room.name}</div>
+            <div class="room">
+                <div class="room__game" id={'game'}></div>
+                <div class="room__head">
+                    <div class="room__head__title">{room.name}</div>
                 </div>
                 <div class="room__body">
                     <div class="room__body__actions">
@@ -147,7 +178,8 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                             readOnly={true}/>
                     </div>
                     <div class="room__foot__option">
-                        <button class="room__foot__option__button">
+                        <button class="room__foot__option__button"
+                            onClick={(e) => this.startGame()}>
                             Start Game!
                         </button>
                     </div>

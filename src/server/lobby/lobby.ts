@@ -37,7 +37,7 @@ export class Lobby {
 
         //#region room
         user.socket.on('room::create', (data: IRoomCreate) => {
-            const room = new Room(user.socket.id, data.name, data.password, data.maxPlayersAmount);
+            const room = new Room(this.io, user.socket.id, data.name, data.password, data.maxPlayersAmount);
             this.rooms.push(room);
             this.userJoinRoom(user, room);
             user.socket.emit('room::created', room.getData(true));
@@ -101,9 +101,7 @@ export class Lobby {
         this.io.to(this.lobbyId).emit('lobby::room-list', this.rooms.map(item => item.getData()));
     }
 
-    private roomUpdateCounter = 0;
     private updateRoom(room: Room): void {
-        console.log('room', this.roomUpdateCounter++);
         this.io.to(room.id).emit('room::changed', room.getData(true));
     }
     

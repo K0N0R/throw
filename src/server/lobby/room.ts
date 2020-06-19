@@ -1,18 +1,22 @@
 import io from 'socket.io';
 import uuid from 'uuid';
 import { User } from './user';
-import { Game, IGameConfig } from './../game/game';
+import { Game } from './../game/game';
 import { ILobbyRoom } from '../../shared/events';
 import { Team } from '../../shared/team';
 
 export class Room {
     public id: string;
+    public playing: boolean = false;
     public users: User[] = [];
     public timeLimit = 6;
     public scoreLimit = 10;
     public messages = [];
+    private game: Game;
+    private gameInterval: any;
 
     public constructor(
+        public io: io.Server,
         public adminId: string,
         public name: string,
         public password: string,
@@ -42,20 +46,33 @@ export class Room {
             this.timeLimit = room.data.timeLimit;
             this.scoreLimit = room.data.scoreLimit;
             this.messages = [];
+            console.log(room, this);
+            if (room.playing && !this.playing) {
+                this.startGame();
+            } else if(!room.playing && this.playing) {
+                this.stopGame();
+            }
+            this.playing = room.playing;
         }
     }
 
-    public startGame(config: IGameConfig, io: io.Server): void {
-        const game = new Game(config, this.id);
-        setInterval(() => {
-            game.run();
+
+    public startGame(): void {
+        this.game = new Game(this.io, this.users, this.timeLimit, this.scoreLimit, this.id);
+        this.gameInterval = setInterval(() => {
+            this.game.run();
         }, 0);
+    }
+
+    public stopGame(): void {
+        clearInterval(this.gameInterval);
     }
 
     public getData(detailed?: boolean): ILobbyRoom {
         const lobbyRoom: ILobbyRoom = {
             id: this.id,
             name: this.name,
+            playing: this.playing,
             players: this.users.length,
         };
         if (detailed) {
