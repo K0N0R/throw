@@ -1,16 +1,13 @@
-import { render, h } from 'preact';
+import { h } from 'preact';
 import CreateRoomPage from './create-room-page';
 import JoinRoomPage from './join-room-page';
 import { User } from '../models/user';
 import { ILobbyRoom } from '../../shared/events';
 import { useEffect, useState } from 'preact/hooks';
-import { useForceUpdate } from './hooks';
 import { goTo } from './utils';
 
 
 export default function ListPage() {
-
-    // const forceUpdate = useForceUpdate;
     const [rooms, setRooms] = useState(User.lobbyRooms);
 
     useEffect(() => {

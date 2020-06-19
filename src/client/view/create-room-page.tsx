@@ -5,13 +5,17 @@ import { User } from './../models/user';
 import { ILobbyRoom } from 'shared/events';
 import { goTo } from './utils';
 import { useLocalStorage } from './hooks';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 
 export default function CreateRoomPage() {
-    const [name, setName] = useLocalStorage('throw_nick', '');
+    const [name] = useLocalStorage('throw_nick', '');
+    const [roomName, setRoomName] = useLocalStorage('throw_room', `${name}'s room`);
     const [password, setPassword] = useState('');
     const maxPlayersAmount = 20;
-    
+
+    useEffect(() => {
+        setRoomName(`${name}'s room`);
+    }, [])
 
     const onConfirm = () => {
         if (name) {
@@ -20,6 +24,7 @@ export default function CreateRoomPage() {
             });
         }
     }
+
     const onCancel = () => {
         goTo(<ListPage />);
     }
@@ -29,8 +34,8 @@ export default function CreateRoomPage() {
             <div class="form-field">
                 <label>Vault name</label>
                 <input
-                    value={name}
-                    onInput={(e) => setName((e.target as HTMLInputElement).value)}/>
+                    value={roomName}
+                    onInput={(e) => setRoomName((e.target as HTMLInputElement).value)}/>
             </div>
             <div class="form-field">
                 <label>Password</label>

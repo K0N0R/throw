@@ -303,7 +303,6 @@ export class Game {
     }
 
     public run() {
-        console.log(this.players);
         // Move bodies forward in time
         const time = new Date().valueOf();
         const timeSinceLastCall = time - this.step.lastTime;

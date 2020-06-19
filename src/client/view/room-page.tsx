@@ -1,4 +1,4 @@
-import { render, h, Component } from 'preact';
+import { h, Component, render } from 'preact';
 import { ILobbyRoom } from './../../shared/events';
 import { User } from './../models/user';
 import { Team } from '../../shared/team';

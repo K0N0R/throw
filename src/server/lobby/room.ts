@@ -46,7 +46,6 @@ export class Room {
             this.timeLimit = room.data.timeLimit;
             this.scoreLimit = room.data.scoreLimit;
             this.messages = [];
-            console.log(room, this);
             if (room.playing && !this.playing) {
                 this.startGame();
             } else if(!room.playing && this.playing) {
