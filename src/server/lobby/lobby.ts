@@ -1,14 +1,12 @@
 import io from 'socket.io';
-import uuid from 'uuid';
 
-import { IConnectionData, IRoomCreate, IRoomLeave, IRoomJoin, ILobbyRoom } from './../../shared/events';
+import { IConnectionData, IRoomCreate, IRoomJoin } from './../../shared/events';
 
 import { User } from './user';
 import { Room } from './room';
 
 
 export class Lobby {
-    private lobbyId = uuid();
     public rooms: Room[] = [];
     public constructor(private io: io.Server) {
         this.initConnection(io);
@@ -34,7 +32,7 @@ export class Lobby {
                 data.password,
                 data.maxPlayersAmount,
                 () => {
-                    this.io.to(this.lobbyId).emit('lobby::room-list', this.rooms.map(item => item.getData()));
+                    this.io.emit('lobby::room-list', this.rooms.map(item => item.getData()));
                 },
                 () => {
                     const idx = this.rooms.indexOf(room);
@@ -49,16 +47,6 @@ export class Lobby {
             if (room  && room.password === data.password) {
                 room.userJoins(user);
             }
-        });
-        //#endregion
-
-        //#region lobby
-        user.socket.on('lobby::enter', () => {
-            user.socket.join(this.lobbyId);
-            user.socket.emit('lobby::room-list', this.rooms.map(room => room.getData()));
-        });
-        user.socket.on('lobby::leave', () => {
-            user.socket.leave(this.lobbyId);
         });
         //#endregion
     }

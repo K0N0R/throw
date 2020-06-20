@@ -1,15 +1,29 @@
 .room
-    width 900px
-    left s("calc(50% - 450px)")
-    top s("calc(50% - 250px)")
     display flex
     flex-direction column
-    background rgba(0, 0, 0, 0.2)
+
     border-radius 5px
-    padding 5px
+    height 100%
+    width 100%
+
+    &__game
+        position relative
+        top 40px
+        max-height calc(100% - 230px)
+        height 100%
+        margin-left auto
+        margin-right auto
+        margin-bottom auto
+
+    &__configuration
+        display flex
+        flex-direction column
+        margin auto
 
     &__head
         display flex
+        margin-top auto
+        background rgba(0, 0, 0, 0.2)
 
         &__title
             flex 1
@@ -17,23 +31,25 @@
             font-weight 900
             border-bottom 1px solid
             color white
-
-    &__body
-        display flex
-        padding-top 50px
+            padding 7px
 
         &__actions
             display flex
-            flex-direction column
             justify-content center
-            width 100px
+
+    &__body
+        display flex
+        padding-top 15px
+        padding-bottom 15px
+        background rgba(0, 0, 0, 0.2)
 
         &__team
             flex 1
-            margin 5px
+            margin 1px
             background rgba(0, 0, 0, 0.6)
             color white
             min-height 300px
+            min-width 200px
 
             &__label
                 text-align center
@@ -58,7 +74,8 @@
         display flex
         flex-direction column
         justify-content center
-        margin-top 60px
+        margin-bottom auto
+        background rgba(0, 0, 0, 0.2)
 
         &__option
             display flex
@@ -73,6 +90,7 @@
 
             &__button
                 margin-top 15px
+                margin-bottom 15px
                 flex 1
                 padding 5px
                 border none
@@ -80,28 +98,40 @@
                 background rgba(0, 0, 0, 0.3)
                 color white
     &__chat
+        
+        left calc(50% - 300px)
         display flex
         flex-direction column
         max-width 600px
         justify-content center
-        background-color rgba(0, 0, 0, 0.6)
-        color white
         margin-left auto
         margin-right auto
-        margin-top 30px
         min-width 600px
 
         &__messages
             display flex
             flex-direction column
-            max-height 200px
+            max-height 150px
             overflow auto
+            color white
+            background-color rgba(0, 0, 0, 0.6)
 
         &__message
             display flex
-            height 36px
+            height 30px
             padding 0 10px
-            line-height 36px
+            line-height 30px
+
+            &:nth-child(even)
+                background-color rgba(255, 255, 255, 0.02)
+
+        &__input-field
+            display flex
+            align-items center
+
+        &__label
+            padding 5px
 
         &__input
-            padding 10px
+            padding 3px
+            flex 1

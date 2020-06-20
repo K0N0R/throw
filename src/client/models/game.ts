@@ -13,7 +13,7 @@ import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
 import { Score } from './score';
 
-import { User } from './user';
+import { Socket } from './socket';
 
 export class Game {
     private map!: Map;
@@ -30,10 +30,10 @@ export class Game {
         this.initEntities();
         this.initCamera();
         this.initEvents();
-        User.socket.on('world::postStep', (data: IWorldPostStep) => {
+        Socket.socket.on('world::postStep', (data: IWorldPostStep) => {
             if (data.playersToAdd) {
                 data.playersToAdd.forEach(player => {
-                    const isMe = player.socketId === User.socket.id;
+                    const isMe = player.socketId === Socket.socket.id;
                     this.players.push(new Player(player.name, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team, isMe));
                     if (isMe) {
                         Camera.updatePos({ x: player.position[0], y: player.position[1] });
@@ -55,7 +55,7 @@ export class Game {
                     if (player) {
                         player.pos.x = dataPlayer.position[0];
                         player.pos.y = dataPlayer.position[1];
-                        if (dataPlayer.socketId === User.socket.id) {
+                        if (dataPlayer.socketId === Socket.socket.id) {
                             Camera.updatePos({ ...player.pos });
                         }
                     }
@@ -83,7 +83,7 @@ export class Game {
     }
 
     private initEvents(): void {
-        User.socket.on('world::reset', (data: IWorldReset) => {
+        Socket.socket.on('world::reset', (data: IWorldReset) => {
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
             data.players.forEach(dataPlayer => {
                 const player = this.players.find(player => player.socketId === dataPlayer.socketId);
@@ -94,13 +94,13 @@ export class Game {
             });
         });
 
-        User.socket.on('player::init', (data: IPlayerInit) => {
+        Socket.socket.on('player::init', (data: IPlayerInit) => {
             this.players.push(...data.players.map(p => new Player(p.name, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team)));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
             this.score.updateScore(data.score);
         });
 
-        User.socket.on('player::shooting', (data: IPlayerShooting) => {
+        Socket.socket.on('player::shooting', (data: IPlayerShooting) => {
             const player = this.players.find(player => player.socketId === data.socketId);
             if (player) {
                 player.shooting = data.shooting;
@@ -116,7 +116,7 @@ export class Game {
             player.dash(pressed[Keys.Shift]);
         };
         KeysHandler.bindEvents((pressed: { [param: number]: boolean }) => {
-            const player = this.players.find(player => player.socketId === User.socket.id);
+            const player = this.players.find(player => player.socketId === Socket.socket.id);
             if (player) {
                 handleShooting(player, pressed);
                 handleDashing(player, pressed);
@@ -132,7 +132,7 @@ export class Game {
                 this.keyMap = pressed;
 
                 if (Object.keys(deltaKeysMap).length > 0) {
-                    User.socket.emit('player::key', deltaKeysMap as IPlayerKey);
+                    Socket.socket.emit('player::key', deltaKeysMap as IPlayerKey);
                 }
             }
             

@@ -1,12 +1,11 @@
 import io from 'socket.io-client';
 import { host, port } from '../../shared/serverConfig';
-import { IRoomCreate, ILobbyRoom } from 'shared/events';
+import { IRoomCreate, ILobbyRoom } from '../../shared/events';
 
-export class User {
+export class Socket {
     public static socket: SocketIOClient.Socket;
     public static nick: string;
     public static avatar: string;
-    public static lobbyRooms: ILobbyRoom[] = [];
 
     public static connect(nick: string, avatar: string, connected: () => void): void {
         this.nick = nick;
@@ -23,49 +22,26 @@ export class User {
             this.socket.emit('connection::data', JSON.stringify(connectionData));
             connected();
         });
-        this.socket.on('lobby::room-list', (data: ILobbyRoom[]) => {
-            this.lobbyRooms = data;
-            if (this.onLobbyRoomsChange) this.onLobbyRoomsChange();
+    }
+    //#region lobby
+    public static enterLobby(onLobbyChanged: (rooms: ILobbyRoom[]) => void): void {
+        this.socket.on('lobby::room-list', (rooms: ILobbyRoom[]) => {
+            onLobbyChanged(rooms);
         });
     }
 
-    public static onLobbyRoomsChange: (() => void) | null;
-    public static setLobbyRoomsChange(onLobbyRoomsChange: (() => void) | null) {
-        this.onLobbyRoomsChange = onLobbyRoomsChange;
-    }
-
-    public static onRoomChanges: ((room: ILobbyRoom) => void) | null;
-    public static setRoomChange(onRoomChanges: ((room: ILobbyRoom) => void) | null) {
-        this.onRoomChanges = onRoomChanges;
-    }
-
-    public static onRoomDestroyed: ((room: ILobbyRoom) => void) | null;
-    public static setRoomDestroyed(onRoomDestroyed: ((room: ILobbyRoom) => void) | null) {
-        this.onRoomDestroyed = onRoomDestroyed;
-    }
-
-    public static enterLobby(): void {
-        this.socket.emit('lobby::enter');
-    }
-
     public static leaveLobby(): void {
-        this.socket.emit('lobby::leave');
+        this.socket.off('lobby::room-list')
     }
+    //#endregion
 
+    //#region room
     public static createRoom(data: IRoomCreate, created: (room: ILobbyRoom) => void): void {
         this.socket.emit('room::create', data);
         this.socket.on('room::created', (room: ILobbyRoom) => {
             created(room);
             this.socket.removeListener('room::created');
         });
-        this.onRoomJoin();
-
-    }
-
-    public static leaveRoom(room: ILobbyRoom): void {
-        this.socket.emit('room::leave', { id: room.id });
-        this.socket.removeListener('room::changed');
-        this.socket.removeListener('room::destroyed');
     }
 
     public static joinRoom(room: ILobbyRoom, password: string, joined: (room: ILobbyRoom) => void): void {
@@ -74,21 +50,30 @@ export class User {
             joined(room);
             this.socket.removeListener('room::joined');
         });
-        this.onRoomJoin();
     }
-    private static onRoomJoin(): void {
+
+    public static onRoomJoined(onRoomChanged: (room: ILobbyRoom) => void, onRoomDestroyed: (room: ILobbyRoom) => void): void {
         this.socket.on('room::changed', (room: ILobbyRoom) => {
-            if (this.onRoomChanges) this.onRoomChanges(room);
+            onRoomChanged(room);
         });
         this.socket.on('room::destroyed', (room: ILobbyRoom) => {
             this.socket.removeListener('room::changed');
             this.socket.removeListener('room::destroyed');
-            if (this.onRoomDestroyed) this.onRoomDestroyed(room);
-        })
+            onRoomDestroyed(room);
+        });
     }
 
     public static updateRoom(room: ILobbyRoom): void {
-         this.socket.emit('room::update', room);
+        this.socket.emit('room::update', room);
     }
+
+    public static leaveRoom(room: ILobbyRoom): void {
+        this.socket.emit('room::leave', { id: room.id });
+        this.socket.removeListener('room::changed');
+        this.socket.removeListener('room::destroyed');
+    }
+    //#endregion
+
+
 
 }

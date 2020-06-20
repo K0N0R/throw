@@ -25,7 +25,7 @@ export class Room {
         public name: string,
         public password: string,
         public maxPlayersAmount: number,
-        private onUpdate: () => void,
+        private onNotify: () => void,
         private onDestroy: () => void) {
         this.id = uuid();
     }
@@ -67,7 +67,7 @@ export class Room {
 
     private notifyChange(): void {
         this.io.to(this.id).emit('room::changed', this.getData(true));
-        this.onUpdate();
+        this.onNotify();
     }
 
     public getData(detailed?: boolean): ILobbyRoom {

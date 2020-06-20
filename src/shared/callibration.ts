@@ -32,19 +32,19 @@ export const goal_style = {
     postLineWidth: 3 * scale
 }
 
-const mapSize = { height: 586, width: 1280 };
+const mapSize = { height: 586 * scale, width: 1280 * scale };
 const mapBorder = 2*goal_config.size.width; 
 export const map_config = {
-    size: { height: mapSize.height * scale, width: mapSize.width * scale },
-    outerSize: { height: (mapSize.height + 2*mapBorder) * scale, width: (mapSize.width + 2*mapBorder) * scale},
+    size: { height: mapSize.height, width: mapSize.width },
+    outerSize: { height: (mapSize.height + (2*mapBorder)), width: (mapSize.width + (2*mapBorder))},
     cornerPointsAmount: 16 * scale,
-    cornerRadius: mapSize.width / 10 * scale,
-    border: mapBorder * scale,
-    middleRadius: 150 * scale
+    cornerRadius: mapSize.width / 10,
+    border: mapBorder,
+    middleRadius: mapSize.height/4
 }
 
 export const canvas_config = {
-    size: { width: (mapSize.width + 2 * mapBorder) * scale, height: (mapSize.height + 2*mapBorder) * scale }
+    size: { width: (mapSize.width + (2 * mapBorder)), height: (mapSize.height + (2*mapBorder)) }
 }
 
 export const map_style = {

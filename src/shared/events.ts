@@ -82,21 +82,19 @@ export interface IRoomData {
     users: { socketId: string, nick: string, avatar: string; team: Team}[]
     timeLimit: number;
     scoreLimit: number;
-    lastMessage?: {
-        nick: string;
-        avatar: string;
-        value: string;
-    } | null
+    lastMessage?: IRoomDataMessage | null
+}
+
+export interface IRoomDataMessage {
+    nick: string;
+    avatar: string;
+    value: string;
 }
 
 export interface IRoomCreate {
     name: string;
     password: string;
     maxPlayersAmount: number;
-}
-
-export interface IRoomLeave {
-    id: string;
 }
 
 export interface IRoomJoin {
