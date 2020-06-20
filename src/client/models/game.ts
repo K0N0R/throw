@@ -31,7 +31,7 @@ export class Game {
         this.initCamera();
         this.initEvents();
         Socket.socket.on('world::postStep', (data: IWorldPostStep) => {
-            if (data.playersToAdd) {
+            if (data.playersToAdd != null) {
                 data.playersToAdd.forEach(player => {
                     const isMe = player.socketId === Socket.socket.id;
                     this.players.push(new Player(player.name, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team, isMe));
@@ -41,7 +41,7 @@ export class Game {
                 });
             }
 
-            if (data.playersToRemove) {
+            if (data.playersToRemove != null) {
                 data.playersToRemove.forEach(socketId => {
                     const idx = this.players.findIndex(player => socketId === player.socketId);
                     if (idx !== -1) {
@@ -49,7 +49,7 @@ export class Game {
                     }
                 });
             }
-            if (data.playersMoving) {
+            if (data.playersMoving != null) {
                 data.playersMoving.forEach(dataPlayer => {
                     const player = this.players.find(player => player.socketId === dataPlayer.socketId);
                     if (player) {
@@ -61,7 +61,7 @@ export class Game {
                     }
                 });
             }
-            if (data.playersShooting) {
+            if (data.playersShooting != null) {
                 data.playersShooting.forEach(dataPlayer => {
                     const player = this.players.find(player => player.socketId === dataPlayer.socketId);
                     if (player) {
@@ -69,15 +69,18 @@ export class Game {
                     }
                 });
             }
-            if (data.ballMoving) {
+            if (data.ballMoving != null) {
                 this.ball.pos.x = data.ballMoving.position[0];
                 this.ball.pos.y = data.ballMoving.position[1];
             }
-            if (data.scoreLeft || data.scoreRight) {
+            if (data.scoreLeft != null || data.scoreRight != null) {
                 this.score.updateScore({
                     left: data.scoreLeft || null,
                     right: data.scoreRight || null
                 });
+            }
+            if (data.teamWhoScored != null) {
+                this.score.showScorrerName(data.teamWhoScored);
             }
         });
     }

@@ -6,7 +6,7 @@ import { Map } from './map';
 import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
-import { goal_config, map_config, player_config, ball_config, game_config } from './../../shared/callibration';
+import { goal_config, map_config, player_config, ball_config, game_config, canvas_config } from './../../shared/callibration';
 import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
@@ -56,8 +56,36 @@ export class Game {
         });
     }
 
+    public updatePlayers(users: User[]): void {
+        this.users = users;
+        this.users.forEach(user => {
+            
+            const player = this.players.find(player => player.socketId === user.socket.id);
+            if (!player && user.team !== Team.Spectator) {
+                console.log('playerWas not HERE', user.nick);
+                this.addNewPlayer(user);
+            } else if (player && player.team !== user.team) {
+                console.log('playerHad wrong team', user.nick);
+                this.removePlayer(user);
+                if (user.team !== Team.Spectator) {
+                    this.addNewPlayer(user);
+                }
+            }
+        })
+    }
+
     public addNewPlayer(user: User): void {
-        const player = new Player(user.socket.id, user.nick, user.avatar, user.team, this.mat.player);
+        const leftTeam = this.users.filter(item=> item.team === Team.Left);
+        const rightTeam = this.users.filter(item=> item.team === Team.Right);
+        const initPos = {
+            x: user.team === Team.Left
+                ? player_config.radius
+                : canvas_config.size.width - player_config.radius,
+            y : user.team === Team.Left
+                ? this.map.pos.y + map_config.size.height / 2 - goal_config.size.height/2 + ((player_config.radius * 2 + 10) * (leftTeam.length - 1))
+                : this.map.pos.y + map_config.size.height / 2 - goal_config.size.height/2 + ((player_config.radius * 2 + 10) * (rightTeam.length - 1))
+        };
+        const player = new Player(user.socket.id, user.nick, user.avatar, user.team, this.mat.player, initPos);
         this.playersToAdd.push(player);
     }
 
@@ -66,7 +94,6 @@ export class Game {
         this.world.addBody(player.body);
         this.bindPlayerEvents(player);
     }
-
 
     private bindPlayerEvents(player: Player): void {
         const user = this.users.find(item => item.socket.id === player.socketId);
@@ -177,10 +204,12 @@ export class Game {
         });
 
         // map reset
-        if (teamWhoScored === Team.Left) {
-             this.world.addBody(this.map.leftHalfBody);
-        } else {
-            this.world.addBody(this.map.rightHalfBody);
+        if (teamWhoScored != null) {
+            if (teamWhoScored === Team.Left) {
+                this.world.addBody(this.map.leftHalfBody);
+            } else if (teamWhoScored === Team.Right) {
+                this.world.addBody(this.map.rightHalfBody);
+            }
         }
 
         // event
@@ -275,8 +304,12 @@ export class Game {
             ? ++this.score.left
             : null;
 
-        if (scoreRight !== null || scoreLeft !== null) {
-            const teamWhoScored = scoreRight ? Team.Right : Team.Left;
+        const scoreChanged = (scoreRight !== null || scoreLeft !== null);
+        const teamWhoScored = scoreChanged
+            ? (scoreRight ? Team.Right : Team.Left)
+            : null;
+
+        if (scoreChanged) {
             this.reseting = true;
             setTimeout(() => {
                 this.reset(teamWhoScored);
@@ -289,13 +322,14 @@ export class Game {
         }
         
         const data: IWorldPostStep = {};
-        if (playersToAdd.length) data.playersToAdd = playersToAdd;
-        if (playersToRemove.length) data.playersToRemove = playersToRemove;
-        if (playersMoving.length) data.playersMoving = playersMoving;
-        if (playersShooting.length) data.playersShooting = playersShooting;
-        if (ballMoving) data.ballMoving = ballMoving;
-        if (scoreRight) data.scoreRight = scoreRight;
-        if (scoreLeft) data.scoreLeft = scoreLeft;
+        if (playersToAdd.length != null) data.playersToAdd = playersToAdd;
+        if (playersToRemove.length != null) data.playersToRemove = playersToRemove;
+        if (playersMoving.length != null) data.playersMoving = playersMoving;
+        if (playersShooting.length != null) data.playersShooting = playersShooting;
+        if (ballMoving != null) data.ballMoving = ballMoving;
+        if (scoreRight != null) data.scoreRight = scoreRight;
+        if (scoreLeft != null) data.scoreLeft = scoreLeft;
+        if (teamWhoScored != null) data.teamWhoScored = teamWhoScored;
         if (Object.keys(data).length) {
             this.io.to(this.roomId).emit('world::postStep', data);
         }

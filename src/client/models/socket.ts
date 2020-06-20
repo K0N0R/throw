@@ -25,6 +25,7 @@ export class Socket {
     }
     //#region lobby
     public static enterLobby(onLobbyChanged: (rooms: ILobbyRoom[]) => void): void {
+        this.socket.emit('lobby::enter');
         this.socket.on('lobby::room-list', (rooms: ILobbyRoom[]) => {
             onLobbyChanged(rooms);
         });

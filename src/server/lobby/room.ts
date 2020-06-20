@@ -97,18 +97,26 @@ export class Room {
 
     public update(room: ILobbyRoom, user: User): void {
         if (user.socket.id === this.adminId) {
-           this.adminId = room.data.adminId;
+            this.adminId = room.data.adminId;
             this.timeLimit = room.data.timeLimit;
             this.scoreLimit = room.data.scoreLimit;
             // react on data change
-            this.users.forEach(user => {
-                const userTeam = room?.data?.users.find(item => item.socketId === user.socket.id)?.team;
-                user.team = userTeam ?? Team.Spectator;
+            let usersChanged = this.users.length !== room.data.users.length;
+            this.users.forEach(thisUser => {
+                const dataUser = room?.data?.users.find(item => item.socketId === thisUser.socket.id);
+                if (!user) {
+                    usersChanged = true;
+                } else if (thisUser.team !== dataUser.team) {
+                    usersChanged = true;
+                    thisUser.team = dataUser.team ?? Team.Spectator;
+                }
             });
             if (room.playing && !this.game) {
                 this.startGame();
             } else if(!room.playing && this.game) {
                 this.stopGame();
+            } else if (room.playing && usersChanged) {
+                this.game.updatePlayers(this.users);
             }
         }
 

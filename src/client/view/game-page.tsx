@@ -35,11 +35,6 @@ export default function GamePage(room: ILobbyRoom) {
                     <div class="team-cube team-cube--right"></div>
                 </div>
             </div>
-            <div class="configuration">
-                <div>X - shoot</div>
-                <div>SHIFT - dash</div>
-                <div> ARROW KEYS - movement</div>
-            </div>
         </div>
     );
 }

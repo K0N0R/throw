@@ -11,4 +11,5 @@ export enum Keys {
     Shift = 16,
     C = 67,
     Enter = 13,
+    Esc = 27
 }

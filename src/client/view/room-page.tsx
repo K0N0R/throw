@@ -7,17 +7,57 @@ import { goTo } from './utils';
 import ListPage from './lobby-page';
 import { Keys } from '../../shared/keys';
 
-export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILobbyRoom, messages: IRoomDataMessage[], newMessage: string }> {
+interface IRoomState {
+    room: ILobbyRoom;
+    messages: IRoomDataMessage[];
+    newMessage: string;
+    lobbyViewToggled: boolean;
+    gameRunning: boolean;
+}
+
+export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState> {
+
     componentDidMount() {
-        this.setState({ room: this.props.room, messages: [] });
+        this.setState({ room: this.props.room, messages: [
+            {
+                value: 'ARROW KEYS - movement',
+                nick: 'GAME',
+                avatar: '🛠️'
+            }, {
+                value: 'X - shoot',
+                nick: 'GAME',
+                avatar: '🛠️'
+            }, {
+                value: 'SHIFT - dash',
+                nick: 'GAME',
+                avatar: '🛠️'
+            },
+        ]});
+        this.onRoomChange(this.props.room);
         this.forceUpdate();
-        Socket.onRoomJoined((room) => this.onRoomChange(room, this.state.room), () => goTo(<ListPage/>));
+        Socket.onRoomJoined((room) => this.onRoomChange(room), () => goTo(<ListPage/>));
+        this.unBindEvents = this.bindEvents();
     }
 
-    onRoomChange(newValue: ILobbyRoom, oldValue: ILobbyRoom): void {
-        if (!oldValue.playing && newValue.playing) {
-            this.gameRunning();
-        } else if (oldValue.playing && !newValue.playing) {
+    componentWillUnmount() {
+        if (this.unBindEvents) {
+            this.unBindEvents();
+        }
+    }
+
+    unBindEvents!: () => void;
+    bindEvents(): () => void {
+        const onKeyUp = (e) => this.onLobbyKey(e);
+        document.addEventListener('keyup', onKeyUp);
+        return () => {
+            document.removeEventListener('keyup', onKeyUp);
+        }
+    }
+
+    onRoomChange(newValue: ILobbyRoom): void {
+        if (newValue.playing) {
+            this.setGameRunning();
+        } else if (!newValue.playing) {
             this.gameStopped();
         }
         this.addNewMessage(newValue.data);
@@ -70,10 +110,17 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
     //#endregion
 
     //#region game
+    onLobbyKey(e): void {
+        if (e.keyCode === Keys.Esc) {
+            if (this.state.room.playing) {
+                this.setState({ lobbyViewToggled: !this.state.lobbyViewToggled});
+            }
+        }
+    }
     startGame(): void {
         if (this.state.room.data?.adminId !== Socket.socket.id) return;
         this.state.room.playing = true;
-        this.gameRunning();
+        this.setGameRunning();
         Socket.updateRoom(this.state.room);
     }
 
@@ -84,10 +131,15 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
         Socket.updateRoom(this.state.room);
     }
 
-    gameRunning(): void {
-        const element = document.getElementById('game');
-        if(!element) return;
-        render(<GamePage room={this.state.room}/>, element);
+    setGameRunning(): void {
+        if (!this.state.gameRunning) {
+            setTimeout(() => {
+                const element = document.getElementById('game');
+                if(!element) return;
+                render(<GamePage room={this.state.room}/>, element);
+                this.setState({ gameRunning: true })
+            })
+        }
     }
 
     gameStopped(): void {
@@ -121,17 +173,17 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
     }
     //#endregion
 
-    render(_, { room, messages, newMessage }) {
+    render(_, { room, messages, newMessage, lobbyViewToggled }) {
         if (!room) return;
         const isUserAdmin = room.data.adminId === Socket.socket.id;
         return (
             <div class="room">
                 <div class="room__game"
                     id={'game'}
-                    style={room.playing ? '' : 'display:none;'}>
+                    style={room.playing && !lobbyViewToggled ? '' : 'display:none;'}>
                 </div>
                 <div class="room__configuration"
-                    style={room.playing ? 'display:none;' : ''}>
+                    style={room.playing && !lobbyViewToggled ? 'display:none;' : ''}>
                     <div class="room__head">
                         <div class="room__head__title">{room.name}</div>
                         <div class="room__head__actions">
@@ -230,7 +282,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                             <div class="room__chat__message">
                                 <div>{item.avatar}</div>
                                 <div>{item.nick}</div>: 
-                                <div>{item.value}</div>
+                                <div class="room__chat__message__value">{item.value}</div>
                             </div>
                             ))
                         }
@@ -244,6 +296,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                             onInput={(e) => this.onNewMessageChange(e)}/>
                     </div>
                 </div>
+
             </div>
         );
     }

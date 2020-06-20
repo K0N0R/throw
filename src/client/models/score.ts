@@ -1,6 +1,7 @@
 import { game_config, player_config, canvas_config, map_config, player_style } from './../../shared/callibration';
 import { Canvas } from './canvas';
 import { IPos } from './../../shared/model';
+import { Team } from '../../shared/team';
 
 export class Score {
     public scoreInfo: {
@@ -20,13 +21,10 @@ export class Score {
 
     public updateScore(score: { left: number | null; right: number | null}): void {
         if (score.left !== null) {
-            if (this.left != null) this.showScoreInfo('Red team scores!', player_style.leftFillStyle);
             this.left = score.left;
-            
         }
 
         if (score.right !== null) {
-            if (this.right != null) this.showScoreInfo('Blue team scores!', player_style.rightFillStyle);
             this.right = score.right;
         }
 
@@ -39,6 +37,11 @@ export class Score {
         if (rightScoreEl && score.right !== null) {
             rightScoreEl.innerHTML = `${score.right}`;
         }
+    }
+
+    public showScorrerName(team: Team): void {
+        if (team === Team.Left) this.showScoreInfo('Red team scores!', player_style.leftFillStyle);
+        if (team === Team.Right) this.showScoreInfo('Blue team scores!', player_style.rightFillStyle);
     }
 
     public showScoreInfo(text: string, fillStyle: string): void {

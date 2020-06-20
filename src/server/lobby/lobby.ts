@@ -48,6 +48,11 @@ export class Lobby {
                 room.userJoins(user);
             }
         });
+
+        user.socket.on('lobby::enter', () => {
+            user.socket.emit('lobby::room-list', this.rooms.map(item => item.getData()));
+        });
         //#endregion
     }
+    
 }

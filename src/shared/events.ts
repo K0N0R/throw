@@ -55,6 +55,7 @@ export interface IWorldPostStep {
     playersShooting?: { socketId: string; shooting: boolean }[];
     scoreRight?: number | null;
     scoreLeft?: number | null;
+    teamWhoScored?: Team | null;
     playersMoving?: {
         socketId: string;
         position: [number, number];
