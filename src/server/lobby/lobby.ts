@@ -92,11 +92,10 @@ export class Lobby {
         this.updateLobbyList();
 
         user.socket.on('room::update', (lobbyRoom: ILobbyRoom) => {
-            if (user.socket.id === room.adminId) {
-                room.update(lobbyRoom)
-                this.updateRoom(room);
-                this.updateLobbyList();
-            }
+            room.update(lobbyRoom)
+            this.updateRoom(room);
+            this.updateLobbyList();
+            room.resetTemporary();
         });
     }
 

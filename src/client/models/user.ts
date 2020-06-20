@@ -65,6 +65,7 @@ export class User {
     public static leaveRoom(room: ILobbyRoom): void {
         this.socket.emit('room::leave', { id: room.id });
         this.socket.removeListener('room::changed');
+        this.socket.removeListener('room::destroyed');
     }
 
     public static joinRoom(room: ILobbyRoom, password: string, joined: (room: ILobbyRoom) => void): void {
@@ -80,6 +81,8 @@ export class User {
             if (this.onRoomChanges) this.onRoomChanges(room);
         });
         this.socket.on('room::destroyed', (room: ILobbyRoom) => {
+            this.socket.removeListener('room::changed');
+            this.socket.removeListener('room::destroyed');
             if (this.onRoomDestroyed) this.onRoomDestroyed(room);
         })
     }

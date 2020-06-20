@@ -1,5 +1,4 @@
 .room
-    position fixed
     width 900px
     left s("calc(50% - 450px)")
     top s("calc(50% - 250px)")
@@ -80,3 +79,29 @@
                 border-radius 3px
                 background rgba(0, 0, 0, 0.3)
                 color white
+    &__chat
+        display flex
+        flex-direction column
+        max-width 600px
+        justify-content center
+        background-color rgba(0, 0, 0, 0.6)
+        color white
+        margin-left auto
+        margin-right auto
+        margin-top 30px
+        min-width 600px
+
+        &__messages
+            display flex
+            flex-direction column
+            max-height 200px
+            overflow auto
+
+        &__message
+            display flex
+            height 36px
+            padding 0 10px
+            line-height 36px
+
+        &__input
+            padding 10px

@@ -11,7 +11,12 @@ export class Room {
     public users: User[] = [];
     public timeLimit = 6;
     public scoreLimit = 10;
-    public messages = [];
+    public lastMessage: {
+        nick: string;
+        avatar: string;
+        value: string;
+    } | null;
+    public newLastMessage = false;
     private game: Game;
     private gameInterval: any;
 
@@ -36,6 +41,10 @@ export class Room {
         user.socket.join(this.id);
     }
 
+    public resetTemporary(): void {
+        this.lastMessage = null;
+    }
+
     public update(room: ILobbyRoom): void {
         if (room?.data?.adminId) {
             this.adminId = room.data.adminId;
@@ -45,7 +54,7 @@ export class Room {
             });
             this.timeLimit = room.data.timeLimit;
             this.scoreLimit = room.data.scoreLimit;
-            this.messages = [];
+            this.lastMessage = room.data.lastMessage;
             if (room.playing && !this.playing) {
                 this.startGame();
             } else if(!room.playing && this.playing) {
@@ -86,7 +95,7 @@ export class Room {
                 users: this.users.map(mapUser),
                 timeLimit: this.timeLimit,
                 scoreLimit: this.scoreLimit,
-                messages: this.messages
+                lastMessage: this.lastMessage
             };
         }
         return lobbyRoom;

@@ -5,10 +5,11 @@ import { Team } from '../../shared/team';
 import GamePage from './game-page';
 import { goTo } from './utils';
 import ListPage from './lobby-page';
+import { Keys } from '../../shared/keys';
 
-export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILobbyRoom }> {
+export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILobbyRoom, messages: {nick: string; avatar: string; value:string}[], newMessage: string }> {
     componentDidMount() {
-        this.setState({ room: this.props.room });
+        this.setState({ room: this.props.room, messages: [] });
         this.forceUpdate();
 
         User.setRoomChange((room: ILobbyRoom) => {
@@ -16,6 +17,14 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                 this.gameRunning();
             } else if(this.state.room.playing && !room.playing) {
                 this.gameStopped();
+            }
+            if (room.data?.lastMessage?.value) {
+                this.state.messages.push(room.data?.lastMessage);
+                room.data.lastMessage = null;
+                setTimeout(() => {
+                    const messagesEl = document.querySelector('.room__chat__messages')
+                    if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
+                })
             }
             this.setState({ room });
             this.forceUpdate();
@@ -84,15 +93,25 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
     gameStopped(): void {
         // remove GamePage
     }
+    onNewMessageChange(e: any): void {
+        this.setState({ newMessage: e.target.value});
+    };
 
-
-
+    sendMessage(e: KeyboardEvent): void {
+        if (e.keyCode !== Keys.Enter) return;
+        if (this.state.room.data) {
+            this.state.room.data.lastMessage = { nick: User.nick, avatar: User.avatar, value: this.state.newMessage};
+            User.updateRoom(this.state.room);
+            this.state.room.data.lastMessage = null;
+            this.setState({room: this.state.room, newMessage: ''});
+        }
+    }
 
     rand(): void {}
 
     reset(): void {}
 
-    render(_, { room }) {
+    render(_, { room, messages, newMessage }) {
         if (!room) return;
         const isUserAdmin = room.data.adminId === User.socket.id;
         return (
@@ -190,8 +209,22 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, { room: ILo
                     </div>
                 </div>
 
-                <div class="room-chat">
-
+                <div class="room__chat">
+                    <div class="room__chat__messages">
+                        {   ...(messages.map(item => 
+                            <div class="room__chat__message">
+                                <div>{item.avatar}</div>
+                                <div>{item.nick}</div>: 
+                                <div>{item.value}</div>
+                            </div>
+                            ))
+                        }
+                    </div>
+                    <input class="room__chat__input"
+                        value={newMessage}
+                        placeholder="wyślij wiadomość"
+                        onKeyUp={(e) => this.sendMessage(e)}
+                        onInput={(e) => this.onNewMessageChange(e)}/>
                 </div>
             </div>
         );

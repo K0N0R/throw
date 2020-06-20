@@ -82,11 +82,11 @@ export interface IRoomData {
     users: { socketId: string, nick: string, avatar: string; team: Team}[]
     timeLimit: number;
     scoreLimit: number;
-    messages?: {
+    lastMessage?: {
         nick: string;
         avatar: string;
         value: string;
-    }[]
+    } | null
 }
 
 export interface IRoomCreate {
