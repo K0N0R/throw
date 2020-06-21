@@ -1,7 +1,7 @@
 import { goal_config, map_config } from './../../shared/callibration';
 import { getOffset } from './../../shared/offset';
 import { Keys } from './../../shared/keys';
-import { IPlayerInit, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset, ILobbyRoom } from './../../shared/events';
+import { IRoomGameData, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset, ILobbyRoom } from './../../shared/events';
 
 import { Canvas } from './canvas';
 import { KeysHandler } from './../../shared/keysHandler';
@@ -30,11 +30,12 @@ export class Game {
         this.initEntities();
         this.initCamera();
         this.initEvents();
+        Socket.socket.emit('player::init');
         Socket.socket.on('world::postStep', (data: IWorldPostStep) => {
             if (data.playersToAdd != null) {
                 data.playersToAdd.forEach(player => {
                     const isMe = player.socketId === Socket.socket.id;
-                    this.players.push(new Player(player.name, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team, isMe));
+                    this.players.push(new Player(player.nick, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team, isMe));
                     if (isMe) {
                         Camera.updatePos({ x: player.position[0], y: player.position[1] });
                     }
@@ -96,9 +97,9 @@ export class Game {
                 } 
             });
         });
-
-        Socket.socket.on('player::init', (data: IPlayerInit) => {
-            this.players.push(...data.players.map(p => new Player(p.name, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team)));
+        Socket.socket.emit('room::user-created-game')
+        Socket.socket.on('room::game-data', (data: IRoomGameData) => {
+            this.players.push(...data.players.map(p => new Player(p.nick, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team)));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
             this.score.updateScore(data.score);
         });

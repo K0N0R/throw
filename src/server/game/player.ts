@@ -27,7 +27,7 @@ export class Player {
         return player_config.maxSpeed;
     } 
 
-    public constructor(socketId: string, public name: string, public avatar: string, public team: Team, material: p2.Material, initPos: IPos) {
+    public constructor(socketId: string, public nick: string, public avatar: string, public team: Team, material: p2.Material, initPos: IPos) {
 
         this.socketId = socketId;
         let options: p2.BodyOptions = {

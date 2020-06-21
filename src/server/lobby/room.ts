@@ -43,6 +43,7 @@ export class Room {
     }
 
     private onUserJoins(user: User): void {
+        user.socket.on('room::user-created-game', () => this.onUserCreateGame(user));
         user.socket.on('room::update', (lobbyRoom: ILobbyRoom) => this.update(lobbyRoom, user));
         user.socket.on('room::leave', () => this.userLeaves(user));
         user.socket.on('disconnect', () => this.userLeaves(user));
@@ -63,6 +64,10 @@ export class Room {
         user.socket.leave(this.id);
         const idx = this.users.indexOf(user)
         if (idx !== -1) this.users.splice(idx, 1);
+        user.socket.removeAllListeners('room::user-created-game');
+        user.socket.removeAllListeners('room::update');
+        user.socket.removeAllListeners('room::leave');
+        user.socket.removeAllListeners('disconnect');
     }
 
     private notifyChange(): void {
@@ -127,6 +132,10 @@ export class Room {
     }
 
     //#region game
+    private onUserCreateGame(user): void {
+        if (this.game) user.socket.emit('room::game-data', this.game.getGameData());
+    }
+
     public startGame(): void {
         this.game = new Game(this.io, this.users, this.timeLimit, this.scoreLimit, this.id);
         this.gameInterval = setInterval(() => {

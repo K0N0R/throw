@@ -2,14 +2,14 @@ import { Team } from "./team";
 import { User } from './../server/lobby/user';
 //#region PLAYER
 export interface IPlayerAdd {
-    name: string;
+    nick: string;
     avatar: string;
     socketId: string;
     team: Team;
     position: [number, number];
 }
 
-export interface IPlayerInit {
+export interface IRoomGameData {
     players: IPlayerAdd[];
     ball: {
         position: [number, number];

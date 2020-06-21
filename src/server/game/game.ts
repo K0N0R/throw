@@ -11,7 +11,7 @@ import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
-import { IPlayerKey, IWorldReset, IWorldPostStep } from './../../shared/events';
+import { IPlayerKey, IWorldReset, IWorldPostStep, IRoomGameData } from './../../shared/events';
 import { User } from './../lobby/user';
 
 export class Game {
@@ -47,6 +47,25 @@ export class Game {
         this.initEntities();
         this.initWorld();
         this.initPlayers();
+    }
+
+    public getGameData(): IRoomGameData {
+        return {
+            players: this.players.map(item => ({
+                nick: item.nick,
+                avatar: item.avatar,
+                socketId: item.socketId,
+                team: item.team,
+                position: item.body.position
+            })),
+            ball: {
+                position: this.ball.body.position
+            },
+            score: {
+                left: this.score.left,
+                right: this.score.right
+            }
+        };
     }
 
     //#region player
@@ -260,7 +279,7 @@ export class Game {
 
             this.world.addBody(player.body);
             return {
-                name: player.name,
+                nick: player.nick,
                 avatar: player.avatar,
                 socketId: player.socketId,
                 team: player.team,
