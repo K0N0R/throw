@@ -30,12 +30,12 @@ export class Score {
 
         const leftScoreEl = document.getElementById('score-left');
         if (leftScoreEl && score.left !== null) {
-            leftScoreEl.innerHTML = `${score.left}`;
+            leftScoreEl.innerHTML = score.left.toString();
         }
         
         const rightScoreEl = document.getElementById('score-right');
         if (rightScoreEl && score.right !== null) {
-            rightScoreEl.innerHTML = `${score.right}`;
+            rightScoreEl.innerHTML = score.right.toString();
         }
     }
 

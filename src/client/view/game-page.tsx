@@ -58,12 +58,11 @@ export default class GamePage extends Component<{ room: ILobbyRoom}, { room: ILo
                 <div class="score">
                     <div class="score-value">
                         <div class="team-cube team-cube--left"></div>
-                        <div id="score-left">0</div>
+                        <div id="score-left"></div>
                     </div>
                     <div>-</div>
                     <div class="score-value">
-                        
-                        <div id="score-right">0</div>
+                        <div id="score-right"></div>
                         <div class="team-cube team-cube--right"></div>
                     </div>
                 </div>
