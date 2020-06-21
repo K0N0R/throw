@@ -86,10 +86,12 @@ export class Map {
         // background
         if (this.bcgrImg) {
             const imgSize = 225;
+            const maxX = Math.ceil(canvas_config.size.width/imgSize);
+            const maxY = Math.ceil(canvas_config.size.height/imgSize);
             Canvas.startDraw();
             Canvas.ctx.moveTo(0, 0);
-            for (let i = 0; i < 20; i++) {
-                for (let j = 0; j < 20; j++) {
+            for (let i = 0; i < maxX; i++) {
+                for (let j = 0; j < maxY; j++) {
                     Canvas.ctx.drawImage(this.bcgrImg, i * imgSize, j * imgSize);
                 }
             }

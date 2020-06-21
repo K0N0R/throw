@@ -12,7 +12,6 @@ interface IRoomState {
     messages: IRoomDataMessage[];
     newMessage: string;
     lobbyViewToggled: boolean;
-    gameRunning: boolean;
 }
 
 export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState> {
@@ -55,11 +54,6 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     }
 
     onRoomChange(newValue: ILobbyRoom): void {
-        if (newValue.playing) {
-            this.setGameRunning();
-        } else if (!newValue.playing) {
-            this.gameStopped();
-        }
         this.addNewMessage(newValue.data);
         this.setState({ room: newValue });
         this.forceUpdate();
@@ -120,7 +114,6 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     startGame(): void {
         if (this.state.room.data?.adminId !== Socket.socket.id) return;
         this.state.room.playing = true;
-        this.setGameRunning();
         Socket.updateRoom(this.state.room);
     }
 
@@ -129,17 +122,6 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
         this.state.room.playing = false;
         this.gameStopped();
         Socket.updateRoom(this.state.room);
-    }
-
-    setGameRunning(): void {
-        if (!this.state.gameRunning) {
-            setTimeout(() => {
-                const element = document.getElementById('game');
-                if(!element) return;
-                render(<GamePage room={this.state.room}/>, element);
-                this.setState({ gameRunning: true })
-            })
-        }
     }
 
     gameStopped(): void {
@@ -181,6 +163,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                 <div class="room__game"
                     id={'game'}
                     style={room.playing && !lobbyViewToggled ? '' : 'display:none;'}>
+                    <GamePage {...this.state.room}/>
                 </div>
                 <div class="room__configuration"
                     style={room.playing && !lobbyViewToggled ? 'display:none;' : ''}>
