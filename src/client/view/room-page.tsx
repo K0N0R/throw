@@ -97,10 +97,38 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     }
 
     rand(): void {
-
+        if (this.state.room.data?.adminId !== Socket.socket.id) return;
+        if (this.state.room && this.state.room.data) {
+            const users = this.state.room.data.users;
+            users.forEach((user) => user.team = Team.Spectator);
+            const teamMax = Math.ceil(users.length / 2);
+            users.forEach((user, idx: number) => {
+                const rand = Math.random();
+                if (rand > 0.5) {
+                    if (users.filter(user => user.team === Team.Left).length < teamMax) {
+                        user.team = Team.Left;
+                    } else {
+                        user.team = Team.Right;
+                    }
+                } else {
+                    if (users.filter(user => user.team === Team.Right).length < teamMax) {
+                        user.team = Team.Right;
+                    } else {
+                        user.team = Team.Left;
+                    }
+                }
+            });
+            Socket.updateRoom(this.state.room);
+        }
     }
 
-    reset(): void {}
+    reset(): void {
+        if (this.state.room.data?.adminId !== Socket.socket.id) return;
+        this.state.room.data?.users.forEach((user) => {
+            user.team = Team.Spectator;
+        });
+        Socket.updateRoom(this.state.room);
+    }
     //#endregion
 
     //#region game
