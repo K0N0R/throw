@@ -7,5 +7,21 @@ export class User {
         public socket: io.Socket,
         public nick: string,
         public avatar: string) {
+            this.socket.on('disconnect', () => {
+                this.onDisconnectCallbacks.forEach(item => {
+                    item.callback();
+                })
+            });
+    }
+    public onDisconnectCallbacks: { eventId: string, callback: () => void }[] = []
+    public onDisconnect(eventId: string, callback: () => void): void {
+        this.onDisconnectCallbacks.push({ eventId, callback});
+    };
+
+    public offDisconnect(eventId: string): void {
+        const idx = this.onDisconnectCallbacks.findIndex(item => item.eventId === eventId);
+        if (idx !== -1) {
+            this.onDisconnectCallbacks.splice(idx, 1);
+        }
     }
 }

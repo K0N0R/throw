@@ -25,6 +25,9 @@ export class Canvas {
             element.appendChild(this.element);
     }
 
+    public static removeCanvas(): void {
+        this._element.remove();
+    }
 
     public static clearCanvas(): void {
         this.ctx.clearRect(0, 0, canvas_config.size.width, canvas_config.size.height);

@@ -148,13 +148,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     endGame(): void {
         if (this.state.room.data?.adminId !== Socket.socket.id) return;
         this.state.room.playing = false;
-        this.gameStopped();
+        this.setState({ lobbyViewToggled: false});
         Socket.updateRoom(this.state.room);
     }
 
-    gameStopped(): void {
-        // remove GamePage
-    }
     //#endregion
 
     //#region chat
@@ -191,7 +188,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                 <div class="room__game"
                     id={'game'}
                     style={room.playing && !lobbyViewToggled ? '' : 'display:none;'}>
-                    <GamePage {...this.state.room}/>
+                    <GamePage room={room}></GamePage>
                 </div>
                 <div class="room__configuration"
                     style={room.playing && !lobbyViewToggled ? 'display:none;' : ''}>
@@ -279,10 +276,18 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                                 value={'Rounded'}
                                 readOnly={true}/>
                         </div>
-                        <div class="room__foot__option">
+                        <div class="room__foot__option"
+                            style={room.playing ? 'display:none;' : ''}>
                             <button class="room__foot__option__button"
                                 onClick={(e) => this.startGame()}>
                                 Start Game!
+                            </button>
+                        </div>
+                        <div class="room__foot__option"
+                            style={room.playing ? '' : 'display:none;'}>
+                            <button class="room__foot__option__button"
+                                onClick={(e) => this.endGame()}>
+                                Stop Game!
                             </button>
                         </div>
                     </div>

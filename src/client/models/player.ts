@@ -21,30 +21,38 @@ export class Player {
         this.team = team;
         this.me = me;
     }
-
+    private dashingTimeoutHandler;
+    private dashCooldownTimeoutHandler;
     public dash(dashing: boolean): void {
         if (!this.dashing && dashing) {
             this.dashing = true;
-            setTimeout(() => {
-                this.sprintingCooldownTimer();
+            this.dashingTimeoutHandler =setTimeout(() => {
+                this.dashingCooldownTimer();
                 this.dashCooldown = true;
-                setTimeout(() => {
+                this.dashCooldownTimeoutHandler = setTimeout(() => {
                     this.dashing = false;
                     this.dashCooldown = false;
                 }, player_config.dashCooldown);
             }, player_config.dashDuration)
         }
     }
-    public sprintingCooldownTimer() {
+    private dashingCoolownInterval;
+    public dashingCooldownTimer() {
         const animationTick = 50; // the smaller the smoother
         this.dashCooldownLeft = player_config.dashCooldown; 
-        const interval = setInterval(() => {
+        this.dashingCoolownInterval = setInterval(() => {
             this.dashCooldownLeft -= animationTick;
             if (this.dashCooldownLeft < 0 ) {
                 this.dashCooldownLeft = player_config.dashCooldown;
-                clearInterval(interval);
+                clearInterval(this.dashingCoolownInterval);
             }
         }, animationTick);
+    }
+
+    public dispose(): void {
+        clearTimeout(this.dashingTimeoutHandler);
+        clearTimeout(this.dashCooldownTimeoutHandler);
+        clearInterval(this.dashingCoolownInterval);
     }
 
     public render(): void {

@@ -44,15 +44,20 @@ export class Score {
         if (team === Team.Right) this.showScoreInfo('Blue team scores!', player_style.rightFillStyle);
     }
 
+    public showScoreInfoTimeoutHandler;
     public showScoreInfo(text: string, fillStyle: string): void {
         this.scoreInfo = {
             text,
             fillStyle,
             scale: 1
         };
-        setTimeout(() => {
+        this.showScoreInfoTimeoutHandler = setTimeout(() => {
             this.scoreInfo = null;
         }, game_config.goalResetTimeout);
+    }
+
+    public dispose(): void {
+        clearTimeout(this.showScoreInfoTimeoutHandler);
     }
 
     public render(): void {

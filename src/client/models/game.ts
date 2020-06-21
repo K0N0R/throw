@@ -24,7 +24,7 @@ export class Game {
     private score!: Score;
     private keyMap: IPlayerKey = {};
 
-    constructor(room: ILobbyRoom) {
+    constructor() {
         this.initHandlers();
         this.initCanvas();
         this.initEntities();
@@ -99,9 +99,10 @@ export class Game {
         });
         Socket.socket.emit('room::user-created-game')
         Socket.socket.on('room::game-data', (data: IRoomGameData) => {
-            this.players.push(...data.players.map(p => new Player(p.nick, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team)));
+            this.players = data.players.map(p => new Player(p.nick, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team, Socket.socket.id === p.socketId));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
             this.score.updateScore(data.score);
+
         });
 
         Socket.socket.on('player::shooting', (data: IPlayerShooting) => {
@@ -119,7 +120,7 @@ export class Game {
         const handleDashing = (player: Player, pressed: { [param: number]: boolean }) => {
             player.dash(pressed[Keys.Shift]);
         };
-        KeysHandler.bindEvents((pressed: { [param: number]: boolean }) => {
+        KeysHandler.bindHandler((pressed: { [param: number]: boolean }) => {
             const player = this.players.find(player => player.socketId === Socket.socket.id);
             if (player) {
                 handleShooting(player, pressed);
@@ -159,8 +160,19 @@ export class Game {
         Camera.setBounduary(getOffset(this.map.outerPos, map_config.outerSize));
     }
 
-    public run() {
+    public run(): void {
         this.render();
+    }
+
+    public dispose(): void {
+        Socket.socket.off('world::postStep');
+        Socket.socket.off('room::game-data');
+        Socket.socket.off('player::shooting');
+        Socket.socket.off('world::reset');
+        Canvas.removeCanvas();
+        KeysHandler.clearHandler();
+        if (this.score) this.score.dispose();
+        this.players.forEach(player => player.dispose());
     }
 
     public render(): void {

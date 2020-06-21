@@ -49,6 +49,13 @@ export class Game {
         this.initPlayers();
     }
 
+    public dispose(): void {
+        this.world.off('postStep', this.logic.bind(this));
+        this.users.forEach((item) => {
+             this.removePlayer(item);
+        });
+    }
+
     public getGameData(): IRoomGameData {
         return {
             players: this.players.map(item => ({
@@ -81,10 +88,8 @@ export class Game {
             
             const player = this.players.find(player => player.socketId === user.socket.id);
             if (!player && user.team !== Team.Spectator) {
-                console.log('playerWas not HERE', user.nick);
                 this.addNewPlayer(user);
             } else if (player && player.team !== user.team) {
-                console.log('playerHad wrong team', user.nick);
                 this.removePlayer(user);
                 if (user.team !== Team.Spectator) {
                     this.addNewPlayer(user);
@@ -117,7 +122,7 @@ export class Game {
     private bindPlayerEvents(player: Player): void {
         const user = this.users.find(item => item.socket.id === player.socketId);
         if (!user) return;
-        user.socket.on('disconnect', () => {
+        user.onDisconnect('player::disconnect', () => {
             this.playersToRemove.push(player);
         });
 
@@ -133,8 +138,8 @@ export class Game {
         if (player) {
             this.playersToRemove.push(player);
         }
+        user.offDisconnect('player::disconnect');
         user.socket.removeAllListeners('player::key');
-        user.socket.removeAllListeners('disconnect');
     }
     //#endregion 
 
@@ -169,9 +174,7 @@ export class Game {
         this.world.addContactMaterial(this.contactMat.goalBall);
         this.world.addContactMaterial(this.contactMat.mapPlayer);
 
-        this.world.on('postStep', () => {
-            this.logic();
-        });
+        this.world.on('postStep', this.logic.bind(this));
     }
 
     private initMaterials(): void {
