@@ -138,6 +138,16 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                 this.setState({ lobbyViewToggled: !this.state.lobbyViewToggled});
             }
         }
+        if (e.keyCode === Keys.Enter) {
+            const chatInput = document.querySelector('#chat-input') as HTMLElement;
+            if (chatInput) {
+                if (document.activeElement?.id === 'chat-input') {
+                    chatInput.blur();
+                } else {
+                    chatInput.focus();
+                }
+            }
+        }
     }
     startGame(): void {
         if (this.state.room.data?.adminId !== Socket.socket.id) return;
@@ -171,7 +181,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
 
     sendMessage(e: KeyboardEvent): void {
         if (e.keyCode !== Keys.Enter) return;
-        if (this.state.room.data) {
+        if (this.state.room.data && this.state.newMessage) {
             this.state.room.data.lastMessage = { nick: Socket.nick, avatar: Socket.avatar, value: this.state.newMessage};
             Socket.updateRoom(this.state.room);
             this.state.room.data.lastMessage = null;
@@ -306,6 +316,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                     <div class="room__chat__input-field">
                         <label class="room__chat__label">Wyślij wiadomość</label>
                         <input class="room__chat__input"
+                            id="chat-input"
                             value={newMessage}
                             placeholder="wyślij wiadomość"
                             onKeyUp={(e) => this.sendMessage(e)}
