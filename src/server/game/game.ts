@@ -329,7 +329,7 @@ export class Game {
         const scoreChanged = (scoreRight !== null || scoreLeft !== null);
         const teamWhoScored = scoreChanged
             ? (scoreRight ? Team.Right : Team.Left)
-            : null;
+            : void 0;
 
         if (scoreChanged) {
             this.reseting = true;

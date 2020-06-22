@@ -10,13 +10,12 @@ export class Room {
     public users: User[] = [];
     public timeLimit = 6;
     public scoreLimit = 10;
-    public lastMessage: {
+    public lastMessage!: {
         nick: string;
         avatar: string;
         value: string;
     } | null;
-    public newLastMessage = false;
-    private game: Game | null;
+    private game!: Game | null;
     private gameInterval: any;
 
     public constructor(
@@ -101,51 +100,56 @@ export class Room {
     }
 
     public update(room: ILobbyRoom, user: User): void {
-        if (user.socket.id === this.adminId) {
-            this.adminId = room.data.adminId;
-            this.timeLimit = room.data.timeLimit;
-            this.scoreLimit = room.data.scoreLimit;
-            // react on data change
-            let usersChanged = this.users.length !== room.data.users.length;
-            this.users.forEach(thisUser => {
-                const dataUser = room?.data?.users.find(item => item.socketId === thisUser.socket.id);
-                if (!user) {
-                    usersChanged = true;
-                } else if (thisUser.team !== dataUser.team) {
-                    usersChanged = true;
-                    thisUser.team = dataUser.team ?? Team.Spectator;
+        if (room.data) {
+            if (user.socket.id === this.adminId) {
+                this.adminId = room.data.adminId;
+                this.timeLimit = room.data.timeLimit;
+                this.scoreLimit = room.data.scoreLimit;
+                // react on data change
+                let usersChanged = this.users.length !== room.data.users.length;
+                this.users.forEach(thisUser => {
+                    const dataUser = room?.data?.users.find(item => item.socketId === thisUser.socket.id);
+                    if (dataUser) {
+                        if (!user) {
+                            usersChanged = true;
+                        } else if (thisUser.team !== dataUser.team) {
+                            usersChanged = true;
+                            thisUser.team = dataUser.team ?? Team.Spectator;
+                        }
+                    }
+                });
+                if (room.playing && !this.game) {
+                    this.startGame();
+                } else if(!room.playing && this.game) {
+                    this.stopGame();
+                } else if (room.playing && usersChanged) {
+                    this.game?.updatePlayers(this.users);
                 }
-            });
-            if (room.playing && !this.game) {
-                this.startGame();
-            } else if(!room.playing && this.game) {
-                this.stopGame();
-            } else if (room.playing && usersChanged) {
-                this.game.updatePlayers(this.users);
             }
+            this.lastMessage = room.data?.lastMessage ?? null;
+            this.notifyChange();
+            // clear temporary data - only for one notify
+            this.lastMessage = null;
         }
-
-        this.lastMessage = room.data.lastMessage;
-        this.notifyChange();
-        // clear temporary data - only for one notify
-        this.lastMessage = null;
     }
 
     //#region game
-    private onUserCreateGame(user): void {
-        if (this.game) user.socket.emit('room::game-data', this.game.getGameData());
+    private onUserCreateGame(user: User): void {
+        if (this.game != null) {
+            user.socket.emit('room::game-data', this.game.getGameData());
+        }
     }
 
     public startGame(): void {
         this.game = new Game(this.io, this.users, this.timeLimit, this.scoreLimit, this.id);
         this.gameInterval = setInterval(() => {
-            this.game.run();
+            if(this.game) this.game.run();
         }, 0);
     }
 
     public stopGame(): void {
         clearInterval(this.gameInterval);
-        this.game.dispose();
+        if (this.game) this.game.dispose();
         this.game = null;
     }
     //#endregion
