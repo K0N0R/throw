@@ -2,9 +2,8 @@ import io from 'socket.io';
 import uuid from 'uuid';
 import { User } from './user';
 import { Game } from './../game/game';
-import { ILobbyRoom } from '../../shared/events';
 import { Team } from '../../shared/team';
-import { ILobbyRoomListItem } from './../../shared/events';
+import { ILobbyRoom, ILobbyRoomListItem, IGameState } from './../../shared/events';
 
 type Message = {
     nick: string;
@@ -15,8 +14,15 @@ type Message = {
 export class Room {
     public id: string;
     public users: User[] = [];
+    public time: number = 0; // in seconds
     public timeLimit = 6;
+    public timeInterval: any;
     public scoreLimit = 10;
+    private score!: {
+        left: number;
+        right: number;
+    };
+    private goldenScore!: boolean;
     public lastMessage!: Message;
     private game!: Game | null;
     private gameInterval: any;
@@ -106,8 +112,8 @@ export class Room {
     public update(room: ILobbyRoom, user: User): void {
         if (user.socket.id === this.adminId) {
             this.adminId = room.adminId;
-            this.timeLimit = room.timeLimit;
-            this.scoreLimit = room.scoreLimit;
+            this.timeLimit = Number(room.timeLimit);
+            this.scoreLimit = Number(room.scoreLimit);
             // react on data change
             let usersChanged = this.users.length !== room.users.length;
             this.users.forEach(thisUser => {
@@ -123,6 +129,8 @@ export class Room {
                 this.startGame();
             } else if(!room.playing && this.game) {
                 this.stopGame();
+                this.stopTime();
+                this.resetScore();
             } else if (room.playing && usersChanged) {
                 this.game?.updatePlayers(this.users);
             }
@@ -147,16 +155,100 @@ export class Room {
     }
 
     public startGame(): void {
-        this.game = new Game(this.io, this.users, this.timeLimit, this.scoreLimit, this.id);
+        this.game = new Game(this.io, this.users, this.id,
+            () => { this.stopTime() },
+            () => { this.startTime() },
+            (team: Team) => { this.updateScore(team) });
+
+        this.resetTime();
+        this.resetScore();
         this.gameInterval = setInterval(() => {
-            if(this.game) this.game.run();
+            if (this.game) this.game.run();
         }, 0);
+        this.onGameStateChange();
     }
 
     public stopGame(): void {
         clearInterval(this.gameInterval);
         if (this.game) this.game.dispose();
         this.game = null;
+        this.resetTime();
+        this.resetScore();
     }
+
+    private getGameState(gameState?: {teamWhoScored?: Team, teamWhoWon?: Team}): IGameState {
+        return {
+            time: this.time,
+            score: {
+                left: this.score.left,
+                right: this.score.right
+            },
+            goldenScore: this.goldenScore,
+            teamWhoScored: gameState?.teamWhoScored ?? void 0,
+            teamWhoWon: gameState?.teamWhoWon ?? void 0
+        }
+    }
+
+    private onGameStateChange(gameState?: {teamWhoScored?: Team, teamWhoWon?: Team}): void {
+        this.io.to(this.id).emit('game::state', this.getGameState(gameState))
+    }
+    //#endregion
+
+    //#region time
+    private startTime(): void {
+        this.timeInterval = setInterval(() => {
+            this.time+=1;
+            if (this.time >= this.timeLimit * 60) {
+                if (this.score.left !== this.score.right) {
+                    const teamWhoWon = this.score.left > this.score.right
+                        ? Team.Left : Team.Right;
+                    this.onGameStateChange({ teamWhoWon });
+                    this.stopGame();
+                    this.notifyChange();
+                    
+                } else {
+                    this.goldenScore = true;
+                    this.onGameStateChange();
+                }
+            } else {
+                this.onGameStateChange();
+            }
+        }, 1000);
+    }
+
+    private stopTime(): void {
+        clearInterval(this.timeInterval);
+    }
+
+    private resetTime(): void {
+        this.time = 0;
+        clearInterval(this.timeInterval);
+    }
+
+    private updateScore(teamWhoScored: Team): void {
+        if (Team.Left === teamWhoScored) {
+            this.score.left = this.score.left+1;
+        } else {
+            this.score.right = this.score.right+1;
+        }
+        let teamWhoWon = this.goldenScore ? teamWhoScored : void 0;
+        if (this.score.left === this.scoreLimit) teamWhoWon = Team.Left;
+        if (this.score.right === this.scoreLimit) teamWhoWon = Team.Right;
+        this.onGameStateChange({ teamWhoScored, teamWhoWon });
+        if (teamWhoWon != null) {
+            this.stopGame();
+            this.notifyChange();
+        }
+    }
+
+    private resetScore(): void {
+        this.score = {
+            left: 0,
+            right: 0
+        };
+        this.goldenScore = false;
+    }
+
+
     //#endregion
 }

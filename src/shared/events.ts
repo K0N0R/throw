@@ -53,9 +53,6 @@ export interface IWorldPostStep {
     playersToAdd?: IPlayerAdd[];
     playersToRemove?: string[];
     playersShooting?: { socketId: string; shooting: boolean }[];
-    scoreRight?: number | null;
-    scoreLeft?: number | null;
-    teamWhoScored?: Team | null;
     playersMoving?: {
         socketId: string;
         position: [number, number];
@@ -104,5 +101,16 @@ export interface IRoomCreate {
 export interface IRoomJoin {
     id: string;
     password: string;
+}
+
+export interface IGameState {
+    teamWhoWon?: Team;
+    teamWhoScored?: Team;
+    goldenScore?: boolean;
+    score: {
+        left: number;
+        right: number;
+    }
+    time: number;
 }
 //#endregion

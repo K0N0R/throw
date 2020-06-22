@@ -1,6 +1,6 @@
 import io from 'socket.io-client';
 import { host, port } from '../../shared/serverConfig';
-import { IRoomCreate, ILobbyRoom } from '../../shared/events';
+import { IRoomCreate, ILobbyRoom, IGameState } from '../../shared/events';
 
 export class Socket {
     public static socket: SocketIOClient.Socket;
@@ -60,6 +60,7 @@ export class Socket {
         this.socket.on('room::destroyed', (room: ILobbyRoom) => {
             this.socket.removeListener('room::changed');
             this.socket.removeListener('room::destroyed');
+            this.socket.removeListener('game::state');
             onRoomDestroyed(room);
         });
     }
@@ -73,8 +74,12 @@ export class Socket {
         this.socket.removeListener('room::changed');
         this.socket.removeListener('room::destroyed');
     }
+
+    public static onGameJoined(onGameStateChange: (gameState: IGameState) => void): void {
+        this.socket.on('game::state', (gameState: IGameState) => {
+            onGameStateChange(gameState);
+        });
+    }
     //#endregion
-
-
 
 }

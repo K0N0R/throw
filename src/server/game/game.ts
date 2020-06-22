@@ -32,13 +32,15 @@ export class Game {
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
-    private time: number = 0;
 
     private score = { left: 0, right: 0 };
     private reseting!: boolean;
 
     private initStage: boolean;
-    constructor(private io: io.Server, private users: User[], timeLimit, scoreLimit, public roomId: string) {
+    constructor(private io: io.Server, private users: User[], public roomId: string,
+        private onGameTimeStop: () => void,
+        private onGameTimeResume: () => void,
+        private onGameScoreChanged: (team: Team) => void) {
         this.initStage = true;
         this.step = {
             fixedTime: 1 / 240,
@@ -48,7 +50,6 @@ export class Game {
         this.initEntities();
         this.initWorld();
         this.initPlayers();
-        this.initTime();
     }
 
     public dispose(): void {
@@ -76,12 +77,6 @@ export class Game {
             }
         };
     }
-
-    //#region time
-    private initTime(): void {
-        this.time
-    }
-    //#endregion
 
     //#region player
     private initPlayers(): void {
@@ -240,6 +235,7 @@ export class Game {
             } else if (teamWhoScored === Team.Right) {
                 this.world.addBody(this.map.rightHalfBody);
             }
+            this.onGameScoreChanged(teamWhoScored);
         }
 
         // event
@@ -319,18 +315,20 @@ export class Game {
             const rightIdx = this.world.bodies.indexOf(this.map.rightHalfBody)
             if (rightIdx != -1) {
                 this.world.removeBody(this.map.rightHalfBody);
+                this.onGameTimeResume();
             }
             const leftIdx = this.world.bodies.indexOf(this.map.leftHalfBody)
             if (leftIdx != -1) {
                 this.world.removeBody(this.map.leftHalfBody);
+                this.onGameTimeResume();
             }
         }
 
-        const scoreRight = !this.reseting && this.ball.body.position[0] < this.map.pos.x
+        const scoreRight = !this.reseting && this.ball.body.position[0] < this.map.pos.x - ball_config.radius
             ? ++this.score.right
             : null;
 
-        const scoreLeft = !this.reseting && this.ball.body.position[0] > this.map.pos.x + map_config.size.width
+        const scoreLeft = !this.reseting && this.ball.body.position[0] > this.map.pos.x + map_config.size.width + ball_config.radius
             ? ++this.score.left
             : null;
 
@@ -340,6 +338,7 @@ export class Game {
             : void 0;
 
         if (scoreChanged) {
+            this.onGameTimeStop();
             this.reseting = true;
             setTimeout(() => {
                 this.reset(teamWhoScored);
@@ -347,6 +346,7 @@ export class Game {
         }
 
         if (this.initStage) {
+            this.onGameTimeStop();
             this.reset();
             this.initStage = false;
         }
@@ -357,9 +357,6 @@ export class Game {
         if (playersMoving.length != null) data.playersMoving = playersMoving;
         if (playersShooting.length != null) data.playersShooting = playersShooting;
         if (ballMoving != null) data.ballMoving = ballMoving;
-        if (scoreRight != null) data.scoreRight = scoreRight;
-        if (scoreLeft != null) data.scoreLeft = scoreLeft;
-        if (teamWhoScored != null) data.teamWhoScored = teamWhoScored;
         if (Object.keys(data).length) {
             this.io.to(this.roomId).emit('world::postStep', data);
         }

@@ -74,15 +74,6 @@ export class Game {
                 this.ball.pos.x = data.ballMoving.position[0];
                 this.ball.pos.y = data.ballMoving.position[1];
             }
-            if (data.scoreLeft != null || data.scoreRight != null) {
-                this.score.updateScore({
-                    left: data.scoreLeft || null,
-                    right: data.scoreRight || null
-                });
-            }
-            if (data.teamWhoScored != null) {
-                this.score.showScorrerName(data.teamWhoScored);
-            }
         });
     }
 

@@ -11,6 +11,7 @@ export class User {
                 this.onDisconnectCallbacks.forEach(item => {
                     item.callback();
                 })
+                this.socket.removeAllListeners('disconnect');
             });
     }
     public onDisconnectCallbacks: { eventId: string, callback: () => void }[] = []
