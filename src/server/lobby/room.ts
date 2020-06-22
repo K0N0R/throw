@@ -6,16 +6,18 @@ import { ILobbyRoom } from '../../shared/events';
 import { Team } from '../../shared/team';
 import { ILobbyRoomListItem } from './../../shared/events';
 
+type Message = {
+    nick: string;
+    avatar: string;
+    value: string;
+} | null
+
 export class Room {
     public id: string;
     public users: User[] = [];
     public timeLimit = 6;
     public scoreLimit = 10;
-    public lastMessage!: {
-        nick: string;
-        avatar: string;
-        value: string;
-    } | null;
+    public lastMessage!: Message;
     private game!: Game | null;
     private gameInterval: any;
 
@@ -112,9 +114,9 @@ export class Room {
                 const dataUser = room.users.find(item => item.socketId === thisUser.socket.id);
                 if (!user) {
                     usersChanged = true;
-                } else if (thisUser.team !== dataUser.team) {
+                } else if (thisUser.team !== dataUser?.team) {
                     usersChanged = true;
-                    thisUser.team = dataUser.team ?? Team.Spectator;
+                    thisUser.team = dataUser?.team ?? Team.Spectator;
                 }
             });
             if (room.playing && !this.game) {
@@ -122,16 +124,16 @@ export class Room {
             } else if(!room.playing && this.game) {
                 this.stopGame();
             } else if (room.playing && usersChanged) {
-                this.game.updatePlayers(this.users);
+                this.game?.updatePlayers(this.users);
             }
 
-            this.lastMessage = room.lastMessage;
+            this.lastMessage = room.lastMessage as Message;
             this.notifyChange();
             // clear temporary data - only for one notify
             this.lastMessage = null;
         }
 
-        this.lastMessage = room.lastMessage;
+        this.lastMessage = room.lastMessage as Message;
         this.notifyChange();
         // clear temporary data - only for one notify
         this.lastMessage = null;
