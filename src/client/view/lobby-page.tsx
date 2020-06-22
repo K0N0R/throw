@@ -2,13 +2,13 @@ import { h } from 'preact';
 import CreateRoomPage from './create-room-page';
 import JoinRoomPage from './join-room-page';
 import { Socket } from '../models/socket';
-import { ILobbyRoom } from '../../shared/events';
 import { useEffect, useState } from 'preact/hooks';
 import { goTo } from './utils';
+import { ILobbyRoomListItem } from './../../shared/events';
 
 
 export default function ListPage() {
-    const [rooms, setRooms] = useState([] as ILobbyRoom[]);
+    const [rooms, setRooms] = useState([] as ILobbyRoomListItem[]);
 
     useEffect(() => {
         Socket.enterLobby((rooms) => {
@@ -20,7 +20,7 @@ export default function ListPage() {
         }
     });
 
-    const joinRoom = (room: ILobbyRoom) => {
+    const joinRoom = (room: ILobbyRoomListItem) => {
         goTo(<JoinRoomPage {...room } />);
     }
 

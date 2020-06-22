@@ -45,8 +45,8 @@ export class Socket {
         });
     }
 
-    public static joinRoom(room: ILobbyRoom, password: string, joined: (room: ILobbyRoom) => void): void {
-        this.socket.emit('room::join', {id: room.id, password });
+    public static joinRoom(roomId: string, password: string, joined: (room: ILobbyRoom) => void): void {
+        this.socket.emit('room::join', {id: roomId, password });
         this.socket.on('room::joined', (room: ILobbyRoom) => {
             joined(room);
             this.socket.removeListener('room::joined');

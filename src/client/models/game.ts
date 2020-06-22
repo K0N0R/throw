@@ -1,7 +1,7 @@
 import { goal_config, map_config } from './../../shared/callibration';
 import { getOffset } from './../../shared/offset';
 import { Keys } from './../../shared/keys';
-import { IRoomGameData, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset, ILobbyRoom } from './../../shared/events';
+import { IRoomGameData, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset } from './../../shared/events';
 
 import { Canvas } from './canvas';
 import { KeysHandler } from './../../shared/keysHandler';

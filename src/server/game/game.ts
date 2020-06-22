@@ -32,6 +32,7 @@ export class Game {
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
+    private time: number = 0;
 
     private score = { left: 0, right: 0 };
     private reseting!: boolean;
@@ -47,6 +48,7 @@ export class Game {
         this.initEntities();
         this.initWorld();
         this.initPlayers();
+        this.initTime();
     }
 
     public dispose(): void {
@@ -74,6 +76,12 @@ export class Game {
             }
         };
     }
+
+    //#region time
+    private initTime(): void {
+        this.time
+    }
+    //#endregion
 
     //#region player
     private initPlayers(): void {

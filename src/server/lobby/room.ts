@@ -4,6 +4,7 @@ import { User } from './user';
 import { Game } from './../game/game';
 import { ILobbyRoom } from '../../shared/events';
 import { Team } from '../../shared/team';
+import { ILobbyRoomListItem } from './../../shared/events';
 
 export class Room {
     public id: string;
@@ -38,7 +39,7 @@ export class Room {
         user.socket.join(this.id);
 
         this.notifyChange();
-        user.socket.emit('room::joined', this.getData(true));
+        user.socket.emit('room::joined', this.getData());
         this.onUserJoins(user);
     }
 
@@ -71,44 +72,45 @@ export class Room {
     }
 
     private notifyChange(): void {
-        this.io.to(this.id).emit('room::changed', this.getData(true));
+        this.io.to(this.id).emit('room::changed', this.getData());
         this.onNotify();
     }
 
-    public getData(detailed?: boolean): ILobbyRoom {
-        const lobbyRoom: ILobbyRoom = {
+    public getListData(): ILobbyRoomListItem {
+        return {
             id: this.id,
             name: this.name,
             playing: this.game != null,
             players: this.users.length,
         };
-        if (detailed) {
-            const mapUser = (user: User) => ({
+    }
+
+    public getData(): ILobbyRoom {
+        const mapUser = (user: User) => ({
                 socketId: user.socket.id,
                 nick: user.nick,
                 avatar: user.avatar,
                 team: user.team
             });
-            lobbyRoom.data = {
-                adminId: this.adminId,
-                users: this.users.map(mapUser),
-                timeLimit: this.timeLimit,
-                scoreLimit: this.scoreLimit,
-                lastMessage: this.lastMessage
-            };
+        return {
+            ...this.getListData(),
+            adminId: this.adminId,
+            users: this.users.map(mapUser),
+            timeLimit: this.timeLimit,
+            scoreLimit: this.scoreLimit,
+            lastMessage: this.lastMessage
         }
-        return lobbyRoom;
     }
 
     public update(room: ILobbyRoom, user: User): void {
         if (user.socket.id === this.adminId) {
-            this.adminId = room.data.adminId;
-            this.timeLimit = room.data.timeLimit;
-            this.scoreLimit = room.data.scoreLimit;
+            this.adminId = room.adminId;
+            this.timeLimit = room.timeLimit;
+            this.scoreLimit = room.scoreLimit;
             // react on data change
-            let usersChanged = this.users.length !== room.data.users.length;
+            let usersChanged = this.users.length !== room.users.length;
             this.users.forEach(thisUser => {
-                const dataUser = room?.data?.users.find(item => item.socketId === thisUser.socket.id);
+                const dataUser = room.users.find(item => item.socketId === thisUser.socket.id);
                 if (!user) {
                     usersChanged = true;
                 } else if (thisUser.team !== dataUser.team) {
@@ -125,7 +127,7 @@ export class Room {
             }
         }
 
-        this.lastMessage = room.data.lastMessage;
+        this.lastMessage = room.lastMessage;
         this.notifyChange();
         // clear temporary data - only for one notify
         this.lastMessage = null;

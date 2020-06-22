@@ -32,7 +32,7 @@ export class Lobby {
                 data.password,
                 data.maxPlayersAmount,
                 () => {
-                    this.io.emit('lobby::room-list', this.rooms.map(item => item.getData()));
+                    this.io.emit('lobby::room-list', this.rooms.map(item => item.getListData()));
                 },
                 () => {
                     const idx = this.rooms.indexOf(room);
@@ -40,7 +40,7 @@ export class Lobby {
                 });
             this.rooms.push(room);
             room.userJoins(user);
-            user.socket.emit('room::created', room.getData(true));
+            user.socket.emit('room::created', room.getData());
         });
         user.socket.on('room::join', (data: IRoomJoin) => {
             const room = this.rooms.find(item => item.id === data.id);
@@ -50,7 +50,7 @@ export class Lobby {
         });
 
         user.socket.on('lobby::enter', () => {
-            user.socket.emit('lobby::room-list', this.rooms.map(item => item.getData()));
+            user.socket.emit('lobby::room-list', this.rooms.map(item => item.getListData()));
         });
         //#endregion
     }

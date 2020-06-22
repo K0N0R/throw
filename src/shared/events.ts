@@ -70,15 +70,18 @@ export interface IConnectionData {
     avatar: string;
 }
 
-export interface ILobbyRoom {
+export interface ILobbyRoomListItem {
     id: string;
     name: string;
     players: number;
     playing: boolean;
-    data?: IRoomData;
 }
 
-export interface IRoomData {
+export interface ILobbyRoom extends ILobbyRoomListItem {
+    id: string;
+    name: string;
+    players: number;
+    playing: boolean;
     adminId: string;
     users: { socketId: string, nick: string, avatar: string; team: Team}[]
     timeLimit: number;
