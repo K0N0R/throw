@@ -11,13 +11,12 @@ export class Room {
     public users: User[] = [];
     public timeLimit = 6;
     public scoreLimit = 10;
-    public lastMessage: {
+    public lastMessage!: {
         nick: string;
         avatar: string;
         value: string;
     } | null;
-    public newLastMessage = false;
-    private game: Game | null;
+    private game!: Game | null;
     private gameInterval: any;
 
     public constructor(
@@ -125,6 +124,11 @@ export class Room {
             } else if (room.playing && usersChanged) {
                 this.game.updatePlayers(this.users);
             }
+
+            this.lastMessage = room.lastMessage;
+            this.notifyChange();
+            // clear temporary data - only for one notify
+            this.lastMessage = null;
         }
 
         this.lastMessage = room.lastMessage;
@@ -134,20 +138,22 @@ export class Room {
     }
 
     //#region game
-    private onUserCreateGame(user): void {
-        if (this.game) user.socket.emit('room::game-data', this.game.getGameData());
+    private onUserCreateGame(user: User): void {
+        if (this.game != null) {
+            user.socket.emit('room::game-data', this.game.getGameData());
+        }
     }
 
     public startGame(): void {
         this.game = new Game(this.io, this.users, this.timeLimit, this.scoreLimit, this.id);
         this.gameInterval = setInterval(() => {
-            this.game.run();
+            if(this.game) this.game.run();
         }, 0);
     }
 
     public stopGame(): void {
         clearInterval(this.gameInterval);
-        this.game.dispose();
+        if (this.game) this.game.dispose();
         this.game = null;
     }
     //#endregion
