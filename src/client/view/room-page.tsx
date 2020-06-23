@@ -46,10 +46,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
 
     unBindEvents!: () => void;
     bindEvents(): () => void {
-        const onKeyUp = (e) => this.onLobbyKey(e);
-        document.addEventListener('keyup', onKeyUp);
+        const onKeyDown = (e) => this.onLobbyKey(e);
+        document.addEventListener('keydown', onKeyDown);
         return () => {
-            document.removeEventListener('keyup', onKeyUp);
+            document.removeEventListener('keydown', onKeyDown);
         }
     }
 
@@ -139,11 +139,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
         if (e.keyCode === Keys.Enter) {
             const chatInput = document.querySelector('#chat-input') as HTMLElement;
             if (chatInput) {
-                if (document.activeElement?.id === 'chat-input') {
-                    chatInput.blur();
-                } else {
-                    chatInput.focus();
-                }
+                chatInput.focus();
             }
         }
     }
@@ -184,6 +180,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
             Socket.updateRoom(this.state.room);
             this.state.room.lastMessage = null;
             this.setState({room: this.state.room, newMessage: ''});
+            const chatInput = document.querySelector('#chat-input') as HTMLElement;
+            if (chatInput) {
+                chatInput.blur();
+            }
         }
     }
     //#endregion

@@ -134,11 +134,6 @@ export class Room {
             } else if (room.playing && usersChanged) {
                 this.game?.updatePlayers(this.users);
             }
-
-            this.lastMessage = room.lastMessage as Message;
-            this.notifyChange();
-            // clear temporary data - only for one notify
-            this.lastMessage = null;
         }
 
         this.lastMessage = room.lastMessage as Message;
