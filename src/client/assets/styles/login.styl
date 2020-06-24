@@ -5,7 +5,6 @@
 
 	color var(--dialog-text-color)
 	background-color var(--dialog-bg-color)
-	width 520px
 	margin auto auto
 	padding 20px
 	box-shadow 0px 10px 43px 0px rgba(0, 0, 0, 0.12)
@@ -46,6 +45,20 @@
 			font-size 3em
 			text-align center
 
+	&--small
+		& label
+			font-size .8em
+			padding 8px
+			text-align end
+
+		& input
+			font-size .8em
+			padding 4px 8px
+
+	
+	&--horizontal
+		flex-direction row
+
 .link
 	color: var(--text-color)
 	text-decoration none
@@ -77,4 +90,5 @@
 		background var(--button-hover-color)
 
 	&--primary
+		color var(--text-invert-color)
 		background-color var(--button-color)

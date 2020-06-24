@@ -1,140 +1,141 @@
 .room
-    display flex
-    flex-direction column
+	display flex
+	flex-direction column
 
-    border-radius 5px
-    height 100%
-    width 100%
+	border-radius 5px
+	height 100%
+	width 100%
 
-    &__game
-        position relative
-        top 40px
-        max-height calc(100% - 230px)
-        height 100%
-        margin-left auto
-        margin-right auto
-        margin-bottom auto
+	&__game
+		position relative
+		top 40px
+		max-height calc(100% - 230px)
+		height 100%
+		margin-left auto
+		margin-right auto
+		margin-bottom auto
 
-    &__configuration
-        display flex
-        flex-direction column
-        margin auto
+	&__configuration
+		display flex
+		flex-direction column
+		margin auto
 
-    &__head
-        display flex
-        margin-top auto
-        background rgba(0, 0, 0, 0.2)
+	&__head
+		display flex
+		margin-top auto
 
-        &__title
-            flex 1
-            font-size 18px
-            font-weight 900
-            border-bottom 1px solid
-            color white
-            padding 7px
+		&__title
+			flex 1
+			font-size 18px
+			font-weight 900
+			color white
+			padding 7px
 
-        &__actions
-            display flex
-            justify-content center
+		&__actions
+			display flex
+			justify-content center
 
-    &__body
-        display flex
-        padding-top 15px
-        padding-bottom 15px
-        background rgba(0, 0, 0, 0.2)
+	&__body
+		display flex
+		margin-top 15px
+		margin-bottom 15px
+		border 1px solid hsl(201deg 20% 23%)
 
-        &__team
-            flex 1
-            margin 1px
-            background rgba(0, 0, 0, 0.6)
-            color white
-            min-height 300px
-            min-width 200px
+		&__team
+			flex 1
+			margin 1px
+			min-height 300px
+			min-width 200px
 
-            &__label
-                text-align center
-                text-transform uppercase
-                border-bottom 1px solid
+			&--red
+				color rgb(229, 110, 86)
+				background-color rgba(229, 110, 86, .0666)
+				border-right 1px solid hsl(201deg 20% 23%)
 
-                &--red
-                    color #e56e56
+			&--blue
+				color rgb(129, 174, 255)
+				background-color rgba(129, 174, 255, .0666)
+				border-left 1px solid hsl(201deg 20% 23%)
 
-                &--blue
-                    color #5689e5
+			&__label
+				text-align center
+				letter-spacing 2px
+				text-transform uppercase
+				padding 10px 0
+				border-bottom 1px solid hsl(201deg 20% 23%)
 
-            &__members
-                display flex
-                flex-direction column
+			&__members
+				display flex
+				flex-direction column
 
-            &__member
-                display flex
-                padding 5px
+			&__member
+				display flex
+				padding 5px
 
-    &__foot
-        display flex
-        flex-direction column
-        justify-content center
-        margin-bottom auto
-        background rgba(0, 0, 0, 0.2)
+	&__foot
+		display flex
+		flex-direction column
+		justify-content center
+		margin-bottom auto
 
-        &__option
-            display flex
-            width 300px
-            margin auto
+		&__option
+			display flex
+			width 400px
+			margin 5px auto
+			align-items center
 
-            &__label
-                flex 1
+			&__label
+				flex 1
 
-            &__input
-                flex 1
+			&__input
+				flex 1
 
-            &__button
-                margin-top 15px
-                margin-bottom 15px
-                flex 1
-                padding 5px
-                border none
-                border-radius 3px
-                background rgba(0, 0, 0, 0.3)
-                color white
-    &__chat
-        
-        left calc(50% - 300px)
-        display flex
-        flex-direction column
-        max-width 600px
-        justify-content center
-        margin-left auto
-        margin-right auto
-        min-width 600px
+			&__button
+				margin-top 15px
+				margin-bottom 15px
+				flex 1
+				padding 5px
+				border none
+				border-radius 3px
+				background rgba(0, 0, 0, 0.3)
+				color white
+	&__chat
+		
+		left calc(50% - 300px)
+		display flex
+		flex-direction column
+		max-width 600px
+		justify-content center
+		margin-left auto
+		margin-right auto
+		min-width 600px
 
-        &__messages
-            display flex
-            flex-direction column
-            max-height 150px
-            overflow auto
-            color white
-            background-color rgba(0, 0, 0, 0.6)
+		&__messages
+			display flex
+			flex-direction column
+			max-height 150px
+			overflow auto
+			color white
 
-        &__message
-            display flex
-            height 30px
-            padding 0 10px
-            line-height 30px
+		&__message
+			display flex
+			height 30px
+			padding 0 10px
+			line-height 30px
 
-            &:nth-child(even)
-                background-color rgba(255, 255, 255, 0.02)
+			&:nth-child(even)
+				background-color rgba(255, 255, 255, 0.02)
 
-            &__value
-                margin-left 10px
+			&__value
+				margin-left 10px
 
-        &__input-field
-            display flex
-            align-items center
+		&__input-field
+			display flex
+			align-items center
 
-        &__label
-            padding 5px
+		&__label
+			padding 5px
 
-        &__input
-            padding 3px
-            flex 1
+		&__input
+			padding 3px
+			flex 1

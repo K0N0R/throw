@@ -33,7 +33,7 @@ export default function JoinRoomPage(room: ILobbyRoomListItem) {
             <button
                 class="form-btn form-btn-submit"
                 onClick={onCancel}>
-                Cancel :(
+                Cancel 😢
             </button>
             <button
                 class="form-btn form-btn-submit"

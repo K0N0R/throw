@@ -198,7 +198,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                     style={room.playing && !lobbyViewToggled ? '' : 'display:none;'}>
                     <GamePage room={room}></GamePage>
                 </div>
-                <div class="room__configuration"
+                <div class="dialog room__configuration"
                     style={room.playing && !lobbyViewToggled ? 'display:none;' : ''}>
                     <div class="room__head">
                         <div class="room__head__title">{room.name}</div>
@@ -216,10 +216,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                         </div>
                     </div>
                     <div class="room__body">
-                        <div class="room__body__team"
+                        <div class="room__body__team room__body__team--red"
                             onDrop={(ev) => this.drop(ev, Team.Left)}
                             onDragOver={(ev) => this.dragOver(ev)}>
-                            <div class="room__body__team__label room__body__team__label--red">Red</div>
+                            <div class="room__body__team__label">Red</div>
                             <div class="room__body__team__members"
                                 >
                                 {   ...(room.users.filter(user => user.team === Team.Left).map(item => 
@@ -247,10 +247,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                                 }
                             </div>
                         </div>
-                        <div class="room__body__team"
+                        <div class="room__body__team room__body__team--blue"
                             onDragOver={(ev) => this.dragOver(ev)}
                             onDrop={(ev) => this.drop(ev, Team.Right)}>
-                            <div class="room__body__team__label room__body__team__label--blue">Blue</div>
+                            <div class="room__body__team__label">Blue</div>
                                 <div class="room__body__team__members">
                                 {   ...(room.users.filter(user => user.team === Team.Right).map(item => 
                                     <div class="room__body__team__member"
@@ -264,21 +264,21 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                         </div>
                     </div>
                     <div class="room__foot">
-                        <div class="room__foot__option">
+                        <div class="form-field form-field--small form-field--horizontal room__foot__option">
                             <label class="room__foot__option__label">Time limit</label>
                             <input class="room__foot__option__input"
                                 value={room.timeLimit}
                                 readOnly={!isUserAdmin}
                                 onInput={(e) => this.onTimeLimitChange(e)}/>
                         </div>
-                        <div class="room__foot__option">
+                        <div class="form-field form-field--small form-field--horizontal room__foot__option">
                             <label class="room__foot__option__label">Score limit</label>
                             <input class="room__foot__option__input"
                                 value={room.scoreLimit}
                                 readOnly={!isUserAdmin}
                                 onInput={(e) => this.onScoreLimitChange(e)}/>
                         </div>
-                        <div class="room__foot__option">
+                        <div class="form-field form-field--small form-field--horizontal room__foot__option">
                             <label class="room__foot__option__label">Map</label>
                             <input class="room__foot__option__input"
                                 value={'Rounded'}
@@ -286,21 +286,21 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                         </div>
                         <div class="room__foot__option"
                             style={room.playing ? 'display:none;' : ''}>
-                            <button class="room__foot__option__button"
+                            <button class="form-btn form-btn-submit form-btn-submit--primary"
                                 onClick={(e) => this.startGame()}>
                                 Start Game!
                             </button>
                         </div>
                         <div class="room__foot__option"
                             style={room.playing ? '' : 'display:none;'}>
-                            <button class="room__foot__option__button"
+                            <button class="form-btn form-btn-submit form-btn-submit--primary"
                                 onClick={(e) => this.endGame()}>
                                 Stop Game!
                             </button>
                         </div>
                     </div>
                 </div>
-                <div class="room__chat">
+                <div class="dialog room__chat">
                     <div class="room__chat__messages">
                         {   ...(messages.map(item => 
                             <div class="room__chat__message">
@@ -311,7 +311,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                             ))
                         }
                     </div>
-                    <div class="room__chat__input-field">
+                    <div class="form-field form-field--small form-field--horizontal room__chat__input-field">
                         <label class="room__chat__label">Wyślij wiadomość</label>
                         <input class="room__chat__input"
                             id="chat-input"
@@ -321,7 +321,6 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                             onInput={(e) => this.onNewMessageChange(e)}/>
                     </div>
                 </div>
-
             </div>
         );
     }
