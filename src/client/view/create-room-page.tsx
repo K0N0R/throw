@@ -1,7 +1,7 @@
 import { h } from 'preact';
-import ListPage from './lobby-page';
+import LobbyPage from './lobby-page';
 import RoomPage from './room-page';
-import { Socket } from '../models/socket';
+import { User } from '../models/socket';
 import { ILobbyRoom } from 'shared/events';
 import { goTo } from './utils';
 import { useLocalStorage } from './hooks';
@@ -19,14 +19,16 @@ export default function CreateRoomPage() {
 
     const onConfirm = () => {
         if (name) {
-            Socket.createRoom({ name, password, maxPlayersAmount }, (room: ILobbyRoom) => {
+            User.socket.emit('room::create', { name, password, maxPlayersAmount });
+            User.socket.on('room::created', (room: ILobbyRoom) => {
                 goTo(<RoomPage room={room}/>);
+                User.socket.off('room::created');
             });
         }
     }
 
     const onCancel = () => {
-        goTo(<ListPage />);
+        goTo(<LobbyPage />);
     }
 
     return (

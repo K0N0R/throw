@@ -37,7 +37,7 @@ export class Game {
     private reseting!: boolean;
 
     private initStage: boolean;
-    constructor(private io: io.Server, private users: User[], public roomId: string,
+    constructor(private io: io.Server, users: User[], public roomId: string,
         private onGameTimeStop: () => void,
         private onGameTimeResume: () => void,
         private onGameScoreChanged: (team: Team) => void) {
@@ -49,14 +49,12 @@ export class Game {
         };
         this.initEntities();
         this.initWorld();
-        this.initPlayers();
+        this.initPlayers(users);
     }
 
     public dispose(): void {
         this.world.off('postStep', this.logic.bind(this));
-        this.users.forEach((item) => {
-             this.removePlayer(item);
-        });
+        this.players.forEach((item) => this.removePlayer(item.user));
     }
 
     public getGameData(): IRoomGameData {
@@ -64,7 +62,7 @@ export class Game {
             players: this.players.map(item => ({
                 nick: item.nick,
                 avatar: item.avatar,
-                socketId: item.socketId,
+                socketId: item.user.socket.id,
                 team: item.team,
                 position: item.body.position
             })),
@@ -79,17 +77,22 @@ export class Game {
     }
 
     //#region player
-    private initPlayers(): void {
-        this.users.filter(item => item.team !== Team.Spectator).forEach((item) => {
+    private initPlayers(users): void {
+        users.filter(item => item.team !== Team.Spectator).forEach((item) => {
              this.addNewPlayer(item);
         });
     }
 
     public updatePlayers(users: User[]): void {
-        this.users = users;
-        this.users.forEach(user => {
-            
-            const player = this.players.find(player => player.socketId === user.socket.id);
+        this.players.forEach(player => {
+            const user = users.find((user) => player.user === user);
+            if (!user || user.team === Team.Spectator) {
+                this.removePlayer(player.user);
+            }
+        });
+
+        users.forEach(user => {
+            const player = this.players.find(player => player.user.socket.id === user.socket.id);
             if (!player && user.team !== Team.Spectator) {
                 this.addNewPlayer(user);
             } else if (player && player.team !== user.team) {
@@ -102,8 +105,8 @@ export class Game {
     }
 
     public addNewPlayer(user: User): void {
-        const leftTeam = this.users.filter(item=> item.team === Team.Left);
-        const rightTeam = this.users.filter(item=> item.team === Team.Right);
+        const leftTeam = this.players.filter(item=> item.team === Team.Left);
+        const rightTeam = this.players.filter(item=> item.team === Team.Right);
         const initPos = {
             x: user.team === Team.Left
                 ? player_config.radius
@@ -112,7 +115,7 @@ export class Game {
                 ? this.map.pos.y + map_config.size.height / 2 - goal_config.size.height/2 + ((player_config.radius * 2 + 10) * (leftTeam.length - 1))
                 : this.map.pos.y + map_config.size.height / 2 - goal_config.size.height/2 + ((player_config.radius * 2 + 10) * (rightTeam.length - 1))
         };
-        const player = new Player(user.socket.id, user.nick, user.avatar, user.team, this.mat.player, initPos);
+        const player = new Player(user, user.nick, user.avatar, user.team, this.mat.player, initPos);
         this.playersToAdd.push(player);
     }
 
@@ -123,13 +126,11 @@ export class Game {
     }
 
     private bindPlayerEvents(player: Player): void {
-        const user = this.users.find(item => item.socket.id === player.socketId);
-        if (!user) return;
-        user.onDisconnect('player::disconnect', () => {
+        player.user.onDisconnect('player::disconnect', () => {
             this.playersToRemove.push(player);
         });
 
-        user.socket.on('player::key', (data: IPlayerKey) => {
+        player.user.socket.on('player::key', (data: IPlayerKey) => {
             for (let key in data) {
                 player.keyMap[key] = data[key];
             }
@@ -137,7 +138,7 @@ export class Game {
     }
 
     public removePlayer(user: User): void {
-        const player = this.players.find(item => item.socketId === user.socket.id);
+        const player = this.players.find(item => item.user.socket.id === user.socket.id);
         if (player) {
             this.playersToRemove.push(player);
         }
@@ -239,9 +240,9 @@ export class Game {
         }
 
         // event
-        this.io.to(this.roomId).emit('world::reset', ({
+        this.io.to(this.roomId).emit('game::reset', ({
             players: this.players.map(player => ({
-                socketId: player.socketId,
+                socketId: player.user.socket.id,
                 position: player.body.position,
             })),
             ball: {
@@ -252,14 +253,14 @@ export class Game {
     }
 
     public logic(): void {
-        const playersShootingMap = this.players.map(player => ({ socketId: player.socketId, shooting: player.shooting }));
+        const playersShootingMap = this.players.map(player => ({ socketId: player.user.socket.id, shooting: player.shooting }));
         this.players.forEach(player => {
             player.logic();
         });
 
         const playersShooting = this.players
-            .filter(player => player.shooting !== playersShootingMap.find(plr => plr.socketId === player.socketId)?.shooting)
-            .map(player => ({ socketId: player.socketId, shooting: player.shooting }))
+            .filter(player => player.shooting !== playersShootingMap.find(plr => plr.socketId === player.user.socket.id)?.shooting)
+            .map(player => ({ socketId: player.user.socket.id, shooting: player.shooting }))
 
         this.players
             .filter((player) => player.shooting && !player.shootingCooldown)
@@ -288,7 +289,7 @@ export class Game {
             return {
                 nick: player.nick,
                 avatar: player.avatar,
-                socketId: player.socketId,
+                socketId: player.user.socket.id,
                 team: player.team,
                 position: player.body.position,
             };
@@ -299,13 +300,13 @@ export class Game {
             this.world.removeBody(player.body);
             const playerIdx = this.players.indexOf(player);
             this.players.splice(playerIdx, 1);
-            return player.socketId;
+            return player.user.socket.id;
         })
         this.playersToRemove.length = 0;
 
         const playersMoving = this.players
             .filter(player => isMoving(player.body))
-            .map(player => ({ socketId: player.socketId, position: player.body.interpolatedPosition }));
+            .map(player => ({ socketId: player.user.socket.id, position: player.body.interpolatedPosition }));
 
         const ballMoving = isMoving(this.ball.body)
             ? { position: this.ball.body.interpolatedPosition }
@@ -358,7 +359,7 @@ export class Game {
         if (playersShooting.length != null) data.playersShooting = playersShooting;
         if (ballMoving != null) data.ballMoving = ballMoving;
         if (Object.keys(data).length) {
-            this.io.to(this.roomId).emit('world::postStep', data);
+            this.io.to(this.roomId).emit('game::step', data);
         }
 
     }

@@ -8,9 +8,9 @@ import { IPlayerKey } from './../../shared/events';
 
 import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
 import { IPos } from './../../shared/model';
+import { User } from './../lobby/user';
 
 export class Player {
-    public socketId: string;
     public body!: p2.Body;
     private shape!: p2.Circle;
     public keyMap: IPlayerKey = {};
@@ -27,9 +27,14 @@ export class Player {
         return player_config.maxSpeed;
     } 
 
-    public constructor(socketId: string, public nick: string, public avatar: string, public team: Team, material: p2.Material, initPos: IPos) {
+    public constructor(
+        public user: User,
+        public nick: string,
+        public avatar: string,
+        public team: Team, 
+        material: p2.Material,
+        initPos: IPos) {
 
-        this.socketId = socketId;
         let options: p2.BodyOptions = {
             mass: player_config.mass,
             position: [initPos.x, initPos.y],

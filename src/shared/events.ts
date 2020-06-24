@@ -106,11 +106,10 @@ export interface IRoomJoin {
 export interface IGameState {
     teamWhoWon?: Team;
     teamWhoScored?: Team;
+    scoreLeft: number;
+    scoreRight: number;
+    scoreGolden: boolean;
     goldenScore?: boolean;
-    score: {
-        left: number;
-        right: number;
-    }
     time: number;
 }
 //#endregion

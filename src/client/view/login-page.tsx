@@ -1,6 +1,6 @@
 import { h } from 'preact';
-import ListPage from './lobby-page';
-import { Socket } from '../models/socket';
+import LobbyPage from './lobby-page';
+import { User } from '../models/socket';
 import { useLocalStorage } from './hooks';
 import { goTo } from './utils';
 
@@ -10,8 +10,8 @@ export default function StartPage() {
     
     const onConfirm = () => {
         if (nick && avatar) {
-            Socket.connect(nick, avatar, () => {
-                goTo(<ListPage />);
+            User.connect(nick, avatar, () => {
+                goTo(<LobbyPage />);
             });
         }
     }

@@ -1,22 +1,23 @@
 import { h } from 'preact';
 import CreateRoomPage from './create-room-page';
 import JoinRoomPage from './join-room-page';
-import { Socket } from '../models/socket';
+import { User } from '../models/socket';
 import { useEffect, useState } from 'preact/hooks';
 import { goTo } from './utils';
 import { ILobbyRoomListItem } from './../../shared/events';
 
 
-export default function ListPage() {
+export default function LobbyPage() {
     const [rooms, setRooms] = useState([] as ILobbyRoomListItem[]);
 
     useEffect(() => {
-        Socket.enterLobby((rooms) => {
+        User.socket.emit('lobby::enter');
+        User.socket.on('lobby::room-list', (rooms: ILobbyRoomListItem[]) => {
             setRooms(rooms);
         });
 
         return () => {
-            Socket.leaveLobby();
+            User.socket.off('lobby::room-list')
         }
     });
 

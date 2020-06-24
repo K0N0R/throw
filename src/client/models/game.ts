@@ -1,19 +1,18 @@
-import { goal_config, map_config } from './../../shared/callibration';
-import { getOffset } from './../../shared/offset';
-import { Keys } from './../../shared/keys';
-import { IRoomGameData, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset } from './../../shared/events';
+import { goal_config, map_config } from '../../shared/callibration';
+import { getOffset } from '../../shared/offset';
+import { Keys } from '../../shared/keys';
+import { IRoomGameData, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset } from '../../shared/events';
+import { KeysHandler } from '../../shared/keysHandler';
 
 import { Canvas } from './canvas';
-import { KeysHandler } from './../../shared/keysHandler';
 import { Player } from './player';
 import { Map } from './map';
 import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
-import { Score } from './score';
 
-import { Socket } from './socket';
+import { User } from './socket';
 
 export class Game {
     private map!: Map;
@@ -21,7 +20,6 @@ export class Game {
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
-    private score!: Score;
     private keyMap: IPlayerKey = {};
 
     constructor() {
@@ -30,12 +28,11 @@ export class Game {
         this.initEntities();
         this.initCamera();
         this.initEvents();
-        Socket.socket.emit('player::init');
-        Socket.socket.on('world::postStep', (data: IWorldPostStep) => {
+        User.socket.on('game::step', (data: IWorldPostStep) => {
             if (data.playersToAdd != null) {
                 data.playersToAdd.forEach(player => {
-                    const isMe = player.socketId === Socket.socket.id;
-                    this.players.push(new Player(player.nick, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team, isMe));
+                    const isMe = player.socketId === User.socket.id;
+                    this.players.push(new Player(player.nick, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team));
                     if (isMe) {
                         Camera.updatePos({ x: player.position[0], y: player.position[1] });
                     }
@@ -56,7 +53,7 @@ export class Game {
                     if (player) {
                         player.pos.x = dataPlayer.position[0];
                         player.pos.y = dataPlayer.position[1];
-                        if (dataPlayer.socketId === Socket.socket.id) {
+                        if (dataPlayer.socketId === User.socket.id) {
                             Camera.updatePos({ ...player.pos });
                         }
                     }
@@ -78,7 +75,7 @@ export class Game {
     }
 
     private initEvents(): void {
-        Socket.socket.on('world::reset', (data: IWorldReset) => {
+        User.socket.on('game::reset', (data: IWorldReset) => {
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
             data.players.forEach(dataPlayer => {
                 const player = this.players.find(player => player.socketId === dataPlayer.socketId);
@@ -88,15 +85,13 @@ export class Game {
                 } 
             });
         });
-        Socket.socket.emit('room::user-created-game')
-        Socket.socket.on('room::game-data', (data: IRoomGameData) => {
-            this.players = data.players.map(p => new Player(p.nick, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team, Socket.socket.id === p.socketId));
+        User.socket.emit('game::player-joins')
+        User.socket.on('game::init-data', (data: IRoomGameData) => {
+            this.players = data.players.map(p => new Player(p.nick, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
-            this.score.updateScore(data.score);
-
         });
 
-        Socket.socket.on('player::shooting', (data: IPlayerShooting) => {
+        User.socket.on('game::player-shooting', (data: IPlayerShooting) => {
             const player = this.players.find(player => player.socketId === data.socketId);
             if (player) {
                 player.shooting = data.shooting;
@@ -112,7 +107,7 @@ export class Game {
             player.dash(pressed[Keys.Shift]);
         };
         KeysHandler.bindHandler((pressed: { [param: number]: boolean }) => {
-            const player = this.players.find(player => player.socketId === Socket.socket.id);
+            const player = this.players.find(player => player.socketId === User.socket.id);
             if (player) {
                 handleShooting(player, pressed);
                 handleDashing(player, pressed);
@@ -128,10 +123,9 @@ export class Game {
                 this.keyMap = pressed;
 
                 if (Object.keys(deltaKeysMap).length > 0) {
-                    Socket.socket.emit('player::key', deltaKeysMap as IPlayerKey);
+                    User.socket.emit('player::key', deltaKeysMap as IPlayerKey);
                 }
             }
-            
         });
     }
     
@@ -144,7 +138,6 @@ export class Game {
         this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
         this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
         this.ball = new Ball({ x: this.map.pos.x + map_config.size.width / 2, y: this.map.pos.y + map_config.size.height / 2 });
-        this.score = new Score();
     }
 
     private initCamera(): void {
@@ -156,13 +149,13 @@ export class Game {
     }
 
     public dispose(): void {
-        Socket.socket.off('world::postStep');
-        Socket.socket.off('room::game-data');
-        Socket.socket.off('player::shooting');
-        Socket.socket.off('world::reset');
+        User.socket.off('game::init-data');
+        User.socket.off('game::step');
+        User.socket.off('game::reset');
+        User.socket.off('game::player-shooting');
+
         Canvas.removeCanvas();
         KeysHandler.clearHandler();
-        if (this.score) this.score.dispose();
         this.players.forEach(player => player.dispose());
     }
 
@@ -177,7 +170,6 @@ export class Game {
             player.render();
         });
         this.ball.render();
-        this.score.render();
 
         Camera.translateEnd();
 
