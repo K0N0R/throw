@@ -1,88 +1,80 @@
 
-.dialog {
-	position: fixed;
-	left: calc(50% - 150px);
-	top: calc(50% - 150px);
-	background-color: #a4b992;
-	width: 300px;
-	height: 300px;
-	padding: 30px;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	border-radius: 5px;
-}
+.dialog
+	--dialog-bg-color var(--background-color)
+	--dialog-text-color var(--text-color)
 
-.form-field {
-	display:flex;
-	flex-direction: column;
-	margin: 10px;
+	color var(--dialog-text-color)
+	background-color var(--dialog-bg-color)
+	width 520px
+	margin auto auto
+	padding 20px
+	box-shadow 0px 10px 43px 0px rgba(0, 0, 0, 0.12)
+	border-radius 8px
 
-}
-.form-field label {
-	padding: 5px 10px;
-	text-transform: uppercase;
-	color: hsla(92, 22%, 15%, 1);
-	font-weight: 500;
-}
+.form-field
+	display flex
+	flex-direction column
+	margin 10px 0 25px 0
+	
+	& label
+		padding 10px 8px
+		letter-spacing .075em
+		text-transform uppercase
 
-.form-field input {
-	padding: 5px 10px;
-	border-radius: 5px;
-	border: none;
-	outline: none;
-	font-size: 20px;
-}
+	& input
+		font-size 2rem
+		padding 15px 10px
+		background-color var(--text-color)
+		color var(--surface-color)
+		border-radius 5px
+		border none
+		outline none
 
-.form-field-avatar {
-	display:flex;
-	flex-direction: column;
-	margin: 10px;
-}
+		&[readonly]
+			background-color rgba(255, 255, 255, 0.2)
+			cursor not-allowed
 
-.form-field-avatar label {
-	padding: 5px 3px;
-	text-transform: uppercase;
-	color: hsla(92, 22%, 15%, 1);
-	font-weight: 500;
-}
+	&--avatar
 
-.form-field-avatar input {
-	padding: 5px;
-	border-radius: 5px;
-	border: none;
-	outline: none;
-	width: 50px;
-	height: 50px;
-	font-size: 30px;
-	text-align: center;
-}
+		& input
+			padding 5px
+			border-radius 5px
+			border none
+			outline none
+			width 80px
+			height 80px
+			font-size 3em
+			text-align center
 
-.link {
-	padding: 15px;
-	text-align: center;
-}
+.link
+	color: var(--text-color)
+	text-decoration none
+	padding 15px
+	text-align: center
 
-.form-btn {
-	margin: 10px;
-	background-color: white;
-	line-height: 40px;
-	border-radius: 5px;
-	border: none;
-	text-transform: uppercase;
-	outline: none;
+.form-btn
+	border-radius 8px
+	border none
+	padding 10px 20px
+	margin 10px 0
+	text-transform uppercase
+	outline none
 	cursor pointer
-}
 
 .form-btn-submit
-	background-color: #718c5a;
-	color: white;
-	font-weight: 800;
-	transition background 0.3s
+	--button-color var(--primary-color)
+	--button-hover-color var(--primary-light-color)
+	
+	background-color transparent
+	border 1px solid var(--primary-color)
+	color var(--text-color)
+	width 100%
+	font-weight 800
+	transition all 0.3s
+
 	&:hover
-		background lightness(#718c5a, 40)
+		color var(--text-invert-color)
+		background var(--button-hover-color)
 
-
-.display--flex {
-	display: flex;
-}
+	&--primary
+		background-color var(--button-color)

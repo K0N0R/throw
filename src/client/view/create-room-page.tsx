@@ -55,7 +55,7 @@ export default function CreateRoomPage() {
                 Cancel :(
             </button>
             <button
-                class="form-btn form-btn-submit"
+                class="form-btn form-btn-submit form-btn-submit--primary"
                 onClick={onConfirm}>
                 Create room!
             </button>

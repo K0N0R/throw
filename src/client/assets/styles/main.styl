@@ -4,9 +4,41 @@
 @import './list'
 @import './room'
 
-body 
-	display flex
-	height 100vh
-	width 100vw
+:root
+	--cgl: 97 13% 80% // hsl(97, 13%, 80%)
+	--cgml: 133 18% 59% // hsl(133, 18%, 59%)
+	--cgm: 165 19% 40% // hsl(165, 19%, 40%)
+	--cgmd: 186 21% 26% // hsl(186, 21%, 26%)
+	--cgd: 201 20% 23% // hsl(201, 20%, 23%)
+
+
+	--text-color hsl(97, 13%, 80%)
+	--text-invert-color hsl(201, 20%, 14%)
+	--primary-color hsl(133, 18%, 59%)
+	--primary-light-color hsl(133, 18%, 70%)
+	--secundary-color hsl(165, 19%, 40%)
+	--secundary-color-light hsl(165, 19%, 60%)
+	--background-color hsl(186, 21%, 26%)
+	--surface-color hsl(201, 20%, 23%)
+
+*,
+*::before,
+*::after
+	box-sizing border-box
+
+html,
+body
+	width 100%
+	height 100%
 	overflow hidden
-	background-color #718c5a
+
+html
+	font-size 62.5%
+
+body
+	display flex
+	flex-direction column
+	font-size 1.6rem
+	font-family 'Consolas', 'Courier New', monospace
+	background-color var(--secundary-color)
+	background-image repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.0666) 35px, rgba(255,255,255,.0666) 70px)
