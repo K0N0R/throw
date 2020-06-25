@@ -63,8 +63,8 @@ export const player_config = {
     shootingCooldown: 100,
     dashing: 1250,
     dashDuration: 200,
-    dashCooldown: 2000,
-    dashMaxSpeed: 9000 * scale
+    dashCooldown: 6000,
+    dashMaxSpeed: 8000 * scale
 }
 
 export const player_style = {
