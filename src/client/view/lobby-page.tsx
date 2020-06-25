@@ -45,7 +45,7 @@ export default function LobbyPage() {
                     ))
                 }
                 <div class="list-footer">
-                    Click on item in the list to join you dumb ass!
+                    { rooms.length <= 0 ? 'No room find, click to add one.' : 'Click on item in the list to join you dumb ass!'}
                 </div>
                 <button class="form-btn form-btn-submit form-btn-submit--primary"
                         onClick={() => createNewGame()}>
