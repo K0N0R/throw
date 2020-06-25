@@ -18,8 +18,8 @@ export default function CreateRoomPage() {
     }, [])
 
     const onConfirm = () => {
-        if (name) {
-            User.socket.emit('room::create', { name, password, maxPlayersAmount });
+        if (roomName) {
+            User.socket.emit('room::create', { name: roomName, password, maxPlayersAmount });
             User.socket.on('room::created', (room: ILobbyRoom) => {
                 goTo(<RoomPage room={room}/>);
                 User.socket.off('room::created');
