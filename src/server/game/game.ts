@@ -36,6 +36,7 @@ export class Game {
 
     private score = { left: 0, right: 0 };
     private reseting!: boolean;
+    private hardResesting!: boolean;
 
     private initStage: boolean;
     constructor(private io: io.Server, users: User[], public roomId: string,
@@ -60,6 +61,7 @@ export class Game {
 
     public endGame(): void {
         this.reseting = true;
+        this.hardResesting = true;
     }
 
     public getGameData(): IRoomGameData {
@@ -347,6 +349,7 @@ export class Game {
             this.onGameTimeStop();
             this.reseting = true;
             setTimeout(() => {
+                if (this.hardResesting) return;
                 this.reset(teamWhoScored);
             }, game_config.goalResetTimeout);
         }
