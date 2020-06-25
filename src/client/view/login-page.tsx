@@ -29,25 +29,27 @@ export default function LoginPage() {
             </div>
             <div class="form-field form-field--avatar">
                 <label>Avatar</label>
-                <div>
+                <div class="form-field__flex">
                     <input
                         value={avatar}
                         maxLength={avatarMaxLength}
                         onInput={(e) => setAvatar((e.target as HTMLInputElement).value.slice(0, avatarMaxLength))}/>
-                    <a class="link"
-                        target="_blank"
-                        href="https://getemoji.com/">
-                            Where do i find cool avatar?
-                    </a>
+                    <div class="legends">
+                        <div >LEGENDARY PLAYERS:</div>
+                        <div class="avatar">👽 👻 👥 🐗 🤖 ⚽️ 💪 🐻 😾 🐒 👴 🎯 🤡 🐴 🐍 🚽 🍍 💎 👮🏻 👨</div>
+                    </div>
                 </div>
             </div>
-
+            <a class="link"
+                target="_blank"
+                href="https://getemoji.com/">
+                    Where do i find cool avatar?
+            </a>
             <button
                 class="form-btn form-btn-submit"
                 onClick={onConfirm}>
                 Throw!
             </button>
-
         </div>
     );
 }
