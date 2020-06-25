@@ -7,6 +7,8 @@ import { goTo } from './utils';
 export default function StartPage() {
     const [nick, setNick] = useLocalStorage('throw_nick', '');
     const [avatar, setAvatar] = useLocalStorage('throw_avatar', '');
+    const nickMaxLength = 20;
+    const avatarMaxLength = 2;
     
     const onConfirm = () => {
         if (nick && avatar) {
@@ -22,16 +24,16 @@ export default function StartPage() {
                 <label>Nick</label>
                 <input
                     value={nick}
-                    maxLength={20}
-                    onInput={(e) => setNick((e.target as HTMLInputElement).value)}/>
+                    maxLength={nickMaxLength}
+                    onInput={(e) => setNick((e.target as HTMLInputElement).value).slice(0, nickMaxLength)}/>
             </div>
             <div class="form-field form-field--avatar">
                 <label>Avatar</label>
                 <div>
                     <input
                         value={avatar}
-                        maxLength={2}
-                        onInput={(e) => setAvatar((e.target as HTMLInputElement).value)}/>
+                        maxLength={avatarMaxLength}
+                        onInput={(e) => setAvatar((e.target as HTMLInputElement).value.slice(0, avatarMaxLength))}/>
                     <a class="link"
                         target="_blank"
                         href="https://getemoji.com/">
