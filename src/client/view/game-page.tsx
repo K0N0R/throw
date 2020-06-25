@@ -151,9 +151,9 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
             'GOOD GAME!',
             'TOO EASY!',
             'NOT EVEN A CHALLENGE!',
-            'GO TETRIS NEXT TIME!',
-            'IN HAXBALL YOU WOULD SUCK ANYWAY!'
-            ][Math.round(Math.random() * 8)]});
+            'GO PLAY TETRIS!',
+            'YOU SUCK AND YOU KNOW IT!'
+            ][Math.round(Math.random() * 7)]});
     }
 
     showScorer(team: Team) {
@@ -171,12 +171,14 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
             <div class="game-state">
                 {state.gameWon === Team.Left &&
                 <div class="game-state__scorer game-state__scorer--left">
-                    RED TEAM WON THE GAME! {state.gameWonGeneratedMessage}
+                    RED TEAM WON THE GAME!
+                    <div class="game-state__scorer--punchline">{state.gameWonGeneratedMessage}</div>
                 </div>
                 }
                 {state.gameWon === Team.Right &&
                 <div class="game-state__scorer game-state__scorer--right">
-                    BLUE TEAM WON THE GAME! {state.gameWonGeneratedMessage}
+                    BLUE TEAM WON THE GAME!
+                    <div class="game-state__scorer--punchline">{state.gameWonGeneratedMessage}</div>
                 </div>
                 }
                 {state.scorer === Team.Left &&
