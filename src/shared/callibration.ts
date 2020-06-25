@@ -42,7 +42,7 @@ export const map_config = {
     size: { height: mapSize.height, width: mapSize.width },
     outerSize: { height: (mapSize.height + (2*mapBorder)), width: (mapSize.width + (2*mapBorder))},
     cornerPointsAmount: 16 * scale,
-    cornerRadius: mapSize.width / 10,
+    cornerRadius: mapSize.height / 6,
     border: mapBorder,
     middleRadius: mapSize.height/5
 }
@@ -61,7 +61,7 @@ export const player_config = {
     mass: 5,
     damping: 0.92,
     shootingMaxSpeed: 1750 * scale,
-    maxSpeed: 2750 * scale,
+    maxSpeed: 3000 * scale,
     shooting: 125000 * scale,
     shootingCooldown: 100,
     dashing: 1250,
