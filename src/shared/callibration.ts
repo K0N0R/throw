@@ -18,7 +18,7 @@ export const ball_style = {
 }
 
 export const goal_config = {
-    size: { height: 220 * scale, width: 50 * scale },
+    size: { height: 220 * scale, width: 65 * scale },
     postRadius: 13 * scale,
     cornerRadius: 30 * scale,
     cornerPointsAmount: 10 * scale,
@@ -32,8 +32,11 @@ export const goal_style = {
     rightPostFillStyle: '#ccccff',
     postLineWidth: 3 * scale
 }
-
-const mapSize = { height: 586 * scale, width: 1280 * scale };
+const mapSizeDefaults = {
+    height: 586 * 1.2,
+    width: 1280 * 1.2
+}
+const mapSize = { height: mapSizeDefaults.height * scale, width: mapSizeDefaults.width * scale };
 const mapBorder = 2*goal_config.size.width; 
 export const map_config = {
     size: { height: mapSize.height, width: mapSize.width },
@@ -41,7 +44,7 @@ export const map_config = {
     cornerPointsAmount: 16 * scale,
     cornerRadius: mapSize.width / 10,
     border: mapBorder,
-    middleRadius: mapSize.height/4
+    middleRadius: mapSize.height/5
 }
 
 export const canvas_config = {

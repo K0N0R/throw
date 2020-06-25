@@ -227,6 +227,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
         const isUserAdmin = state.room.adminId === User.socket.id;
         return (
             <div class="room">
+                <button class="room__config-button form-btn form-btn--small form-btn--accent"
+                    onClick={() => this.openConfiguration()}>
+                    🛠️ Configuration 🛠️
+                </button>
                 <div id="configuration"></div>
                 <div class="room"
                     id="room"
@@ -354,10 +358,6 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                         </div>
                     </div>
                     <div class="dialog room__chat">
-                        <button class="room__chat__config-button form-btn form-btn--small form-btn--accent"
-                            onClick={() => this.openConfiguration()}>
-                            🛠️ Configuration 🛠️
-                        </button>
                         <div class="room__chat__messages">
                             {   ...(state.messages.map(item => 
                                 <div class="room__chat__message">
