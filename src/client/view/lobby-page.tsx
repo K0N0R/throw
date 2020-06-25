@@ -30,14 +30,10 @@ export default function LobbyPage() {
     }
 
     return (
-        <div class="centered">
+        <div class="dialog">
             <div class="list">
                 <div class="list-header">
                     <div>Games List</div>
-                    <button class="list-header__button"
-                        onClick={() => createNewGame()}>
-                        Create game
-                    </button>
                 </div>
                 {...(rooms.map(room =>
                         <div class="list-item"
@@ -51,6 +47,10 @@ export default function LobbyPage() {
                 <div class="list-footer">
                     Click on item in the list to join you dumb ass!
                 </div>
+                <button class="form-btn form-btn-submit form-btn-submit--primary"
+                        onClick={() => createNewGame()}>
+                        Create game
+                </button>
             </div>
         </div>
     );

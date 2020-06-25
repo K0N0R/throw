@@ -25,9 +25,9 @@ export default function StartPage() {
                     maxLength={20}
                     onInput={(e) => setNick((e.target as HTMLInputElement).value)}/>
             </div>
-            <div class="form-field-avatar">
+            <div class="form-field form-field--avatar">
                 <label>Avatar</label>
-                <div class="display--flex">
+                <div>
                     <input
                         value={avatar}
                         maxLength={2}
