@@ -34,6 +34,9 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
         this.bindSocket();
 
         this.onRoomChanged(this.props.room);
+        setTimeout(() => {
+            (document.querySelector('#room') as HTMLElement)?.focus();
+        });
     }
     //#endregion
 
@@ -203,11 +206,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     };
 
     onMessageKeyConfirm(e): void {
-        e.stopProgation();
         if (e.key !== 'Enter' || !this.state.messageToSend) return;
         this.sendMessage();
         setTimeout(() => {
-            (document.querySelector('#chat-input') as HTMLElement)?.blur();
+            (document.querySelector('#room') as HTMLElement)?.focus();
         });
     }
 
@@ -227,6 +229,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
             <div class="room">
                 <div id="configuration"></div>
                 <div class="room"
+                    id="room"
                     tabIndex={-1}
                     onKeyDown={(e) => this.onLobbyKey(e)}>
                     <div class="room__game"
@@ -365,7 +368,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                                 ))
                             }
                         </div>
-                        <div class="form-field form-field--small form-field--horizontal room__chat__input-field">
+                        <div class="form-field form-field--small form-field--flat form-field--horizontal room__chat__input-field">
                             <label class="room__chat__label">Wyślij wiadomość</label>
                             <input class="room__chat__input"
                                 id="chat-input"
