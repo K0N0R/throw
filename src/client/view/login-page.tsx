@@ -4,7 +4,7 @@ import { User } from '../models/socket';
 import { useLocalStorage } from './hooks';
 import { goTo } from './utils';
 
-export default function StartPage() {
+export default function LoginPage() {
     const [nick, setNick] = useLocalStorage('throw_nick', '');
     const [avatar, setAvatar] = useLocalStorage('throw_avatar', '');
     const nickMaxLength = 20;

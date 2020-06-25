@@ -1,19 +1,18 @@
 import * as p2 from 'p2';
 
 import { calculateVectorLength, normalizeVector, getNormalizedVector } from './../../shared/vector';
-import { Keys } from './../../shared/keys';
 import { player_config } from './../../shared/callibration';
 import { Team } from './../../shared/team';
-import { IPlayerKey } from './../../shared/events';
 
 import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
 import { IPos } from './../../shared/model';
 import { User } from './../lobby/user';
+import { KeysMap } from './../../shared/keysHandler';
 
 export class Player {
     public body!: p2.Body;
     private shape!: p2.Circle;
-    public keyMap: IPlayerKey = {};
+    public keysMap: Partial<KeysMap> = {};
 
     public shootingCooldown!: boolean;
     public shooting!: boolean;
@@ -89,53 +88,23 @@ export class Player {
     }
     public counter = 0;
     public logic(): void {
-        const direction = {
-            up: false,
-            down: false,
-            left: false,
-            right: false
-        };
-        for (let key in this.keyMap) {
-            switch (Number(key)) {
-                case Keys.Up:
-                    if (this.keyMap[key]) {
-                        this.body.force[1] = -this.maxSpeed;
-                        direction.up = true;
-                    }
-                    break;
-                case Keys.Down:
-                    if (this.keyMap[key]) {
-                        this.body.force[1] = +this.maxSpeed;
-                        direction.down = true;
-                    }
-                    break;
-                case Keys.Left:
-                    if (this.keyMap[key]) {
-                        this.body.force[0] = -this.maxSpeed;
-                        direction.left = true;
-                    }
-                    break;
-                case Keys.Right:
-                    if (this.keyMap[key]) {
-                        this.body.force[0] = +this.maxSpeed;
-                        direction.right = true;
-                    }
-                    break;
-                case Keys.X:
-                    this.shooting = this.keyMap[key];
-                    break;
-            }
+        
+        if (this.keysMap.up) {
+            this.body.force[1] = -this.maxSpeed;
         }
-        for (let key in this.keyMap) {
-            switch (Number(key)) {
-                case Keys.Shift:
-                    if  (this.keyMap[key]) {
-                        if (direction.up || direction.down || direction.left || direction.right) {
-                            this.dash();
-                        }
-                    }
-                    break;
-            }
+        if (this.keysMap.down) {
+            this.body.force[1] = +this.maxSpeed;
+        }
+        if (this.keysMap.left) {
+            this.body.force[0] = -this.maxSpeed;
+        }
+        if (this.keysMap.right) {
+            this.body.force[0] = +this.maxSpeed;
+        }
+        this.shooting = Boolean(this.keysMap.shoot);
+
+        if (this.keysMap.dash && (this.keysMap.up || this.keysMap.down || this.keysMap.left || this.keysMap.right)) {
+            this.dash();
         }
         this.onMovmentChange();
     }

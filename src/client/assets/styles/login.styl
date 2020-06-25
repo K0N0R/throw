@@ -10,6 +10,10 @@
 	box-shadow 0px 10px 43px 0px rgba(0, 0, 0, 0.12)
 	border-radius 8px
 
+	&--fixed
+		position fixed
+		z-index 2
+
 .form-field
 	display flex
 	flex-direction column
@@ -20,6 +24,7 @@
 		letter-spacing .075em
 		text-transform uppercase
 
+	& select,
 	& input
 		font-size 2rem
 		padding 15px 10px
@@ -51,6 +56,7 @@
 			padding 8px
 			text-align end
 
+		& select,
 		& input
 			font-size .8em
 			padding 4px 8px
@@ -77,6 +83,10 @@
 	&--small
 		padding 5px 10px
 		margin 0 10px
+	
+	&--accent
+		background-color var(--text-color)
+		color var(--surface-color)
 
 .form-btn-submit
 	--button-color var(--primary-color)

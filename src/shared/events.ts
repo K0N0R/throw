@@ -20,10 +20,6 @@ export interface IRoomGameData {
     }
 }
 
-export interface IPlayerKey {
-    [param: number]: boolean;
-}
-
 export interface IPlayerShooting {
     socketId: string;
     shooting: boolean;
