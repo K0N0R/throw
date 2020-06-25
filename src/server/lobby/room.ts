@@ -4,6 +4,7 @@ import { User } from './user';
 import { Game } from './../game/game';
 import { Team } from '../../shared/team';
 import { ILobbyRoom, ILobbyRoomListItem, IGameState } from './../../shared/events';
+import { game_config } from './../../shared/callibration';
 
 type Message = {
     nick: string;
@@ -18,6 +19,7 @@ export class Room {
 
     private game!: Game | null;
     private gameInterval: any;
+    private gameHasEnded: boolean = false;
 
     public time: number = 0; // in seconds
     public timeLimit = 6;
@@ -155,6 +157,7 @@ export class Room {
 
     //#region game
     public createGame(): void {
+        this.gameHasEnded = false;
         this.game = new Game(this.io, this.users, this.id,
             () => { this.stopTime() },
             () => { this.startTime() },
@@ -175,6 +178,16 @@ export class Room {
         this.game = null;
         this.resetTime();
         this.resetScore();
+    }
+
+    private endGame(): void {
+        this.stopTime();
+        this.game?.endGame();
+        this.gameHasEnded = true;
+        setTimeout(() => {
+            this.disposeGame();
+            this.notifyChange();
+        }, game_config.endGameResetTimeout);
     }
 
     private onUserJoinsGame(user: User): void {
@@ -205,8 +218,7 @@ export class Room {
                     const teamWhoWon = this.scoreLeft > this.scoreRight
                         ? Team.Left : Team.Right;
                     this.onGameStateChange({ teamWhoWon });
-                    this.disposeGame();
-                    this.notifyChange();
+                    this.endGame();
                 } else {
                     this.scoreGolden = true;
                     this.onGameStateChange();
@@ -227,6 +239,7 @@ export class Room {
     }
 
     private updateScore(teamWhoScored: Team): void {
+        if (this.gameHasEnded) return;
         if (Team.Left === teamWhoScored) {
             this.scoreLeft += 1;
         } else {
@@ -237,8 +250,7 @@ export class Room {
         if (this.scoreRight >= this.scoreLimit) teamWhoWon = Team.Right;
         this.onGameStateChange({ teamWhoScored, teamWhoWon });
         if (teamWhoWon != null) {
-            this.disposeGame();
-            this.notifyChange();
+            this.endGame();
         }
     }
 

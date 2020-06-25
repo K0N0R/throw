@@ -57,6 +57,10 @@ export class Game {
         this.players.forEach((item) => this.removePlayer(item.user));
     }
 
+    public endGame(): void {
+        this.reseting = true;
+    }
+
     public getGameData(): IRoomGameData {
         return {
             players: this.players.map(item => ({
@@ -236,7 +240,6 @@ export class Game {
             } else if (teamWhoScored === Team.Right) {
                 this.world.addBody(this.map.rightHalfBody);
             }
-            this.onGameScoreChanged(teamWhoScored);
         }
 
         // event
@@ -339,6 +342,7 @@ export class Game {
             : void 0;
 
         if (scoreChanged) {
+            this.onGameScoreChanged(teamWhoScored as Team);
             this.onGameTimeStop();
             this.reseting = true;
             setTimeout(() => {

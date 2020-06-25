@@ -1,6 +1,7 @@
 const scale = 2;
 export const game_config = {
     goalResetTimeout: 3000,
+    endGameResetTimeout: 5000,
     interval: 1000/60
 }
 

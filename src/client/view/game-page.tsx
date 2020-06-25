@@ -5,6 +5,8 @@ import { Game } from '../models/game';
 import { KeysHandler } from './../../shared/keysHandler'
 import { ILobbyRoom, IGameState } from '../../shared/events';
 import { User } from './../models/socket';
+import { Team } from '../../shared/team';
+import { game_config } from './../../shared/callibration';
 
 interface IGamePageProps {
     room: ILobbyRoom;
@@ -16,10 +18,12 @@ interface IGamePageState {
     gameAnimFrame: number;
     gameKeysInterval: NodeJS.Timeout;
     game: Game | null;
+    gameWon: Team | null;
 
     scoreLeft: number;
     scoreRight: number;
     scoreGolden: boolean;
+    scorer: Team | null;
     time: number;
 }
 
@@ -67,6 +71,12 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
         this.setState({ scoreLeft: gameState.scoreLeft });
         this.setState({ scoreRight: gameState.scoreRight });
         this.setState({ time: gameState.time });
+        if (gameState.teamWhoWon) {
+            this.showWon(gameState.teamWhoWon);
+        } else if (gameState.teamWhoScored) {
+            this.showScorer(gameState.teamWhoScored);
+        }
+
         this.forceUpdate();
     }
 
@@ -122,10 +132,48 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
     }
     //#endregion
 
+    //#region animations
+    showWon(team: Team) {
+        this.setState({gameWon: team});
+        this.forceUpdate();
+        setTimeout(() => {
+            this.setState({gameWon: null});
+        }, game_config.endGameResetTimeout);
+    }
+
+    showScorer(team: Team) {
+        this.setState({scorer: team});
+        this.forceUpdate();
+        setTimeout(() => {
+            this.setState({scorer: null});
+        }, game_config.goalResetTimeout);
+    }
+    //#endregion
+
     render(_, state: IGamePageState) {
         if (!state.room) return;
         return (
             <div class="game-state">
+                {state.gameWon === Team.Left &&
+                <div class="game-state__scorer game-state__scorer--left">
+                    Red team won the game! Congratulations!
+                </div>
+                }
+                {state.gameWon === Team.Right &&
+                <div class="game-state__scorer game-state__scorer--right">
+                    Blue team won the game by accident :)
+                </div>
+                }
+                {state.scorer === Team.Left &&
+                <div class="game-state__scorer game-state__scorer--left">
+                    Red team scores!
+                </div>
+                }
+                {state.scorer === Team.Right &&
+                <div class="game-state__scorer game-state__scorer--right">
+                    Blue team scores!
+                </div>
+                }
                 <div class="game-state__score">
                     <div class="game-state__score__value">
                         <div class="team-cube team-cube--left"></div>
