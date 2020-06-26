@@ -2,7 +2,7 @@ import './../assets/images/grass_big.png';
 import { IPos } from './../../shared/model';
 import { getOffset } from './../../shared/offset';
 import { getCornerPoints } from './../../shared/vertices';
-import { map_config, map_style, goal_config, canvas_config } from './../../shared/callibration';
+import { map_config, map_style, goal_config, canvas_config, ball_style, ball_config } from './../../shared/callibration';
 
 import { Canvas } from './canvas';
 
@@ -158,6 +158,13 @@ export class Map {
         Canvas.ctx.lineWidth = map_style.lineWidth;
         Canvas.ctx.strokeStyle = map_style.strokeStyle;
         Canvas.ctx.stroke();
+        Canvas.stopDraw();
+
+        Canvas.ctx.moveTo(this.pos.x + map_config.size.width / 2, this.pos.y + map_config.size.height / 2);
+        Canvas.startDraw();
+        Canvas.ctx.arc(this.pos.x + map_config.size.width / 2, this.pos.y + map_config.size.height / 2, ball_config.radius*3/4, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = map_style.strokeStyle;
+        Canvas.ctx.fill();
         Canvas.stopDraw();
     }
 }

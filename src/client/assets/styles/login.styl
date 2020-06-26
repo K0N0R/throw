@@ -10,16 +10,27 @@
 	box-shadow 0px 10px 43px 0px rgba(0, 0, 0, 0.12)
 	border-radius 8px
 
+	&--fixed
+		position fixed
+		z-index 2
+
 .form-field
 	display flex
 	flex-direction column
 	margin 10px 0 25px 0
+
+	&--flat
+		margin 5px 0 0 0
+	
+	&__flex
+		display flex
 	
 	& label
 		padding 10px 8px
 		letter-spacing .075em
 		text-transform uppercase
 
+	& select,
 	& input
 		font-size 2rem
 		padding 15px 10px
@@ -51,11 +62,11 @@
 			padding 8px
 			text-align end
 
+		& select,
 		& input
 			font-size .8em
 			padding 4px 8px
 
-	
 	&--horizontal
 		flex-direction row
 
@@ -64,6 +75,16 @@
 	text-decoration none
 	padding 15px
 	text-align: center
+
+.legends
+	margin 15px
+	margin-top 0
+
+	.avatar
+		margin-top 10px
+		font-size 20px
+		max-width 400px
+		line-height 150%
 
 .form-btn
 	border-radius 8px
@@ -77,6 +98,10 @@
 	&--small
 		padding 5px 10px
 		margin 0 10px
+	
+	&--accent
+		background-color var(--text-color)
+		color var(--surface-color)
 
 .form-btn-submit
 	--button-color var(--primary-color)

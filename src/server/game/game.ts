@@ -11,8 +11,9 @@ import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
-import { IPlayerKey, IWorldReset, IWorldPostStep, IRoomGameData } from './../../shared/events';
+import { IWorldReset, IWorldPostStep, IRoomGameData } from './../../shared/events';
 import { User } from './../lobby/user';
+import { KeysMap } from './../../shared/keysHandler';
 
 export class Game {
     private step: {
@@ -35,6 +36,7 @@ export class Game {
 
     private score = { left: 0, right: 0 };
     private reseting!: boolean;
+    private hardResesting!: boolean;
 
     private initStage: boolean;
     constructor(private io: io.Server, users: User[], public roomId: string,
@@ -59,6 +61,7 @@ export class Game {
 
     public endGame(): void {
         this.reseting = true;
+        this.hardResesting = true;
     }
 
     public getGameData(): IRoomGameData {
@@ -134,9 +137,9 @@ export class Game {
             this.playersToRemove.push(player);
         });
 
-        player.user.socket.on('player::key', (data: IPlayerKey) => {
+        player.user.socket.on('game::player-key', (data: KeysMap) => {
             for (let key in data) {
-                player.keyMap[key] = data[key];
+                player.keysMap[key] = data[key];
             }
         });
     }
@@ -147,7 +150,7 @@ export class Game {
             this.playersToRemove.push(player);
         }
         user.offDisconnect('player::disconnect');
-        user.socket.removeAllListeners('player::key');
+        user.socket.removeAllListeners('game::player-key');
     }
     //#endregion 
 
@@ -346,6 +349,7 @@ export class Game {
             this.onGameTimeStop();
             this.reseting = true;
             setTimeout(() => {
+                if (this.hardResesting) return;
                 this.reset(teamWhoScored);
             }, game_config.goalResetTimeout);
         }

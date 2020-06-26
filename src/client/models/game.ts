@@ -1,7 +1,6 @@
 import { goal_config, map_config } from '../../shared/callibration';
 import { getOffset } from '../../shared/offset';
-import { Keys } from '../../shared/keys';
-import { IRoomGameData, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset } from '../../shared/events';
+import { IRoomGameData,  IPlayerShooting, IWorldPostStep, IWorldReset } from '../../shared/events';
 import { KeysHandler } from '../../shared/keysHandler';
 
 import { Canvas } from './canvas';
@@ -13,6 +12,7 @@ import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
 
 import { User } from './socket';
+import { KeysMap } from './../../shared/keysHandler';
 
 export class Game {
     private map!: Map;
@@ -20,7 +20,7 @@ export class Game {
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
-    private keyMap: IPlayerKey = {};
+    private keysMap: KeysMap = {};
 
     constructor() {
         this.initHandlers();
@@ -100,31 +100,24 @@ export class Game {
     }
 
     private initHandlers(): void {
-        const handleShooting = (player: Player, pressed: { [param: number]: boolean }) => {
-            player.shooting = pressed[Keys.X];
-        };
-        const handleDashing = (player: Player, pressed: { [param: number]: boolean }) => {
-            player.dash(pressed[Keys.Shift]);
-        };
-        KeysHandler.bindHandler((pressed: { [param: number]: boolean }) => {
+        KeysHandler.bindHandler((keysMap: KeysMap) => {
             const player = this.players.find(player => player.socketId === User.socket.id);
-            if (player) {
-                handleShooting(player, pressed);
-                handleDashing(player, pressed);
+            if (!player) return;
+            player.shooting = Boolean(keysMap.shoot);
+            player.dash(Boolean(keysMap.dash));
 
-                const deltaKeysMap: IPlayerKey = {};
-                for(const key in pressed) {
-                    if (this.keyMap[key] == void 0) {
-                        deltaKeysMap[key] = pressed[key];
-                    } else if (this.keyMap[key] !== pressed[key]) {
-                        deltaKeysMap[key] = pressed[key];
-                    }
+            const deltaKeysMap: Partial<KeysMap> = {};
+            for (const key in keysMap) {
+                if (this.keysMap[key] === void 0) {
+                    deltaKeysMap[key] = keysMap[key];
+                } else if (this.keysMap[key] !== keysMap[key]) {
+                    deltaKeysMap[key] = keysMap[key];
                 }
-                this.keyMap = pressed;
+            }
+            this.keysMap = keysMap;
 
-                if (Object.keys(deltaKeysMap).length > 0) {
-                    User.socket.emit('player::key', deltaKeysMap as IPlayerKey);
-                }
+            if (Object.keys(deltaKeysMap).length > 0) {
+                User.socket.emit('game::player-key', deltaKeysMap as KeysMap);
             }
         });
     }

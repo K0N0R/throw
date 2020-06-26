@@ -1,7 +1,7 @@
 const scale = 2;
 export const game_config = {
     goalResetTimeout: 3000,
-    endGameResetTimeout: 5000,
+    endGameResetTimeout: 8000,
     interval: 1000/60
 }
 
@@ -18,7 +18,7 @@ export const ball_style = {
 }
 
 export const goal_config = {
-    size: { height: 220 * scale, width: 50 * scale },
+    size: { height: 220 * scale, width: 65 * scale },
     postRadius: 13 * scale,
     cornerRadius: 30 * scale,
     cornerPointsAmount: 10 * scale,
@@ -32,16 +32,19 @@ export const goal_style = {
     rightPostFillStyle: '#ccccff',
     postLineWidth: 3 * scale
 }
-
-const mapSize = { height: 586 * scale, width: 1280 * scale };
+const mapSizeDefaults = {
+    height: 586 * 1.2,
+    width: 1280 * 1.2
+}
+const mapSize = { height: mapSizeDefaults.height * scale, width: mapSizeDefaults.width * scale };
 const mapBorder = 2*goal_config.size.width; 
 export const map_config = {
     size: { height: mapSize.height, width: mapSize.width },
     outerSize: { height: (mapSize.height + (2*mapBorder)), width: (mapSize.width + (2*mapBorder))},
     cornerPointsAmount: 16 * scale,
-    cornerRadius: mapSize.width / 10,
+    cornerRadius: mapSize.height / 6,
     border: mapBorder,
-    middleRadius: mapSize.height/4
+    middleRadius: mapSize.height/5
 }
 
 export const canvas_config = {
@@ -58,13 +61,13 @@ export const player_config = {
     mass: 5,
     damping: 0.92,
     shootingMaxSpeed: 1750 * scale,
-    maxSpeed: 2750 * scale,
+    maxSpeed: 3000 * scale,
     shooting: 125000 * scale,
     shootingCooldown: 100,
     dashing: 1250,
     dashDuration: 200,
-    dashCooldown: 2000,
-    dashMaxSpeed: 9000 * scale
+    dashCooldown: 6000,
+    dashMaxSpeed: 8000 * scale
 }
 
 export const player_style = {

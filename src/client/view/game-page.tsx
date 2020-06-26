@@ -19,6 +19,7 @@ interface IGamePageState {
     gameKeysInterval: NodeJS.Timeout;
     game: Game | null;
     gameWon: Team | null;
+    gameWonGeneratedMessage: string;
 
     scoreLeft: number;
     scoreRight: number;
@@ -135,10 +136,24 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
     //#region animations
     showWon(team: Team) {
         this.setState({gameWon: team});
+        this.setGameWonMessage();
         this.forceUpdate();
         setTimeout(() => {
             this.setState({gameWon: null});
         }, game_config.endGameResetTimeout);
+    }
+
+    setGameWonMessage(): void {
+        this.setState({ gameWonGeneratedMessage: [
+            'THAT WAS PURE LUCK!',
+            'MAYBE REMATCH?',
+            'NOOB TEAM!',
+            'GOOD GAME!',
+            'TOO EASY!',
+            'NOT EVEN A CHALLENGE!',
+            'GO PLAY TETRIS!',
+            'YOU SUCK AND YOU KNOW IT!'
+            ][Math.round(Math.random() * 7)]});
     }
 
     showScorer(team: Team) {
@@ -156,12 +171,14 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
             <div class="game-state">
                 {state.gameWon === Team.Left &&
                 <div class="game-state__scorer game-state__scorer--left">
-                    Red team won the game! Congratulations!
+                    RED TEAM WON THE GAME!
+                    <div class="game-state__scorer--punchline">{state.gameWonGeneratedMessage}</div>
                 </div>
                 }
                 {state.gameWon === Team.Right &&
                 <div class="game-state__scorer game-state__scorer--right">
-                    Blue team won the game by accident :)
+                    BLUE TEAM WON THE GAME!
+                    <div class="game-state__scorer--punchline">{state.gameWonGeneratedMessage}</div>
                 </div>
                 }
                 {state.scorer === Team.Left &&
