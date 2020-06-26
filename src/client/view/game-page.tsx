@@ -1,4 +1,4 @@
-import { h, Component } from 'preact';
+import { h } from 'preact';
 
 import { Game } from '../models/game';
 
@@ -7,210 +7,185 @@ import { ILobbyRoom, IGameState } from '../../shared/events';
 import { User } from './../models/socket';
 import { Team } from '../../shared/team';
 import { game_config } from './../../shared/callibration';
+import { useState, useEffect } from 'preact/hooks';
 
-interface IGamePageProps {
-    room: ILobbyRoom;
-}
+// interface IGamePageProps {
+//     room: ILobbyRoom;
+// }
 
-interface IGamePageState {
-    room: ILobbyRoom;
+// interface IGamePageState {
+//     room: ILobbyRoom;
 
-    gameAnimFrame: number;
-    gameKeysInterval: NodeJS.Timeout;
-    game: Game | null;
-    gameWon: Team | null;
-    gameWonGeneratedMessage: string;
+//     gameAnimFrame: number;
+//     gameKeysInterval: NodeJS.Timeout;
+//     game: Game | null;
+//     gameWon: Team | null;
+//     gameWonGeneratedMessage: string;
 
-    scoreLeft: number;
-    scoreRight: number;
-    scoreGolden: boolean;
-    scorer: Team | null;
-    time: number;
-}
+//     scoreLeft: number;
+//     scoreRight: number;
+//     scoreGolden: boolean;
+//     scorer: Team | null;
+//     time: number;
+// }
 
-export default class GamePage extends Component<IGamePageProps, IGamePageState> {
+export default function GamePage(room: ILobbyRoom) {
+    const [, setRoom] = useState<ILobbyRoom | null>(null);
+    const [scoreGolden, setScoreGolden] = useState(false);
+    const [scoreLeft, setScoreLeft] = useState(0);
+    const [scoreRight, setScoreRight] = useState(0);
+    //const [game, setGame] = useState<Game | null>(null);
+    let game: Game | null = new Game();
+    let gameAnimFrame: number;
+    let gameKeysInterval: any;
+    // const [gameAnimFrame, setGameAnimFrame] = useState(0);
+    // const [gameKeysInterval, setGameKeysInterval] = useState<any>(null);
+    const [time, setTime] = useState(0);
+    const [gameWon, setGameWon] = useState('');
+    const [gameWonMessage, setGameWonMessage] = useState('')
+    const [scorer, setScorer] = useState('');
 
-    componentDidMount() {
-        this.setState({ scoreLeft: 0, scoreRight: 0, scoreGolden: false, time: 0 });
-        this.bindSocket();
-        this.onRoomChanged(this.props.room);
-    }
-
-    bindSocket(): void {
-        const onGameStateChanged = (gameState: IGameState) => {
-            this.onGameStateChanged(gameState);
-        };
+    useEffect(() => {
+        onRoomChanged(room);
         User.socket.on('game::state', onGameStateChanged);
-
-        const onRoomChanged = (room: ILobbyRoom) => {
-            this.onRoomChanged(room);
-        };
         User.socket.on('room::changed', onRoomChanged);
-
-        const onUserLeftRoom = () => {
-            this.onUserLeftRoom();
-            onDispose();
-        };
         User.socket.on('room::user-left', onUserLeftRoom);
-
-        const onRoomDestroyed = () => {
-            this.onRoomDestroyed();
-            onDispose();
-        };
         User.socket.on('room::destroyed', onRoomDestroyed);
-
-
-        const onDispose = () => {
+        return () => {
             User.socket.off('room::changed', onRoomChanged);
             User.socket.off('room::user-left', onUserLeftRoom);
             User.socket.off('room::destroyed', onRoomDestroyed);
-        };
-    }
+        }
+    }, []);
 
-    onGameStateChanged(gameState: IGameState): void {
-        this.setState({ scoreGolden: gameState.scoreGolden });
-        this.setState({ scoreLeft: gameState.scoreLeft });
-        this.setState({ scoreRight: gameState.scoreRight });
-        this.setState({ time: gameState.time });
+    const onGameStateChanged = (gameState: IGameState) => {
+        setScoreGolden(gameState.scoreGolden);
+        setScoreLeft(gameState.scoreLeft);
+        setScoreRight(gameState.scoreRight);
+        setTime(gameState.time);
         if (gameState.teamWhoWon) {
-            this.showWon(gameState.teamWhoWon);
+            showWon(gameState.teamWhoWon);
         } else if (gameState.teamWhoScored) {
-            this.showScorer(gameState.teamWhoScored);
+            showScorer(gameState.teamWhoScored);
         }
-
-        this.forceUpdate();
+        // this.forceUpdate();
     }
 
-    onRoomChanged(newValue: ILobbyRoom): void {
-        if (newValue.playing && !this.state.game) {
-            this.startGame();
-        } else if (!newValue.playing && this.state.game) {
-            this.breakGame();
+    const onRoomChanged = (newValue: ILobbyRoom) => {
+        if (newValue.playing && !game) {
+            startGame();
+        } else if (!newValue.playing && game) {
+            breakGame();
         }
-        this.setState({ room: newValue });
-        this.forceUpdate();
+        setRoom(newValue);
     }
 
-    onUserLeftRoom(): void {
-        this.breakGame();
+    const onUserLeftRoom = () => {
+        breakGame();
     }
 
-    onRoomDestroyed(): void {
-        this.breakGame();
+    const onRoomDestroyed = () => {
+        breakGame();
     }
-    //#endregion
 
-    //#region game
-    startGame(): void {
-        this.setState({ game: new Game()});
+    const startGame = () => {
         const loop = () => {
-            this.setState({ gameAnimFrame: requestAnimationFrame(loop) });
-            if (this.state.game) this.state.game.run();
+            gameAnimFrame = requestAnimationFrame(loop);
+            if (game) {
+                game.run();
+            }
         }
         loop();
-        this.setState({ gameKeysInterval: setInterval(() => {
+        gameKeysInterval = setInterval(() => {
             KeysHandler.run();
-        }, 4)});
+        }, 4);
     }
 
-    breakGame(): void {
-        cancelAnimationFrame(this.state.gameAnimFrame);
-        clearInterval(this.state.gameKeysInterval);
-        if (this.state.game) {
-            this.state.game.dispose();
-            this.setState({ game: null });
+    const breakGame = () => {
+        cancelAnimationFrame(gameAnimFrame);
+        clearInterval(gameKeysInterval);
+        if (game) {
+            game.dispose();
+            game = null;
         }
     }
-    //#endregion
 
-    //#region filters
-    showTime(): string {
-        let minutes = Math.floor(this.state.time / 60).toString();
+    const showTime = () => {
+        let minutes = Math.floor(time / 60).toString();
         if (minutes.length !== 2) minutes = `0${minutes}`;
-        let seconds = (this.state.time % 60).toString();
+        let seconds = (time % 60).toString();
         if (seconds.length !== 2) seconds = `0${seconds}`;
         return `${minutes}:${seconds}`;
     }
-    //#endregion
-
-    //#region animations
-    showWon(team: Team) {
-        this.setState({gameWon: team});
-        this.setGameWonMessage();
-        this.forceUpdate();
+    
+    const showWon = (team: Team) => {
+        setGameWon(team);
+        setGameWonMessage(words[Math.floor(Math.random() * 7)])
         setTimeout(() => {
-            this.setState({gameWon: null});
+            setGameWon('');
         }, game_config.endGameResetTimeout);
     }
 
-    setGameWonMessage(): void {
-        this.setState({ gameWonGeneratedMessage: [
-            'THAT WAS PURE LUCK!',
-            'MAYBE REMATCH?',
-            'NOOB TEAM!',
-            'GOOD GAME!',
-            'TOO EASY!',
-            'NOT EVEN A CHALLENGE!',
-            'GO PLAY TETRIS!',
-            'YOU SUCK AND YOU KNOW IT!'
-            ][Math.round(Math.random() * 7)]});
-    }
+    const words = [
+        'THAT WAS PURE LUCK!',
+        'MAYBE REMATCH?',
+        'NOOB TEAM!',
+        'GOOD GAME!',
+        'TOO EASY!',
+        'NOT EVEN A CHALLENGE!',
+        'GO PLAY TETRIS!',
+        'YOU SUCK AND YOU KNOW IT!'
+    ];
 
-    showScorer(team: Team) {
-        this.setState({scorer: team});
-        this.forceUpdate();
+    const showScorer = (team: Team) => {
+        setScorer(team);
         setTimeout(() => {
-            this.setState({scorer: null});
+            setScorer('');
         }, game_config.goalResetTimeout);
     }
-    //#endregion
 
-    render(_, state: IGamePageState) {
-        if (!state.room) return;
-        return (
-            <div class="game-state">
-                {state.gameWon === Team.Left &&
+    return (
+        <div class="game-state">
+            {gameWon === Team.Left &&
                 <div class="game-state__scorer game-state__scorer--left">
                     RED TEAM WON THE GAME!
-                    <div class="game-state__scorer--punchline">{state.gameWonGeneratedMessage}</div>
+                    <div class="game-state__scorer--punchline">{gameWonMessage}</div>
                 </div>
-                }
-                {state.gameWon === Team.Right &&
+            }
+            {gameWon === Team.Right &&
                 <div class="game-state__scorer game-state__scorer--right">
                     BLUE TEAM WON THE GAME!
-                    <div class="game-state__scorer--punchline">{state.gameWonGeneratedMessage}</div>
+                    <div class="game-state__scorer--punchline">{gameWonMessage}</div>
                 </div>
-                }
-                {state.scorer === Team.Left &&
+            }
+            {scorer === Team.Left &&
                 <div class="game-state__scorer game-state__scorer--left">
                     Red team scores!
                 </div>
-                }
-                {state.scorer === Team.Right &&
+            }
+            {scorer === Team.Right &&
                 <div class="game-state__scorer game-state__scorer--right">
                     Blue team scores!
                 </div>
-                }
+            }
                 <div class="game-state__score">
                     <div class="game-state__score__value">
                         <div class="team-cube team-cube--left"></div>
-                        <div>{state.scoreLeft}</div>
+                        <div>{scoreLeft}</div>
                     </div>
                     <div>-</div>
                     <div class="game-state__score__value">
-                        <div>{state.scoreRight}</div>
+                        <div>{scoreRight}</div>
                         <div class="team-cube team-cube--right"></div>
                     </div>
                 </div>
                 <div class="game-state__time"
-                    style={state.scoreGolden ? 'color:gold;': ''}>
-                    {this.showTime()}
+                    style={scoreGolden ? 'color:gold;': ''}>
+                    {showTime()}
                 </div>
-                { state.scoreGolden &&
+            { scoreGolden &&
                 <div class="game-state__golden">🔔 Golden goal!</div>
-                }
-            </div>
-
-        );
-    }
+            }
+        </div>
+    );
 }
