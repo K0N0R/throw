@@ -1,5 +1,5 @@
 import { h, Component, render } from 'preact';
-import { ILobbyRoom, IRoomDataMessage } from './../../shared/events';
+import { ILobbyRoom, IRoomDataMessage as IRoomMessage } from './../../shared/events';
 import { User } from '../models/socket';
 import { Team } from '../../shared/team';
 import GamePage from './game-page';
@@ -7,10 +7,11 @@ import ConfigurationPage from './configuration-page';
 import { goTo } from './utils';
 import LobbyPage from './lobby-page';
 import { KeysHandler } from '../../shared/keysHandler';
+import { Socket } from 'socket.io-client';
 
 interface IRoomState {
     room: ILobbyRoom;
-    messages: IRoomDataMessage[];
+    messages: IRoomMessage[];
     messageToSend: string;
     configOverlayOnTop: boolean;
 }
@@ -65,6 +66,10 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
             this.onRoomChanged(room);
         };
         User.socket.on('room::changed', onRoomChanged);
+        const onNewMessage = (message: IRoomMessage) => {
+            this.addNewMessage(message);
+        }
+        User.socket.on('room::new-message', onNewMessage)
 
         const onUserLeftRoom = () => {
             this.onUserLeftRoom();
@@ -80,6 +85,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
 
         const onDispose = () => {
             User.socket.off('room::changed', onRoomChanged);
+            User.socket.off('room::new-message', onRoomChanged);
             User.socket.off('room::user-left', onUserLeftRoom);
             User.socket.off('room::destroyed', onRoomDestroyed);
         };
@@ -89,7 +95,6 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
         User.socket.emit('room::update', this.state.room);
     }
     onRoomChanged(newValue: ILobbyRoom): void {
-        this.addNewMessage(newValue);
         this.setState({ room: newValue });
         this.forceUpdate();
     }
@@ -190,10 +195,8 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     //#endregion
 
     //#region chat
-    addNewMessage(room: ILobbyRoom): void {
-        if (!room.lastMessage) return;
-        this.state.messages.push(room.lastMessage);
-        room.lastMessage = null;
+    addNewMessage(message: IRoomMessage): void {
+        this.state.messages.push(message);
         this.forceUpdate();
         setTimeout(() => { //scroll to last meessage
             const messagesEl = document.querySelector('.room__chat__messages')
@@ -215,10 +218,8 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
 
     sendMessage(): void {
         if (!this.state.messageToSend) return;
-        this.state.room.lastMessage = { nick: User.nick, avatar: User.avatar, value: this.state.messageToSend };
-        this.updateRoom();
-        this.state.room.lastMessage = null;
-        this.setState({ messageToSend: '' });
+        User.socket.emit('room::user-message', { nick: User.nick, avatar: User.avatar, value: this.state.messageToSend });
+        this.setState({ messageToSend: ''});
     }
     //#endregion
 
@@ -253,18 +254,20 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                                     onClick={() => this.leaveRoom()}>
                                     Leave
                                 </button>
+                                {isUserAdmin &&
                                 <div class="room__head__row">
                                     <button class="form-btn form-btn--small"
                                         onClick={() => this.rand()}
-                                        disabled={!isUserAdmin}>
+                                        disabled={state.room.playing}>
                                         Rand
                                     </button>
                                     <button class="form-btn form-btn--small"
                                         onClick={() => this.reset()}
-                                        disabled={!isUserAdmin}>
+                                        disabled={state.room.playing}>
                                         Reset
                                     </button>
                                 </div>
+                                }
                             </div>
                         </div>
                         <div class="room__body">

@@ -3,19 +3,12 @@ import uuid from 'uuid';
 import { User } from './user';
 import { Game } from './../game/game';
 import { Team } from '../../shared/team';
-import { ILobbyRoom, ILobbyRoomListItem, IGameState } from './../../shared/events';
+import { ILobbyRoom, ILobbyRoomListItem, IGameState, IRoomDataMessage } from './../../shared/events';
 import { game_config } from './../../shared/callibration';
-
-type Message = {
-    nick: string;
-    avatar: string;
-    value: string;
-} | null
 
 export class Room {
     public id: string;
     public users: User[] = [];
-    public lastMessage!: Message;
 
     private game!: Game | null;
     private gameInterval: any;
@@ -49,15 +42,16 @@ export class Room {
         user.socket.join(this.id);
         user.team = Team.Spectator;
         this.users.push(user);
-        this.onUsersChange({
+        this.onUsersChange();
+        this.sendMessage({
             nick: '',
             avatar: 'SYSTEM',
-            value: `${user.avatar} ${user.nick} joined the room! :)`
+            value: `${user.avatar}${user.nick} joined the room! :)`
         });
 
         user.socket.emit('room::user-joined', this.getData());
-        this.lastMessage = null;
 
+        user.socket.on('room::user-message', (message: IRoomDataMessage) => this.sendMessage(message));
         user.socket.on('room::update', (lobbyRoom: ILobbyRoom) => this.updateRoom(lobbyRoom, user));
         user.socket.on('room::user-leave', () => this.onUserLeave(user));
         user.onDisconnect('room::user-disconnect', () => this.onUserLeave(user));
@@ -65,10 +59,8 @@ export class Room {
         user.socket.on('game::player-joins', () => this.onUserJoinsGame(user));
     }
 
-    public onUsersChange(message?: Message): void {
-        if (message) this.lastMessage = message;
+    public onUsersChange(): void {
         this.notifyChange();
-        if (message) this.lastMessage = null;
         this.game?.updatePlayers(this.users);
     }
 
@@ -81,10 +73,11 @@ export class Room {
             this.onDestroy();
         } else { // user of room leave
             this.kickUser(user);
-            this.onUsersChange({
+            this.onUsersChange();
+            this.sendMessage({
                 nick: '',
                 avatar: 'SYSTEM',
-                value: `${user.avatar} ${user.nick} left the room! :(`
+                value: `${user.avatar}${user.nick} left the room! :(`
             });
             user.socket.emit('room::user-left');
         }
@@ -96,8 +89,15 @@ export class Room {
         if (idx !== -1) this.users.splice(idx, 1);
         user.socket.removeAllListeners('game::player-joins');
         user.socket.removeAllListeners('room::update');
+        user.socket.removeAllListeners('room::user-message');
         user.socket.removeAllListeners('room::user-leave');
         user.offDisconnect('room::user-disconnect');
+    }
+    //#endregion
+
+    //#region message
+    public sendMessage(message: IRoomDataMessage): void {
+        this.io.to(this.id).emit('room::new-message', message);
     }
     //#endregion
 
@@ -129,7 +129,6 @@ export class Room {
             users: this.users.map(mapUser),
             timeLimit: this.timeLimit,
             scoreLimit: this.scoreLimit,
-            lastMessage: this.lastMessage
         }
     }
 
@@ -159,10 +158,7 @@ export class Room {
             this.game?.updatePlayers(this.users);
         }
 
-        this.lastMessage = room.lastMessage as Message;
         this.notifyChange();
-        // clear temporary data - only for one notify
-        this.lastMessage = null;
     }
     //#endregion
 
@@ -191,7 +187,12 @@ export class Room {
         this.resetScore();
     }
 
-    private endGame(): void {
+    private endGame(teamWhoWon: Team): void {
+        this.sendMessage({
+            nick: '',
+            avatar: 'SYSTEM',
+            value: `${teamWhoWon === Team.Left ? 'Red' : 'Blue' } team won the game!`
+        });
         this.stopTime();
         this.game?.endGame();
         this.gameHasEnded = true;
@@ -229,7 +230,7 @@ export class Room {
                     const teamWhoWon = this.scoreLeft > this.scoreRight
                         ? Team.Left : Team.Right;
                     this.onGameStateChange({ teamWhoWon });
-                    this.endGame();
+                     this.endGame(teamWhoWon);
                 } else {
                     this.scoreGolden = true;
                     this.onGameStateChange();
@@ -261,7 +262,7 @@ export class Room {
         if (this.scoreRight >= this.scoreLimit) teamWhoWon = Team.Right;
         this.onGameStateChange({ teamWhoScored, teamWhoWon });
         if (teamWhoWon != null) {
-            this.endGame();
+            this.endGame(teamWhoWon);
         }
     }
 
