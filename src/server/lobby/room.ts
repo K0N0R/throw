@@ -49,9 +49,14 @@ export class Room {
         user.socket.join(this.id);
         user.team = Team.Spectator;
         this.users.push(user);
-        this.onUsersChange();
+        this.onUsersChange({
+            nick: '',
+            avatar: 'SYSTEM',
+            value: `${user.avatar} ${user.nick} joined the room! :)`
+        });
 
         user.socket.emit('room::user-joined', this.getData());
+        this.lastMessage = null;
 
         user.socket.on('room::update', (lobbyRoom: ILobbyRoom) => this.updateRoom(lobbyRoom, user));
         user.socket.on('room::user-leave', () => this.onUserLeave(user));
@@ -60,8 +65,10 @@ export class Room {
         user.socket.on('game::player-joins', () => this.onUserJoinsGame(user));
     }
 
-    public onUsersChange(): void {
+    public onUsersChange(message?: Message): void {
+        if (message) this.lastMessage = message;
         this.notifyChange();
+        if (message) this.lastMessage = null;
         this.game?.updatePlayers(this.users);
     }
 
@@ -74,7 +81,11 @@ export class Room {
             this.onDestroy();
         } else { // user of room leave
             this.kickUser(user);
-            this.onUsersChange();
+            this.onUsersChange({
+                nick: '',
+                avatar: 'SYSTEM',
+                value: `${user.avatar} ${user.nick} left the room! :(`
+            });
             user.socket.emit('room::user-left');
         }
     }

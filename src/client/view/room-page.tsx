@@ -360,7 +360,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                     <div class="dialog room__chat">
                         <div class="room__chat__messages">
                             {   ...(state.messages.map(item => 
-                                <div class="room__chat__message">
+                                <div className={`room__chat__message ${item.avatar === 'SYSTEM' ? 'room__chat__message--system' : 'zabijaka'} `}>
                                     <div>{item.avatar}</div>
                                     <div>{item.nick}</div>: 
                                     <div class="room__chat__message__value">{item.value}</div>
