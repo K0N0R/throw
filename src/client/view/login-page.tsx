@@ -43,7 +43,7 @@ export default function StartPage() {
             </div>
 
             <button
-                class="form-btn form-btn-submit"
+                class="form-btn form-btn-submit form-btn-submit--primary"
                 onClick={onConfirm}>
                 Throw!
             </button>
