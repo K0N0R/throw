@@ -35,7 +35,7 @@ export default function GamePage(room: ILobbyRoom) {
     const [scoreLeft, setScoreLeft] = useState(0);
     const [scoreRight, setScoreRight] = useState(0);
     //const [game, setGame] = useState<Game | null>(null);
-    let game: Game | null = new Game();
+    let game: Game | null = null;
     let gameAnimFrame: number;
     let gameKeysInterval: any;
     // const [gameAnimFrame, setGameAnimFrame] = useState(0);
@@ -89,6 +89,7 @@ export default function GamePage(room: ILobbyRoom) {
     }
 
     const startGame = () => {
+        game = new Game();
         const loop = () => {
             gameAnimFrame = requestAnimationFrame(loop);
             if (game) {
