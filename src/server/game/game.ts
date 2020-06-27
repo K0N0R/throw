@@ -16,6 +16,7 @@ import { User } from './../lobby/user';
 import { KeysMap } from './../../shared/keysHandler';
 
 export class Game {
+    private listeners: (() => void)[] = [];
     private step: {
         fixedTime: number;
         lastTime: number;
@@ -54,7 +55,8 @@ export class Game {
     }
 
     public dispose(): void {
-        this.world.off('postStep', this.logic.bind(this));
+        this.listeners.forEach(listener => listener());
+        this.listeners = [];
         this.players.forEach((item) => this.removePlayer(item.user));
     }
 
@@ -180,7 +182,11 @@ export class Game {
         this.world.addContactMaterial(this.contactMat.goalBall);
         this.world.addContactMaterial(this.contactMat.mapPlayer);
 
-        this.world.on('postStep', this.logic.bind(this));
+        const onPostStep = () => this.logic();
+        this.world.on('postStep', onPostStep);
+        this.listeners.push(() => {
+            this.world.off('postStep', onPostStep);
+        });
     }
 
     private initMaterials(): void {
@@ -327,7 +333,6 @@ export class Game {
         }
 
         const scoreRight = !this.reseting && this.ball.body.position[0] < this.map.pos.x - map_config[this.mapKind].ball.radius;
-
 
         const scoreLeft = !this.reseting && this.ball.body.position[0] > this.map.pos.x + map_config[this.mapKind].size.width + map_config[this.mapKind].ball.radius;
 
