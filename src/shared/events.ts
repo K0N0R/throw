@@ -1,5 +1,6 @@
 import { Team } from "./team";
 import { User } from './../server/lobby/user';
+import { MapKind } from "./callibration";
 //#region PLAYER
 export interface IPlayerAdd {
     nick: string;
@@ -14,10 +15,6 @@ export interface IRoomGameData {
     ball: {
         position: [number, number];
     };
-    score: {
-        left: number;
-        right: number;
-    }
 }
 
 export interface IPlayerShooting {
@@ -79,7 +76,8 @@ export interface ILobbyRoom extends ILobbyRoomListItem {
     users: { socketId: string, nick: string, avatar: string; team: Team}[]
     timeLimit: number;
     scoreLimit: number;
-    lastMessage?: IRoomDataMessage | null
+    mapKind: MapKind;
+
 }
 
 export interface IRoomDataMessage {

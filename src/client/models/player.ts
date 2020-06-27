@@ -1,4 +1,4 @@
-import { player_config, player_style } from './../../shared/callibration';
+import { MapKind, map_config, style_config, game_config } from './../../shared/callibration';
 import { IPos } from './../../shared/model';
 import { Team } from './../../shared/team';
 
@@ -15,8 +15,10 @@ export class Player {
     private dashingCooldownAnimationTimeLeft!: number;
 
     public shooting!: boolean;
+    
 
     public constructor(
+        private mapKind: MapKind,
         public nick: string,
         public avatar: string,
         public pos: IPos,
@@ -39,18 +41,18 @@ export class Player {
                 this.dashCooldownTimeout = setTimeout(() => {
                     this.dashing = false;
                     this.dashCooldown = false;
-                }, player_config.dashCooldown);
-            }, player_config.dashDuration)
+                }, game_config.player.dashCooldown);
+            }, game_config.player.dashDuration)
         }
     }
 
     public dashingCooldownTimer() {
         const animationTick = 50; // the smaller the smoother
-        this.dashingCooldownAnimationTimeLeft = player_config.dashCooldown; 
+        this.dashingCooldownAnimationTimeLeft = game_config.player.dashCooldown; 
         this.dashingCoolownAnimationInterval = setInterval(() => {
             this.dashingCooldownAnimationTimeLeft -= animationTick;
             if (this.dashingCooldownAnimationTimeLeft < 0 ) {
-                this.dashingCooldownAnimationTimeLeft = player_config.dashCooldown;
+                this.dashingCooldownAnimationTimeLeft = game_config.player.dashCooldown;
                 clearInterval(this.dashingCoolownAnimationInterval);
             }
         }, animationTick);
@@ -61,9 +63,9 @@ export class Player {
         if (User.socket.id === this.socketId) { // render self identifier
             Canvas.startDraw();
             Canvas.ctx.globalAlpha = 0.2;
-            Canvas.ctx.arc(this.pos.x, this.pos.y, player_style.meIndicatorRadius, 0, 2 * Math.PI, true);
-            Canvas.ctx.strokeStyle = player_style.meIndicatorStrokeStyle;
-            Canvas.ctx.lineWidth = player_style.meIndicatorLineWidth;
+            Canvas.ctx.arc(this.pos.x, this.pos.y, style_config.player.meIndicatorRadius, 0, 2 * Math.PI, true);
+            Canvas.ctx.strokeStyle = style_config.player.meIndicatorStrokeStyle;
+            Canvas.ctx.lineWidth = style_config.player.meIndicatorLineWidth;
             Canvas.ctx.stroke();
             Canvas.ctx.globalAlpha = 1;
             Canvas.stopDraw();
@@ -72,32 +74,32 @@ export class Player {
             Canvas.ctx.moveTo(this.pos.x, this.pos.y);
             Canvas.startDraw();
             Canvas.ctx.globalAlpha = 0.5;
-            Canvas.ctx.arc(this.pos.x, this.pos.y, player_style.meIndicatorRadius, -Math.PI/2 + (-2 * Math.PI * this.dashingCooldownAnimationTimeLeft/player_config.dashCooldown), -Math.PI/2, false);
-            Canvas.ctx.lineWidth = player_style.meIndicatorLineWidth;
+            Canvas.ctx.arc(this.pos.x, this.pos.y, style_config.player.meIndicatorRadius, -Math.PI/2 + (-2 * Math.PI * this.dashingCooldownAnimationTimeLeft/game_config.player.dashCooldown), -Math.PI/2, false);
+            Canvas.ctx.lineWidth = style_config.player.meIndicatorLineWidth;
             Canvas.ctx.stroke();
             Canvas.ctx.globalAlpha = 1;
             Canvas.stopDraw();
         }
         // render player
         Canvas.startDraw();
-        Canvas.ctx.arc(this.pos.x, this.pos.y, player_config.radius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = this.team === Team.Left ? player_style.leftFillStyle  : player_style.rightFillStyle;
+        Canvas.ctx.arc(this.pos.x, this.pos.y, map_config[this.mapKind].player.radius, 0, 2 * Math.PI, true);
+        Canvas.ctx.fillStyle = this.team === Team.Left ? style_config.player.leftFillStyle  : style_config.player.rightFillStyle;
         Canvas.ctx.fill();
-        Canvas.ctx.strokeStyle = this.shooting ? player_style.shootingStrokeStyle : player_style.strokeStyle;
-        Canvas.ctx.lineWidth = player_style.lineWidth;
+        Canvas.ctx.strokeStyle = this.shooting ? style_config.player.shootingStrokeStyle : style_config.player.strokeStyle;
+        Canvas.ctx.lineWidth = style_config.player.lineWidth;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
         // render player nick
         Canvas.startDraw();
         Canvas.ctx.textAlign = 'center';
-        Canvas.ctx.font = `${player_config.radius*0.8}px consolas`;
+        Canvas.ctx.font = `${map_config[this.mapKind].player.radius*0.8}px consolas`;
         Canvas.ctx.fillStyle = 'white';
-        Canvas.ctx.fillText(this.nick, this.pos.x, this.pos.y + player_config.radius + player_config.radius/2 + player_config.radius*0.4);
+        Canvas.ctx.fillText(this.nick, this.pos.x, this.pos.y + map_config[this.mapKind].player.radius + map_config[this.mapKind].player.radius/2 + map_config[this.mapKind].player.radius*0.4);
 
         // render player avatar
-        Canvas.ctx.font = `${player_config.radius*1.2}px consolas`;
-        Canvas.ctx.fillText(this.avatar, this.pos.x, this.pos.y + (player_config.radius*1.2)/3);
+        Canvas.ctx.font = `${map_config[this.mapKind].player.radius*1.2}px consolas`;
+        Canvas.ctx.fillText(this.avatar, this.pos.x, this.pos.y + (map_config[this.mapKind].player.radius*1.2)/3);
         Canvas.stopDraw();
 
     }

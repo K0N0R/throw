@@ -7,12 +7,13 @@ import ConfigurationPage from './configuration-page';
 import { goTo } from './utils';
 import LobbyPage from './lobby-page';
 import { KeysHandler } from '../../shared/keysHandler';
-import { Socket } from 'socket.io-client';
+import { MapKind } from '../../shared/callibration';
 
 interface IRoomState {
     room: ILobbyRoom;
     messages: IRoomMessage[];
     messageToSend: string;
+    mapKinds: MapKind[];
     configOverlayOnTop: boolean;
 }
 
@@ -31,7 +32,12 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                 avatar: '🛠️'
             },
         ];
-        this.setState({ messages: initMessages });
+        const initMapKinds = [
+            MapKind.ROUNDED,
+            MapKind.ROUNDED_MEDIUM,
+            MapKind.ROUNDED_BIG
+        ]
+        this.setState({ messages: initMessages, mapKinds: initMapKinds });
         this.bindSocket();
 
         this.onRoomChanged(this.props.room);
@@ -119,6 +125,11 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     
     onScoreLimitChange(e: any): void {
         this.state.room.scoreLimit = e.target.value;
+        this.updateRoom();
+    };
+
+    onMapKindChange(e: any): void {
+        this.state.room.mapKind = e.target.value;
         this.updateRoom();
     };
     //#endregion
@@ -324,27 +335,36 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                                 <label class="room__foot__option__label">Time limit</label>
                                 <input class="room__foot__option__input"
                                     value={state.room.timeLimit}
-                                    readOnly={!isUserAdmin}
+                                    readOnly={!isUserAdmin || state.room.playing}
                                     onInput={(e) => this.onTimeLimitChange(e)}/>
                             </div>
                             <div class="form-field form-field--small form-field--horizontal room__foot__option">
                                 <label class="room__foot__option__label">Score limit</label>
                                 <input class="room__foot__option__input"
                                     value={state.room.scoreLimit}
-                                    readOnly={!isUserAdmin}
+                                    readOnly={!isUserAdmin || state.room.playing}
                                     onInput={(e) => this.onScoreLimitChange(e)}/>
                             </div>
                             <div class="form-field form-field--small form-field--horizontal room__foot__option">
                                 <label class="room__foot__option__label">Map</label>
-                                <input class="room__foot__option__input"
-                                    value={'Rounded'}
-                                    readOnly={true}/>
+                                <select class="room__foot__option__input"
+                                    value={state.room.mapKind}
+                                    readOnly={!isUserAdmin || state.room.playing}
+                                    onInput={(e) => this.onMapKindChange(e)}>
+                                        {   ...(state.mapKinds.map(item => 
+                                            <option value={item}>
+                                                {item}
+                                            </option>
+                                            ))
+                                        }
+                                </select>
                             </div>
                             { isUserAdmin &&
                             <div class="room__foot__option"
                                 style={state.room.playing ? 'display:none;' : ''}>
                                 <button class="form-btn form-btn-submit form-btn-submit--primary"
-                                    onClick={(e) => this.startGame()}>
+                                    onClick={(e) => this.startGame()}
+                                    disabled={state.room.playing}>
                                     Start Game!
                                 </button>
                             </div>
@@ -353,7 +373,8 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                             <div class="room__foot__option"
                                 style={state.room.playing ? '' : 'display:none;'}>
                                 <button class="form-btn form-btn-submit form-btn-submit--primary"
-                                    onClick={(e) => this.endGame()}>
+                                    onClick={(e) => this.endGame()}
+                                    disabled={!state.room.playing}>
                                     Stop Game!
                                 </button>
                             </div>
@@ -363,7 +384,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                     <div class="dialog room__chat">
                         <div class="room__chat__messages">
                             {   ...(state.messages.map(item => 
-                                <div className={`room__chat__message ${item.avatar === 'SYSTEM' ? 'room__chat__message--system' : 'zabijaka'} `}>
+                                <div className={`room__chat__message ${item.avatar === 'SYSTEM' ? 'room__chat__message--system' : ''} `}>
                                     <div>{item.avatar}</div>
                                     <div>{item.nick}</div>: 
                                     <div class="room__chat__message__value">{item.value}</div>

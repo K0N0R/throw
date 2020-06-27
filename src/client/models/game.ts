@@ -1,4 +1,4 @@
-import { goal_config, map_config } from '../../shared/callibration';
+import { map_config, MapKind } from '../../shared/callibration';
 import { getOffset } from '../../shared/offset';
 import { IRoomGameData,  IPlayerShooting, IWorldPostStep, IWorldReset } from '../../shared/events';
 import { KeysHandler } from '../../shared/keysHandler';
@@ -16,13 +16,14 @@ import { KeysMap } from './../../shared/keysHandler';
 
 export class Game {
     private map!: Map;
+
     private players: Player[] = [];
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
     private keysMap: KeysMap = {};
 
-    constructor() {
+    constructor(private mapKind: MapKind) {
         this.initHandlers();
         this.initCanvas();
         this.initEntities();
@@ -32,7 +33,7 @@ export class Game {
             if (data.playersToAdd != null) {
                 data.playersToAdd.forEach(player => {
                     const isMe = player.socketId === User.socket.id;
-                    this.players.push(new Player(player.nick, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team));
+                    this.players.push(new Player(this.mapKind, player.nick, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team));
                     if (isMe) {
                         Camera.updatePos({ x: player.position[0], y: player.position[1] });
                     }
@@ -87,7 +88,7 @@ export class Game {
         });
         User.socket.emit('game::player-joins')
         User.socket.on('game::init-data', (data: IRoomGameData) => {
-            this.players = data.players.map(p => new Player(p.nick, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team));
+            this.players = data.players.map(p => new Player(this.mapKind, p.nick, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
         });
 
@@ -123,18 +124,18 @@ export class Game {
     }
     
     private initCanvas(): void {
-        Canvas.createCanvas();
+        Canvas.createCanvas(this.mapKind);
     }
 
     private initEntities(): void {
-        this.map = new Map();
-        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
-        this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
-        this.ball = new Ball({ x: this.map.pos.x + map_config.size.width / 2, y: this.map.pos.y + map_config.size.height / 2 });
+        this.map = new Map(this.mapKind);
+        this.leftGoal = new LeftGoal(this.mapKind);
+        this.rightGoal = new RightGoal(this.mapKind);
+        this.ball = new Ball(this.mapKind);
     }
 
     private initCamera(): void {
-        Camera.setBounduary(getOffset(this.map.outerPos, map_config.outerSize));
+        Camera.init(this.mapKind);
     }
 
     public run(): void {

@@ -6,7 +6,7 @@ import { Map } from './map';
 import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
-import { goal_config, map_config, player_config, ball_config, game_config, canvas_config } from './../../shared/callibration';
+import { map_config, game_config, MapKind } from './../../shared/callibration';
 import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
@@ -34,12 +34,11 @@ export class Game {
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
 
-    private score = { left: 0, right: 0 };
     private reseting!: boolean;
     private hardResesting!: boolean;
 
     private initStage: boolean;
-    constructor(private io: io.Server, users: User[], public roomId: string,
+    constructor(private io: io.Server, private mapKind: MapKind, users: User[], public roomId: string,
         private onGameTimeStop: () => void,
         private onGameTimeResume: () => void,
         private onGameScoreChanged: (team: Team) => void) {
@@ -75,10 +74,6 @@ export class Game {
             })),
             ball: {
                 position: this.ball.body.position
-            },
-            score: {
-                left: this.score.left,
-                right: this.score.right
             }
         };
     }
@@ -116,13 +111,14 @@ export class Game {
         const rightTeam = this.players.filter(item=> item.team === Team.Right);
         const initPos = {
             x: user.team === Team.Left
-                ? player_config.radius
-                : canvas_config.size.width - player_config.radius,
+                ? map_config[this.mapKind].player.radius
+                : map_config[this.mapKind].outerSize.width - map_config[this.mapKind].player.radius,
             y : user.team === Team.Left
-                ? this.map.pos.y + map_config.size.height / 2 - goal_config.size.height/2 + ((player_config.radius * 2 + 10) * (leftTeam.length - 1))
-                : this.map.pos.y + map_config.size.height / 2 - goal_config.size.height/2 + ((player_config.radius * 2 + 10) * (rightTeam.length - 1))
+                ? map_config[this.mapKind].outerSize.height / 2 - map_config[this.mapKind].goal.size.height/2 + ((map_config[this.mapKind].player.radius * 2 + 10) * (leftTeam.length - 1))
+                : map_config[this.mapKind].outerSize.height / 2 - map_config[this.mapKind].goal.size.height/2 + ((map_config[this.mapKind].player.radius * 2 + 10) * (rightTeam.length - 1))
         };
-        const player = new Player(user, user.nick, user.avatar, user.team, this.mat.player, initPos);
+        console.log(this.mapKind, initPos, map_config[this.mapKind]);
+        const player = new Player(this.mapKind, user, user.nick, user.avatar, user.team, this.mat.player, initPos);
         this.playersToAdd.push(player);
     }
 
@@ -156,10 +152,10 @@ export class Game {
 
     private initEntities(): void {
         this.initMaterials();
-        this.map = new Map(this.mat.map);
-        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal, this.mat.map);
-        this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal, this.mat.map);
-        this.ball = new Ball([this.map.pos.x + map_config.size.width / 2, this.map.pos.y + map_config.size.height / 2], this.mat.ball);
+        this.map = new Map(this.mapKind, this.mat.map);
+        this.leftGoal = new LeftGoal(this.mapKind, this.mat.goal, this.mat.map);
+        this.rightGoal = new RightGoal(this.mapKind, this.mat.goal, this.mat.map);
+        this.ball = new Ball(this.mapKind, this.mat.ball);
     }
 
     private initWorld(): void {
@@ -212,26 +208,26 @@ export class Game {
 
     private reset(teamWhoScored?: Team): void {
         // ball reset
-        this.ball.body.position[0] = this.map.pos.x + map_config.size.width / 2;
-        this.ball.body.position[1] = this.map.pos.y + map_config.size.height / 2;
+        this.ball.body.position[0] = map_config[this.mapKind].outerSize.width / 2;
+        this.ball.body.position[1] = map_config[this.mapKind].outerSize.height / 2;
         this.ball.body.force = [0, 0];
         this.ball.body.velocity = [0, 0];
 
         // players reset
         const leftTeam = this.players.filter(player => player.team === Team.Left);
-        const leftTeamX = this.map.pos.x + goal_config.size.width + player_config.radius;
-        const leftTeamY = this.map.pos.y + map_config.size.height / 2 - ((leftTeam.length - 1) * (player_config.radius * 2 + 10)) / 2
+        const leftTeamX = this.map.pos.x + map_config[this.mapKind].goal.size.width + map_config[this.mapKind].player.radius;
+        const leftTeamY = this.map.pos.y + map_config[this.mapKind].size.height / 2 - ((leftTeam.length - 1) * (map_config[this.mapKind].player.radius * 2 + 10)) / 2
         leftTeam.forEach((player, idx) => {
             player.body.position[0] = leftTeamX;
-            player.body.position[1] = leftTeamY + (player_config.radius * 2 + 10) * idx;
+            player.body.position[1] = leftTeamY + (map_config[this.mapKind].player.radius * 2 + 10) * idx;
             player.body.force = [0, 0];
         });
         const rightTeam = this.players.filter(player => player.team === Team.Right);
-        const rightTeamX = this.map.pos.x + map_config.size.width - goal_config.size.width - player_config.radius;
-        const rightTeamY = this.map.pos.y + map_config.size.height / 2 - ((rightTeam.length - 1) * (player_config.radius * 2 + 10)) / 2
+        const rightTeamX = this.map.pos.x + map_config[this.mapKind].size.width - map_config[this.mapKind].goal.size.width - map_config[this.mapKind].player.radius;
+        const rightTeamY = this.map.pos.y + map_config[this.mapKind].size.height / 2 - ((rightTeam.length - 1) * (map_config[this.mapKind].player.radius * 2 + 10)) / 2
         rightTeam.forEach((player, idx) => {
             player.body.position[0] = rightTeamX;
-            player.body.position[1] = rightTeamY + (player_config.radius * 2 + 10) * idx;
+            player.body.position[1] = rightTeamY + (map_config[this.mapKind].player.radius * 2 + 10) * idx;
             player.body.force = [0, 0];
             player.body.velocity = [0, 0];
         });
@@ -273,7 +269,7 @@ export class Game {
             .forEach(player => {
                 const playerPos = { x: player.body.position[0], y: player.body.position[1] };
                 const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
-                const minDistance = player_config.radius + ball_config.radius;
+                const minDistance = map_config[this.mapKind].player.radius + map_config[this.mapKind].ball.radius;
                 const shootingDistance = 5;
                 if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
                     player.shoot();
@@ -281,8 +277,8 @@ export class Game {
                         { x: player.body.position[0], y: player.body.position[1] },
                         { x: this.ball.body.position[0], y: this.ball.body.position[1] }
                     );
-                    this.ball.body.force[0] += (player.body.velocity[0]*0.5) + (shootingVector.x * player_config.shooting);
-                    this.ball.body.force[1] += (player.body.velocity[1]*0.5) + (shootingVector.y * player_config.shooting);
+                    this.ball.body.force[0] += (player.body.velocity[0]*0.5) + (shootingVector.x * game_config.player.shooting);
+                    this.ball.body.force[1] += (player.body.velocity[1]*0.5) + (shootingVector.y * game_config.player.shooting);
                 }
             });
 
@@ -331,15 +327,12 @@ export class Game {
             }
         }
 
-        const scoreRight = !this.reseting && this.ball.body.position[0] < this.map.pos.x - ball_config.radius
-            ? ++this.score.right
-            : null;
+        const scoreRight = !this.reseting && this.ball.body.position[0] < this.map.pos.x - map_config[this.mapKind].ball.radius;
 
-        const scoreLeft = !this.reseting && this.ball.body.position[0] > this.map.pos.x + map_config.size.width + ball_config.radius
-            ? ++this.score.left
-            : null;
 
-        const scoreChanged = (scoreRight !== null || scoreLeft !== null);
+        const scoreLeft = !this.reseting && this.ball.body.position[0] > this.map.pos.x + map_config[this.mapKind].size.width + map_config[this.mapKind].ball.radius;
+
+        const scoreChanged = scoreRight || scoreLeft;
         const teamWhoScored = scoreChanged
             ? (scoreRight ? Team.Right : Team.Left)
             : void 0;

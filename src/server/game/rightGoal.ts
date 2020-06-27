@@ -3,7 +3,7 @@ import * as p2 from 'p2';
 import { IPos } from './../../shared/model';
 import { getCornerPoints } from './../../shared/vertices';
 import { getOffset } from './../../shared/offset';
-import { goal_config } from './../../shared/callibration';
+import { map_config, MapKind } from './../../shared/callibration';
 
 import { GOAL, BALL, GOAL_POST, PLAYER } from './collision';
 
@@ -16,8 +16,11 @@ export class RightGoal {
     private topPostShape: p2.Circle;
     private bottomPostShape: p2.Circle;
 
-    public constructor(pos: IPos, material: p2.Material, postMaterial: p2.Material) {
-        this.pos = { x: pos.x, y: pos.y };
+    public constructor(private mapKind: MapKind, material: p2.Material, postMaterial: p2.Material) {
+        this.pos = {
+                x: map_config[this.mapKind].outerSize.width - map_config[this.mapKind].border,
+                y: (map_config[this.mapKind].outerSize.height/2) - (map_config[this.mapKind].goal.size.height / 2)
+            };
 
         this.borderBody = new p2.Body({
             position: [this.pos.x, this.pos.y],
@@ -35,7 +38,7 @@ export class RightGoal {
             mass: 0
         });
         this.topPostShape = new p2.Circle({
-            radius: goal_config.postRadius,
+            radius: map_config[this.mapKind].goal.postRadius,
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
@@ -43,25 +46,25 @@ export class RightGoal {
         this.postBody.addShape(this.topPostShape, [0, 0]);
 
         this.bottomPostShape = new p2.Circle({
-            radius: goal_config.postRadius,
+            radius: map_config[this.mapKind].goal.postRadius,
             collisionGroup: GOAL_POST,
             collisionMask: PLAYER | BALL
         });
         this.bottomPostShape.material = postMaterial;
-        this.postBody.addShape(this.bottomPostShape, [0, goal_config.size.height]);
+        this.postBody.addShape(this.bottomPostShape, [0, map_config[this.mapKind].goal.size.height]);
     }
 
     private getPoints(pos = { x: 0, y: 0 }): ([number, number])[] {
-        const offset = getOffset(pos, goal_config.size)
+        const offset = getOffset(pos, map_config[this.mapKind].goal.size)
         const goalTickness = 10;
         return [
             [offset.left, offset.bottom],
-            [offset.right - goal_config.cornerRadius, offset.bottom],
-            ...getCornerPoints(goal_config.cornerPointsAmount, Math.PI / 2, { x: offset.right - goal_config.cornerRadius, y: offset.bottom - goal_config.cornerRadius }, goal_config.cornerRadius, {clockWise: -1}),
-            [offset.right, offset.bottom - goal_config.cornerRadius],
-            [offset.right, offset.top + goal_config.cornerRadius],
-            ...getCornerPoints(goal_config.cornerPointsAmount, 0, { x: offset.right - goal_config.cornerRadius, y: offset.top + goal_config.cornerRadius }, goal_config.cornerRadius, {clockWise: -1}),
-            [offset.right - goal_config.cornerRadius, offset.top],
+            [offset.right - map_config[this.mapKind].goal.cornerRadius, offset.bottom],
+            ...getCornerPoints(map_config[this.mapKind].goal.cornerPointsAmount, Math.PI / 2, { x: offset.right - map_config[this.mapKind].goal.cornerRadius, y: offset.bottom - map_config[this.mapKind].goal.cornerRadius }, map_config[this.mapKind].goal.cornerRadius, {clockWise: -1}),
+            [offset.right, offset.bottom - map_config[this.mapKind].goal.cornerRadius],
+            [offset.right, offset.top + map_config[this.mapKind].goal.cornerRadius],
+            ...getCornerPoints(map_config[this.mapKind].goal.cornerPointsAmount, 0, { x: offset.right - map_config[this.mapKind].goal.cornerRadius, y: offset.top + map_config[this.mapKind].goal.cornerRadius }, map_config[this.mapKind].goal.cornerRadius, {clockWise: -1}),
+            [offset.right - map_config[this.mapKind].goal.cornerRadius, offset.top],
             [offset.left, offset.top],
             [offset.left, offset.top - goalTickness],
             [offset.right + goalTickness, offset.top - goalTickness],

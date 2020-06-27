@@ -4,7 +4,7 @@ import { User } from './user';
 import { Game } from './../game/game';
 import { Team } from '../../shared/team';
 import { ILobbyRoom, ILobbyRoomListItem, IGameState, IRoomDataMessage } from './../../shared/events';
-import { game_config } from './../../shared/callibration';
+import { game_config, MapKind } from './../../shared/callibration';
 
 export class Room {
     public id: string;
@@ -22,6 +22,8 @@ export class Room {
     private scoreLeft: number = 0;
     private scoreRight: number = 0;
     private scoreGolden: boolean = false;
+
+    private mapKind: MapKind = MapKind.ROUNDED_MEDIUM;
 
     public constructor(
         public io: io.Server,
@@ -129,6 +131,7 @@ export class Room {
             users: this.users.map(mapUser),
             timeLimit: this.timeLimit,
             scoreLimit: this.scoreLimit,
+            mapKind: this.mapKind,
         }
     }
 
@@ -137,6 +140,7 @@ export class Room {
             this.adminId = room.adminId;
             this.timeLimit = Number(room.timeLimit);
             this.scoreLimit = Number(room.scoreLimit);
+            this.mapKind = room.mapKind;
         }
         let usersChanged = this.users.length !== room.users.length;
         this.users.forEach(thisUser => {
@@ -165,7 +169,7 @@ export class Room {
     //#region game
     public createGame(): void {
         this.gameHasEnded = false;
-        this.game = new Game(this.io, this.users, this.id,
+        this.game = new Game(this.io, this.mapKind, this.users, this.id,
             () => { this.stopTime() },
             () => { this.startTime() },
             (team: Team) => { this.updateScore(team) });

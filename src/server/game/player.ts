@@ -1,7 +1,7 @@
 import * as p2 from 'p2';
 
 import { calculateVectorLength, normalizeVector, getNormalizedVector } from './../../shared/vector';
-import { player_config } from './../../shared/callibration';
+import { game_config, map_config, MapKind } from './../../shared/callibration';
 import { Team } from './../../shared/team';
 
 import { MAP_BORDER, PLAYER, BALL, GOAL_POST } from './collision';
@@ -20,13 +20,13 @@ export class Player {
 
     public get maxSpeed(): number {
         if (this.shooting) {
-            return player_config.shootingMaxSpeed;
+            return game_config.player.shootingMovementSpeed;
         }
-
-        return player_config.maxSpeed;
+        return game_config.player.movementSpeed;
     } 
 
     public constructor(
+        private mapKind: MapKind,
         public user: User,
         public nick: string,
         public avatar: string,
@@ -35,26 +35,26 @@ export class Player {
         initPos: IPos) {
 
         let options: p2.BodyOptions = {
-            mass: player_config.mass,
+            mass: game_config.player.mass,
             position: [initPos.x, initPos.y],
             velocity: [0, 0],
         };
         this.body = new p2.Body(options);
         this.shape = new p2.Circle({
-            radius: player_config.radius,
+            radius: map_config[this.mapKind].player.radius,
             collisionGroup: PLAYER,
             collisionMask: PLAYER | MAP_BORDER | BALL | GOAL_POST 
         });
         this.shape.material = material;
         this.body.addShape(this.shape);
-        this.body.damping = player_config.damping;
+        this.body.damping = game_config.player.damping;
     }
 
     public shoot(): void {
         this.shootingCooldown = true;
         setTimeout(() => {
             this.shootingCooldown = false;
-        }, player_config.shootingCooldown);
+        }, game_config.player.shootingCooldown);
     }
 
     public dash(): void {
@@ -65,15 +65,15 @@ export class Player {
                 { x: this.body.position[0], y: this.body.position[1] },
                 { x: this.body.position[0] + initVelocity.x, y: this.body.position[1] + initVelocity.y }
             ); 
-            this.body.velocity[0] = (dashingVector.x * player_config.dashing);
-            this.body.velocity[1] = (dashingVector.y * player_config.dashing);
+            this.body.velocity[0] = (dashingVector.x * game_config.player.dashing);
+            this.body.velocity[1] = (dashingVector.y * game_config.player.dashing);
             setTimeout(() => {
                 this.body.velocity[0] = initVelocity.x;
                 this.body.velocity[1] = initVelocity.y;
                 setTimeout(() => {
                     this.dashing = false;
-                }, player_config.dashCooldown)
-            }, player_config.dashDuration);
+                }, game_config.player.dashCooldown)
+            }, game_config.player.dashDuration);
         }
     }
 

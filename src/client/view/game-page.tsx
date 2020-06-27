@@ -102,7 +102,7 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
 
     //#region game
     startGame(): void {
-        this.setState({ game: new Game()});
+        this.setState({ game: new Game(this.state.room.mapKind)});
         const loop = () => {
             this.setState({ gameAnimFrame: requestAnimationFrame(loop) });
             if (this.state.game) this.state.game.run();

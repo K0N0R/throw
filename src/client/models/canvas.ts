@@ -1,7 +1,7 @@
-import { canvas_config } from './../../shared/callibration'; 
+import { map_config, MapKind } from './../../shared/callibration'; 
 
 export class Canvas {
-
+    private static mapKind: MapKind;
     private static _element: HTMLCanvasElement;
     public static get element(): HTMLCanvasElement {
         return this._element;
@@ -12,10 +12,11 @@ export class Canvas {
         return this._ctx;
     }
 
-    public static createCanvas(): void {
-        this._element = document.createElement('canvas');  
-        this._element.width = canvas_config.size.width;
-        this._element.height = canvas_config.size.height;
+    public static createCanvas(mapKind: MapKind): void {
+        this.mapKind = mapKind;
+        this._element = document.createElement('canvas');
+        this._element.width = map_config[mapKind].outerSize.width;
+        this._element.height = map_config[mapKind].outerSize.height;
         const ctx = this.element.getContext("2d");
         if (ctx !== null) {
             this._ctx = ctx;
@@ -30,7 +31,7 @@ export class Canvas {
     }
 
     public static clearCanvas(): void {
-        this.ctx.clearRect(0, 0, canvas_config.size.width, canvas_config.size.height);
+        this.ctx.clearRect(0, 0, map_config[this.mapKind].outerSize.width, map_config[this.mapKind].outerSize.height);
     }
 
     public static startDraw(): void {
