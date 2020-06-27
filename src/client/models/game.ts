@@ -13,6 +13,7 @@ import { Camera } from './camera';
 
 import { User } from './socket';
 import { KeysMap } from './../../shared/keysHandler';
+import { ILobbyUser } from './../../shared/events';
 
 export class Game {
     private map!: Map;
@@ -103,7 +104,7 @@ export class Game {
     private initHandlers(): void {
         KeysHandler.bindHandler((keysMap: KeysMap) => {
             const player = this.players.find(player => player.socketId === User.socket.id);
-            if (!player) return;
+            if (!player || player.afk) return;
             player.shooting = Boolean(keysMap.shoot);
             player.dash(Boolean(keysMap.dash));
 
@@ -138,6 +139,14 @@ export class Game {
         Camera.init(this.mapKind);
     }
 
+    public updateAfkers(users: ILobbyUser[]): void {
+        this.players.forEach(player => {
+            const user = users.find(user => user.socketId === player.socketId);
+            if (!user) return;
+            player.afk = user.afk;
+        });
+    }
+
     public run(): void {
         this.render();
     }
@@ -156,10 +165,12 @@ export class Game {
     public render(): void {
         Canvas.clearCanvas();
         Camera.translateStart();
-
         this.map.render();
         this.leftGoal.render();
         this.rightGoal.render();
+        this.players.forEach(player => {
+            player.renderInfo();
+        });
         this.players.forEach(player => {
             player.render();
         });

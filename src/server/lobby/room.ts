@@ -40,7 +40,10 @@ export class Room {
     public userJoins(user: User): void {
         const idx = this.users.indexOf(user);
         if (idx !== -1) return;
-
+        console.log(`
+            roomId: ${this.id},
+            user: ${user.nick}
+        `)
         user.socket.join(this.id);
         user.team = Team.Spectator;
         this.users.push(user);
@@ -123,7 +126,8 @@ export class Room {
             socketId: user.socket.id,
             nick: user.nick,
             avatar: user.avatar,
-            team: user.team
+            team: user.team,
+            afk: user.afk
         });
         return {
             ...this.getListData(),
@@ -147,9 +151,12 @@ export class Room {
             const dataUser = room.users.find(item => item.socketId === thisUser.socket.id);
             if (!dataUser) {
                 usersChanged = true;
+            } else if (thisUser.afk !== dataUser.afk) {
+                usersChanged = true;
+                thisUser.afk = dataUser.afk;
             } else if (thisUser.team !== dataUser?.team) {
                 usersChanged = true;
-                thisUser.team = dataUser?.team ?? Team.Spectator;
+                thisUser.team = dataUser.team ?? Team.Spectator;
             }
         });
 

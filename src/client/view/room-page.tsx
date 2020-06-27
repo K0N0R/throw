@@ -100,7 +100,11 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     updateRoom(): void {
         User.socket.emit('room::update', this.state.room);
     }
+
     onRoomChanged(newValue: ILobbyRoom): void {
+        if (this.state.room && !this.state.room.playing && newValue.playing) {
+            (document.querySelector('#room') as HTMLElement)?.focus();
+        }
         this.setState({ room: newValue });
         this.forceUpdate();
     }
@@ -225,6 +229,20 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
         setTimeout(() => {
             (document.querySelector('#room') as HTMLElement)?.focus();
         });
+    }
+
+    onMessageBoxFocus(e): void {
+        const user = this.state.room.users.find(user => user.socketId === User.socket.id);
+        if (!user) return;
+        user.afk = true;
+        this.updateRoom();
+    }
+
+    onMessageBoxBlur(e): void {
+        const user = this.state.room.users.find(user => user.socketId === User.socket.id);
+        if (!user) return;
+        user.afk = false;
+        this.updateRoom();
     }
 
     sendMessage(): void {
@@ -398,6 +416,8 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                                 id="chat-input"
                                 value={state.messageToSend}
                                 placeholder="send message"
+                                onBlur={(e) => this.onMessageBoxBlur(e)}
+                                onFocus={(e) => this.onMessageBoxFocus(e)}
                                 onKeyUp={(e) => this.onMessageKeyConfirm(e)}
                                 onInput={(e) => this.onMessageToSendChange(e)}/>
                         </div>

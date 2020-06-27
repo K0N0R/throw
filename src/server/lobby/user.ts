@@ -2,6 +2,7 @@ import io from 'socket.io';
 import { Team } from '../../shared/team';
 
 export class User {
+    public afk = false;
     public team: Team = Team.Spectator;
     public constructor(
         public socket: io.Socket,

@@ -117,7 +117,6 @@ export class Game {
                 ? map_config[this.mapKind].outerSize.height / 2 - map_config[this.mapKind].goal.size.height/2 + ((map_config[this.mapKind].player.radius * 2 + 10) * (leftTeam.length - 1))
                 : map_config[this.mapKind].outerSize.height / 2 - map_config[this.mapKind].goal.size.height/2 + ((map_config[this.mapKind].player.radius * 2 + 10) * (rightTeam.length - 1))
         };
-        console.log(this.mapKind, initPos, map_config[this.mapKind]);
         const player = new Player(this.mapKind, user, user.nick, user.avatar, user.team, this.mat.player, initPos);
         this.playersToAdd.push(player);
     }

@@ -87,6 +87,9 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
         } else if (!newValue.playing && this.state.game) {
             this.breakGame();
         }
+        if (newValue.playing) {
+            this.state.game?.updateAfkers(newValue.users);
+        }
         this.setState({ room: newValue });
         this.forceUpdate();
     }

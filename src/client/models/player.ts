@@ -6,6 +6,8 @@ import { Canvas } from './canvas';
 import { User } from './socket';
 
 export class Player {
+    public afk: boolean = false;
+
     public dashing!: boolean;
     public dashCooldown!: boolean;
 
@@ -58,8 +60,49 @@ export class Player {
         }, animationTick);
     }
 
+    private afkCloudVertices(): IPos[] {
+        const afkMessageSize = map_config[this.mapKind].player.radius * 0.7;
+        const afkMessageBottomY = map_config[this.mapKind].player.radius * 1.2;
+        return [
+            { x: this.pos.x - afkMessageSize, y: this.pos.y - afkMessageBottomY - afkMessageSize },
+            { x: this.pos.x - afkMessageSize, y: this.pos.y - afkMessageBottomY - 2 * afkMessageSize },
+            { x: this.pos.x + afkMessageSize, y: this.pos.y - afkMessageBottomY - 2 * afkMessageSize },
+            { x: this.pos.x + afkMessageSize, y: this.pos.y - afkMessageBottomY - afkMessageSize },
+            { x: this.pos.x, y: this.pos.y - afkMessageBottomY * 1.1 }
+        ];
+    }
+
+    private afkDots(): IPos[] {
+        const afkMessageSize = map_config[this.mapKind].player.radius * 0.7;
+        const afkMessageBottomY = map_config[this.mapKind].player.radius * 1.2;
+        return [
+            { x: this.pos.x - afkMessageSize/2, y: this.pos.y - afkMessageBottomY - 1.5 * afkMessageSize },
+            { x: this.pos.x, y: this.pos.y - afkMessageBottomY - 1.5 * afkMessageSize },
+            { x: this.pos.x + afkMessageSize/2, y: this.pos.y - afkMessageBottomY - 1.5 * afkMessageSize, },
+        ]
+    }
+
     public render(): void {
-        
+        // render player
+        Canvas.startDraw();
+        Canvas.ctx.arc(this.pos.x, this.pos.y, map_config[this.mapKind].player.radius, 0, 2 * Math.PI, true);
+        Canvas.ctx.fillStyle = this.team === Team.Left ? style_config.player.leftFillStyle  : style_config.player.rightFillStyle;
+        Canvas.ctx.fill();
+        Canvas.ctx.strokeStyle = this.shooting ? style_config.player.shootingStrokeStyle : style_config.player.strokeStyle;
+        Canvas.ctx.lineWidth = style_config.player.lineWidth;
+        Canvas.ctx.stroke();
+        Canvas.stopDraw();
+
+        // render player avatar
+        Canvas.startDraw();
+        Canvas.ctx.textAlign = 'center';
+        Canvas.ctx.font = `${map_config[this.mapKind].player.radius*1.2}px consolas`;
+        Canvas.ctx.fillStyle = 'white';
+        Canvas.ctx.fillText(this.avatar, this.pos.x, this.pos.y + (map_config[this.mapKind].player.radius*0.4));
+        Canvas.stopDraw();
+    }
+
+    public renderInfo(): void {
         if (User.socket.id === this.socketId) { // render self identifier
             Canvas.startDraw();
             Canvas.ctx.globalAlpha = 0.2;
@@ -80,27 +123,32 @@ export class Player {
             Canvas.ctx.globalAlpha = 1;
             Canvas.stopDraw();
         }
-        // render player
-        Canvas.startDraw();
-        Canvas.ctx.arc(this.pos.x, this.pos.y, map_config[this.mapKind].player.radius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = this.team === Team.Left ? style_config.player.leftFillStyle  : style_config.player.rightFillStyle;
-        Canvas.ctx.fill();
-        Canvas.ctx.strokeStyle = this.shooting ? style_config.player.shootingStrokeStyle : style_config.player.strokeStyle;
-        Canvas.ctx.lineWidth = style_config.player.lineWidth;
-        Canvas.ctx.stroke();
-        Canvas.stopDraw();
-
         // render player nick
         Canvas.startDraw();
         Canvas.ctx.textAlign = 'center';
         Canvas.ctx.font = `${map_config[this.mapKind].player.radius*0.8}px consolas`;
         Canvas.ctx.fillStyle = 'white';
         Canvas.ctx.fillText(this.nick, this.pos.x, this.pos.y + map_config[this.mapKind].player.radius + map_config[this.mapKind].player.radius/2 + map_config[this.mapKind].player.radius*0.4);
-
-        // render player avatar
-        Canvas.ctx.font = `${map_config[this.mapKind].player.radius*1.2}px consolas`;
-        Canvas.ctx.fillText(this.avatar, this.pos.x, this.pos.y + (map_config[this.mapKind].player.radius*1.2)/3);
         Canvas.stopDraw();
 
+        // render afk
+        if (this.afk) {
+            Canvas.startDraw();
+            const afkMessageBottomY = map_config[this.mapKind].player.radius * 1.2;
+            const verticesAfk = this.afkCloudVertices();
+            Canvas.ctx.moveTo(this.pos.x, this.pos.y - afkMessageBottomY * 1.1);
+            verticesAfk.forEach(v => Canvas.ctx.lineTo(v.x, v.y));
+            Canvas.ctx.fillStyle ='white';
+            Canvas.ctx.fill();
+            Canvas.stopDraw();
+
+            Canvas.startDraw();
+            const afkDots = this.afkDots()
+            const afkDotRadius = map_config[this.mapKind].player.radius*0.1;
+            afkDots.forEach(v => Canvas.ctx.arc(v.x, v.y, afkDotRadius, 0, 2 * Math.PI, true));
+            Canvas.ctx.fillStyle ='black';
+            Canvas.ctx.fill();
+            Canvas.stopDraw();
+        }
     }
 }

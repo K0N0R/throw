@@ -67,17 +67,23 @@ export interface ILobbyRoomListItem {
     playing: boolean;
 }
 
+export interface ILobbyUser {
+    socketId: string;
+    nick: string;
+    avatar: string;
+    afk: boolean;
+    team: Team;
+}
 export interface ILobbyRoom extends ILobbyRoomListItem {
     id: string;
     name: string;
     players: number;
     playing: boolean;
     adminId: string;
-    users: { socketId: string, nick: string, avatar: string; team: Team}[]
+    users: ILobbyUser[]
     timeLimit: number;
     scoreLimit: number;
     mapKind: MapKind;
-
 }
 
 export interface IRoomDataMessage {
