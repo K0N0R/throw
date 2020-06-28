@@ -7,6 +7,7 @@ import { ILobbyRoom, IGameState } from '../../shared/events';
 import { User } from './../models/socket';
 import { Team } from '../../shared/team';
 import { game_config } from './../../shared/callibration';
+import { ILobbyUser } from './../../shared/events';
 
 interface IGamePageProps {
     room: ILobbyRoom;
@@ -25,6 +26,7 @@ interface IGamePageState {
     scoreRight: number;
     scoreGolden: boolean;
     scorer: Team | null;
+    scorerUser: ILobbyUser | null;
     time: number;
 }
 
@@ -76,7 +78,7 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
         if (gameState.teamWhoWon) {
             this.showWon(gameState.teamWhoWon);
         } else if (gameState.teamWhoScored) {
-            this.showScorer(gameState.teamWhoScored);
+            this.showScorer(gameState.teamWhoScored, gameState.userWhoScored);
         }
 
         this.forceUpdate();
@@ -165,12 +167,15 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
             ][Math.round(Math.random() * 7)]});
     }
 
-    showScorer(team: Team) {
+    showScorer(team: Team, user?: ILobbyUser) {
         this.setState({scorer: team});
-        this.forceUpdate();
-        setTimeout(() => {
-            this.setState({scorer: null});
-        }, game_config.goalResetTimeout);
+        this.setState({ scorer: team, scorerUser: user }, () => {
+            this.forceUpdate();
+            setTimeout(() => {
+                this.setState({scorer: null});
+                this.setState({ scorerUser: null })
+            }, game_config.goalResetTimeout);
+        })
     }
     //#endregion
 
@@ -193,11 +198,23 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
                 {state.scorer === Team.Left &&
                 <div class="game-state__scorer game-state__scorer--left">
                     Red team scores!
-                </div>
+                    {state.scorerUser &&
+                    <div className={`game-state__scorer__player ${state.scorerUser.team === Team.Left ? 'game-state__scorer--left' : 'game-state__scorer--right'}`}>
+                        {state.scorerUser.avatar} {state.scorerUser.nick}
+                        {state.scorer === state.scorerUser.team ? ' - scored goal! ' : ' - scored own goal :('}
+                    </div>
+                    }
+                </div> 
                 }
                 {state.scorer === Team.Right &&
                 <div class="game-state__scorer game-state__scorer--right">
                     Blue team scores!
+                    {state.scorerUser &&
+                    <div className={`game-state__scorer__player ${state.scorerUser.team === Team.Left ? 'game-state__scorer--left' : 'game-state__scorer--right'}`}>
+                        {state.scorerUser.avatar} {state.scorerUser.nick}
+                        {state.scorer === state.scorerUser.team ? ' - scored goal! ' : ' - scored own goal :('}
+                    </div>
+                    }
                 </div>
                 }
                 <div class="game-state__score">

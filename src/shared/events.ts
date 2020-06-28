@@ -111,5 +111,6 @@ export interface IGameState {
     scoreGolden: boolean;
     goldenScore?: boolean;
     time: number;
+    userWhoScored?: ILobbyUser;
 }
 //#endregion

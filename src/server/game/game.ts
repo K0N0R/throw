@@ -14,6 +14,7 @@ import { Team } from './../../shared/team';
 import { IWorldReset, IWorldPostStep, IRoomGameData } from './../../shared/events';
 import { User } from './../lobby/user';
 import { KeysMap } from './../../shared/keysHandler';
+import { isContact } from './../../shared/body';
 
 export class Game {
     private listeners: (() => void)[] = [];
@@ -31,6 +32,7 @@ export class Game {
     private players: Player[] = [];
     private playersToAdd: Player[] = [];
     private playersToRemove: Player[] = [];
+    private userWhoLastTouchedBall: User | null = null;
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
@@ -42,7 +44,7 @@ export class Game {
     constructor(private io: io.Server, private mapKind: MapKind, users: User[], public roomId: string,
         private onGameTimeStop: () => void,
         private onGameTimeResume: () => void,
-        private onGameScoreChanged: (team: Team) => void) {
+        private onGameScoreChanged: (team: Team, user: User | null) => void) {
         this.initStage = true;
         this.step = {
             fixedTime: 1 / 240,
@@ -57,6 +59,7 @@ export class Game {
     public dispose(): void {
         this.listeners.forEach(listener => listener());
         this.listeners = [];
+        this.userWhoLastTouchedBall = null;
         this.players.forEach((item) => this.removePlayer(item.user));
     }
 
@@ -183,10 +186,13 @@ export class Game {
         this.world.addContactMaterial(this.contactMat.mapPlayer);
 
         const onPostStep = () => this.logic();
+        const onContact = (e) => this.onContactLogic(e);
         this.world.on('postStep', onPostStep);
+        this.world.on('beginContact', onContact);
         this.listeners.push(() => {
             this.world.off('postStep', onPostStep);
         });
+
     }
 
     private initMaterials(): void {
@@ -342,7 +348,7 @@ export class Game {
             : void 0;
 
         if (scoreChanged) {
-            this.onGameScoreChanged(teamWhoScored as Team);
+            this.onGameScoreChanged(teamWhoScored as Team, this.userWhoLastTouchedBall);
             this.onGameTimeStop();
             this.reseting = true;
             setTimeout(() => {
@@ -367,6 +373,12 @@ export class Game {
             this.io.to(this.roomId).emit('game::step', data);
         }
 
+    }
+
+    private onContactLogic(event: { bodyA: p2.Body, bodyB: p2.Body}): void {
+        const player = this.players.find(player => isContact(event, this.ball.body, player.body));
+        if (!player) return;
+        this.userWhoLastTouchedBall = player.user;
     }
 
     public run() {

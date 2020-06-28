@@ -179,7 +179,13 @@ export class Room {
         this.game = new Game(this.io, this.mapKind, this.users, this.id,
             () => { this.stopTime() },
             () => { this.startTime() },
-            (team: Team) => { this.updateScore(team) });
+            (team: Team, user: User | null) => {
+                if (user) {
+                    this.updateScore(team, user);
+                } else {
+                    this.updateScore(team);
+                }
+            });
 
         this.resetTime();
         this.resetScore();
@@ -218,18 +224,26 @@ export class Room {
         user.socket.emit('game::init-data', this.game.getGameData());
     }
 
-    private onGameStateChange(gameState?: {teamWhoScored?: Team, teamWhoWon?: Team}): void {
+    private onGameStateChange(gameState?: {teamWhoScored?: Team, teamWhoWon?: Team, userWhoScored?: User }): void {
         this.io.to(this.id).emit('game::state', this.getGameState(gameState))
     }
 
-    private getGameState(gameState?: {teamWhoScored?: Team, teamWhoWon?: Team}): IGameState {
+    private getGameState(gameState?: {teamWhoScored?: Team, teamWhoWon?: Team, userWhoScored?: User }): IGameState {
+        const mapUser = (user: User) => ({
+            socketId: user.socket.id,
+            nick: user.nick,
+            avatar: user.avatar,
+            team: user.team,
+            afk: user.afk
+        });
         return {
             time: this.time,
             scoreRight: this.scoreRight,
             scoreLeft: this.scoreLeft,
             scoreGolden: this.scoreGolden,
             teamWhoScored: gameState?.teamWhoScored ?? void 0,
-            teamWhoWon: gameState?.teamWhoWon ?? void 0
+            teamWhoWon: gameState?.teamWhoWon ?? void 0,
+            userWhoScored: (gameState?.userWhoScored ? mapUser(gameState.userWhoScored) : void 0) ?? void 0
         }
     }
 
@@ -261,7 +275,7 @@ export class Room {
         clearInterval(this.timeInterval);
     }
 
-    private updateScore(teamWhoScored: Team): void {
+    private updateScore(teamWhoScored: Team, userWhoScored?: User): void {
         if (this.gameHasEnded) return;
         if (Team.Left === teamWhoScored) {
             this.scoreLeft += 1;
@@ -271,7 +285,7 @@ export class Room {
         let teamWhoWon = this.scoreGolden ? teamWhoScored : void 0;
         if (this.scoreLeft >= this.scoreLimit) teamWhoWon = Team.Left;
         if (this.scoreRight >= this.scoreLimit) teamWhoWon = Team.Right;
-        this.onGameStateChange({ teamWhoScored, teamWhoWon });
+        this.onGameStateChange({ teamWhoScored, teamWhoWon, userWhoScored });
         if (teamWhoWon != null) {
             this.endGame(teamWhoWon);
         }
