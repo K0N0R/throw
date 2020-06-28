@@ -1,4 +1,4 @@
-import { map_config, MapKind } from '../../shared/callibration';
+import { map_config, MapKind, CameraKind } from '../../shared/callibration';
 import { getOffset } from '../../shared/offset';
 import { IRoomGameData,  IPlayerShooting, IWorldPostStep, IWorldReset } from '../../shared/events';
 import { KeysHandler } from '../../shared/keysHandler';
@@ -33,11 +33,8 @@ export class Game {
         User.socket.on('game::step', (data: IWorldPostStep) => {
             if (data.playersToAdd != null) {
                 data.playersToAdd.forEach(player => {
-                    const isMe = player.socketId === User.socket.id;
                     this.players.push(new Player(this.mapKind, player.nick, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team));
-                    if (isMe) {
-                        Camera.updatePos({ x: player.position[0], y: player.position[1] });
-                    }
+                    this.updateCamera();
                 });
             }
 
@@ -55,10 +52,8 @@ export class Game {
                     if (player) {
                         player.pos.x = dataPlayer.position[0];
                         player.pos.y = dataPlayer.position[1];
-                        if (dataPlayer.socketId === User.socket.id) {
-                            Camera.updatePos({ ...player.pos });
-                        }
                     }
+                    this.updateCamera();
                 });
             }
             if (data.playersShooting != null) {
@@ -72,6 +67,9 @@ export class Game {
             if (data.ballMoving != null) {
                 this.ball.pos.x = data.ballMoving.position[0];
                 this.ball.pos.y = data.ballMoving.position[1];
+                this.updateCamera();
+
+                
             }
         });
     }
@@ -84,6 +82,7 @@ export class Game {
                 if (player) {
                     player.pos.x = dataPlayer.position[0];
                     player.pos.y = dataPlayer.position[1];
+                    this.updateCamera();
                 } 
             });
         });
@@ -103,6 +102,13 @@ export class Game {
 
     private initHandlers(): void {
         KeysHandler.bindHandler((keysMap: KeysMap) => {
+            if (keysMap.camera1) {
+                Canvas.changeCamera(CameraKind.Close);
+            } else if (keysMap.camera2) {
+                Canvas.changeCamera(CameraKind.Medium);
+            } else if (keysMap.camera3) {
+                Canvas.changeCamera(CameraKind.Far);
+            }
             const player = this.players.find(player => player.socketId === User.socket.id);
             if (!player || player.afk) return;
             player.shooting = Boolean(keysMap.shoot);
@@ -125,7 +131,7 @@ export class Game {
     }
     
     private initCanvas(): void {
-        Canvas.createCanvas(this.mapKind);
+        Canvas.createCanvas();
     }
 
     private initEntities(): void {
@@ -137,6 +143,15 @@ export class Game {
 
     private initCamera(): void {
         Camera.init(this.mapKind);
+    }
+
+    private updateCamera(): void {
+        const player = this.players.find(player => player.socketId === User.socket.id);
+        if (player) {
+            Camera.updatePos(player.pos , this.ball.pos);
+        } else {
+            Camera.updatePos(this.ball.pos, this.ball.pos);
+        }
     }
 
     public updateAfkers(users: ILobbyUser[]): void {

@@ -23,14 +23,18 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
         const config =  { ... KeysHandler.configuration };
         const initMessages = [
             {
-                value: `UP(${config.up}), DOWN(${config.down}), LEFT(${config.left}), RIGHT(${config.right})`,
-                nick: 'MOVEMENT',
-                avatar: '🛠️'
+                value: `MOVE_UP(${config.up}), MOVE_DOWN(${config.down}), MOVE_LEFT(${config.left}), MOVE_RIGHT(${config.right})`,
+                nick: '',
+                avatar: 'SYSTEM'
             }, {
-                 value: `SHOOT(${config.shoot}), DASH(${config.dash})`,
-                nick: `ACTIONS`,
-                avatar: '🛠️'
-            },
+                value: `SHOOT(${config.shoot}), DASH(${config.dash})`,
+                nick: ``,
+                avatar: 'SYSTEM'
+            }, {
+                value: `CAM_CLOSE(${config.camera1}), CAM_MEDIUM(${config.camera2}), CAM_FAR(${config.camera3}) `,
+                nick: ``,
+                avatar: 'SYSTEM'
+            }
         ];
         const initMapKinds = [
             MapKind.ROUNDED,

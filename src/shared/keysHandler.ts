@@ -5,6 +5,9 @@ export interface KeysMap {
     right?: boolean;
     shoot?: boolean;
     dash?: boolean;
+    camera1?: boolean;
+    camera2?: boolean;
+    camera3?: boolean;
 }
 
 export interface KeysConfiguration {
@@ -14,6 +17,9 @@ export interface KeysConfiguration {
     right: string;
     shoot: string;
     dash: string;
+    camera1: string;
+    camera2: string;
+    camera3: string;
 }
 
 export class KeysHandler {
@@ -25,14 +31,21 @@ export class KeysHandler {
         left: 'ArrowLeft',
         right: 'ArrowRight',
         shoot: 'KeyX',
-        dash: 'ShiftLeft'
+        dash: 'ShiftLeft',
+        camera1: 'Digit1',
+        camera2: 'Digit2',
+        camera3: 'Digit3'
     };
 
     public static keyMap: KeysMap = {};
 
     public static setConfiguration(): void {
         const config = window.localStorage.getItem('throw_config');
-        this.configuration = config ? JSON.parse(config) : this.defaultConfiguration;
+        this.configuration =  config
+            ? {
+                ...this.defaultConfiguration,
+                ...JSON.parse(config)
+            } : this.defaultConfiguration;
     }
 
     public static init(): void {

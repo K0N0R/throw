@@ -1,6 +1,7 @@
 import { ISize } from './model';
+import { Camera } from './../client/models/camera';
 
-const scale = 2;
+const scale = 1;
 
 //#region MAP CONFIG
 export enum MapKind {
@@ -92,7 +93,7 @@ const generateMapConfig: () => IMapConfig = () => {
                     width: config[key].goal.width * scale,
                 },
                 postRadius: 13 * scale,
-                cornerRadius: config[key].goal.width * 0.9,
+                cornerRadius: config[key].goal.width * scale * 0.5,
                 cornerPointsAmount: 10 * scale,
             },
             ball: {
@@ -119,10 +120,34 @@ const generateMapConfig: () => IMapConfig = () => {
 }
 export const map_config = generateMapConfig();
 
+export enum CameraKind {
+    Close = 'Close',
+    Medium = 'Medium',
+    Far = 'Far'
+}
+const cameraBaseSize: ISize = {
+    width: 1280,
+    height: 586
+}
+
 export const game_config = {
     goalResetTimeout: 3000,
     endGameResetTimeout: 8000,
     interval: 1000/60,
+    camera: {
+        [CameraKind.Close]: {
+            width: cameraBaseSize.width * 1.1,
+            height: cameraBaseSize.height * 1.1
+        },
+        [CameraKind.Medium]: {
+            width: cameraBaseSize.width * 1.3,
+            height: cameraBaseSize.height * 1.3
+        },
+        [CameraKind.Far]: {
+            width: cameraBaseSize.width * 1.5,
+            height: cameraBaseSize.height * 1.5
+        }
+    },
     ball: {
         mass: 1,
         damping: 0.5

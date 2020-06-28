@@ -16,7 +16,9 @@ interface IConfigurationState {
     movementRight: string;
     movementKind: MovementKind;
     movementKinds: MovementKind[];
-
+    camera1: string;
+    camera2: string;
+    camera3: string;
 }
 
 export default class ConfigurationPage extends Component<any, IConfigurationState> {
@@ -48,6 +50,10 @@ export default class ConfigurationPage extends Component<any, IConfigurationStat
                 down: this.state.movementDown,
                 left: this.state.movementLeft,
                 right: this.state.movementRight,
+                camera1: this.state.camera1,
+                camera2: this.state.camera2,
+                camera3: this.state.camera3
+                
             }
             window.localStorage.setItem('throw_config', JSON.stringify(config));
             KeysHandler.setConfiguration();
@@ -116,6 +122,18 @@ export default class ConfigurationPage extends Component<any, IConfigurationStat
     onDashChange(e: any): void {
         e.preventDefault();
         this.setState({dash: e.code});
+    };
+    onCamera1Change(e: any): void {
+        e.preventDefault();
+        this.setState({camera1: e.code});
+    };
+    onCamera2Change(e: any): void {
+        e.preventDefault();
+        this.setState({camera2: e.code});
+    };
+    onCamera3Change(e: any): void {
+        e.preventDefault();
+        this.setState({camera3: e.code});
     };
     //#endregion
 
@@ -190,6 +208,31 @@ export default class ConfigurationPage extends Component<any, IConfigurationStat
                         <input class="room__foot__option__input"
                             value={state.dash}
                             onKeyUp={(e) => this.onDashChange(e)}/>
+                    </div>
+                </div>
+
+                <div class="room__foot__option">
+                    <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                        <label class="room__foot__option__label">CAMERA 1</label>
+                        <input class="room__foot__option__input"
+                            value={state.camera1}
+                            onKeyUp={(e) => this.onCamera1Change(e)}/>
+                    </div>
+                </div>
+                <div class="room__foot__option">
+                    <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                        <label class="room__foot__option__label">CAMERA 2</label>
+                        <input class="room__foot__option__input"
+                            value={state.camera2}
+                            onKeyUp={(e) => this.onCamera2Change(e)}/>
+                    </div>
+                </div>
+                <div class="room__foot__option">
+                    <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                        <label class="room__foot__option__label">CAMERA 3</label>
+                        <input class="room__foot__option__input"
+                            value={state.camera3}
+                            onKeyUp={(e) => this.onCamera3Change(e)}/>
                     </div>
                 </div>
                 <div class="room__foot__option">
