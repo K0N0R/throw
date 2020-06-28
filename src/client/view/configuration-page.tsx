@@ -1,4 +1,5 @@
-import { h, Component } from 'preact';
+import { h } from 'preact';
+import { useEffect, useState } from 'preact/hooks';
 import { KeysHandler, KeysConfiguration } from './../../shared/keysHandler';
 
 enum MovementKind {
@@ -7,203 +8,194 @@ enum MovementKind {
     CUSTOM = "CUSTOM"
 }
 
-interface IConfigurationState {
-    shoot: string;
-    dash: string;
-    movementUp: string;
-    movementDown: string;
-    movementLeft: string;
-    movementRight: string;
-    movementKind: MovementKind;
-    movementKinds: MovementKind[];
+export default function ConfigurationPage() {
 
-}
+    const [shoot, setShoot] = useState('');
+    const [dash, setDash] = useState('');
+    const [up, setUp] = useState('');
+    const [down, setDown] = useState('');
+    const [left, setLeft] = useState('');
+    const [right, setRight] = useState('');
+    const [kind, setKind] = useState('');
+    const [kinds, setKinds] = useState<MovementKind[]>([]);
 
-export default class ConfigurationPage extends Component<any, IConfigurationState> {
-    //#region hooks
-    componentDidMount() {
-        const movementKinds = [
+    useEffect(() => {
+        setShoot(KeysHandler.configuration.shoot);
+        setDash(KeysHandler.configuration.dash);
+        setUp(KeysHandler.configuration.up);
+        setDown(KeysHandler.configuration.down);
+        setLeft(KeysHandler.configuration.left);
+        setRight(KeysHandler.configuration.right);
+        setKinds([
             MovementKind.ARROW,
             MovementKind.WSAD,
             MovementKind.CUSTOM
-        ];
-        this.setState({
-            shoot: KeysHandler.configuration.shoot,
-            dash: KeysHandler.configuration.dash,
-            movementUp: KeysHandler.configuration.up,
-            movementDown: KeysHandler.configuration.down,
-            movementLeft: KeysHandler.configuration.left,
-            movementRight: KeysHandler.configuration.right,
-            movementKinds
-        });
-    }
-    //#endregion
+        ]);
+    }, []);
 
-    saveConfig(): void {
-        if (this.state.shoot && this.state.dash && this.state.movementUp && this.state.movementDown && this.state.movementLeft && this.state.movementRight) {
+    const saveConfig = () => {
+        if (shoot && dash && up && down && left && right) {
             const config: KeysConfiguration = {
-                shoot: this.state.shoot,
-                dash: this.state.dash,
-                up: this.state.movementUp,
-                down: this.state.movementDown,
-                left: this.state.movementLeft,
-                right: this.state.movementRight,
-            }
+                shoot,
+                dash,
+                up,
+                down,
+                left,
+                right,
+            };
             window.localStorage.setItem('throw_config', JSON.stringify(config));
             KeysHandler.setConfiguration();
-            this.destroy();
+            destroy();
        }
     }
 
-    cancel(): void {
-        this.destroy();
+    const cancel = () => {
+        destroy();
     }
 
-    destroy(): void {
+    const destroy = () => {
         const configuration = document.querySelector('#configuration');
         if (!configuration) return;
         configuration.innerHTML = '';
     }
 
     //#region params change
-    onMovementKindChange(e: any): void {
+    const onMovementKindChange = (e: any) => {
         switch (e.target.value) {
             case MovementKind.ARROW:
-                this.setState({
-                    movementKind: e.target.value,
-                    movementUp: 'ArrowUp',
-                    movementDown: 'ArrowDown',
-                    movementLeft: 'ArrowLeft',
-                    movementRight: 'ArrowRight'
-                });
+                setKind(e.target.value);
+                setUp('ArrowUp');
+                setDown('ArrowDown');
+                setLeft('ArrowLeft');
+                setRight('ArrowRight');
                 break;
+
             case MovementKind.WSAD:
-                this.setState({
-                    movementKind: e.target.value,
-                    movementUp: 'KeyW',
-                    movementDown: 'KeyS',
-                    movementLeft: 'KeyA',
-                    movementRight: 'KeyD'
-                });
+                setKind(e.target.value);
+                setUp('KeyW');
+                setDown('KeyS');
+                setLeft('KeyA');
+                setRight('KeyD');
                 break;
+
             default:
-                this.setState({
-                    movementKind: e.target.value
-                });
+                setKind(e.target.value);
         }
     };
-    onMovementUpChange(e: KeyboardEvent): void {
-        e.preventDefault();
-        this.setState({movementUp: e.code});
-    };
-    onMovementDownChange(e: any): void {
-        e.preventDefault();
-        this.setState({movementDown: e.code});
-    };
-    onMovementLeftChange(e: any): void {
-        e.preventDefault();
-        this.setState({movementLeft: e.code});
-    };
-    onMovementRightChange(e: any): void {
-        e.preventDefault();
-        this.setState({movementRight: e.code});
-    };
-    onShootChange(e: any): void {
-        e.preventDefault();
-        this.setState({shoot: e.code});
-    };
-    onDashChange(e: any): void {
-        e.preventDefault();
-        this.setState({dash: e.code});
-    };
-    //#endregion
 
-    render(_, state: IConfigurationState) {
-        if (!state.movementKinds) return;
-        return (
-            <div class="dialog dialog--fixed">
-                <div class="room__foot__option">
-                    <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                        <label class="room__foot__option__label">Movement</label>
-                        <select class="room__foot__option__input"
-                            value={state.movementKind}
-                            onInput={(e) => this.onMovementKindChange(e)}>
-                                {
-                                    ...state.movementKinds.map(item =>
-                                        <option value={item}>
-                                            {item}
-                                        </option>
-                                    )
-                                }
+    const onMovementUpChange = (e: KeyboardEvent) => {
+        e.preventDefault();
+        setUp(e.code);
+    };
 
-                        </select>
-                    </div>
+    const onMovementDownChange = (e: any) => {
+        e.preventDefault();
+        setDown(e.code);
+    };
+
+    const onMovementLeftChange = (e: any) => {
+        e.preventDefault();
+        setLeft(e.code);
+    };
+
+    const onMovementRightChange = (e: any) => {
+        e.preventDefault();
+        setRight(e.code);
+    };
+
+    const onShootChange = (e: any) => {
+        e.preventDefault();
+        setShoot(e.code);
+    };
+
+    const onDashChange = (e: any) => {
+        e.preventDefault();
+        setDash(e.code);
+    };
+
+    return (
+        <div class="dialog dialog--fixed">
+            <div class="room__foot__option">
+                <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                    <label class="room__foot__option__label">Movement</label>
+                    <select class="room__foot__option__input"
+                        value={kinds}
+                        onInput={onMovementKindChange}>
+                            {
+                                ...kinds.map(item =>
+                                    <option value={item}>
+                                        {item}
+                                    </option>
+                                )
+                            }
+
+                    </select>
                 </div>
-                { state.movementKind === MovementKind.CUSTOM &&
+            </div>
+            { kind === MovementKind.CUSTOM &&
                 <div>
                     <div class="room__foot__option">
                         <div class="form-field form-field--small form-field--horizontal room__foot__option">
                             <label class="room__foot__option__label">MOVE UP</label>
                             <input class="room__foot__option__input"
-                                value={state.movementUp}
-                                onKeyUp={(e) => this.onMovementUpChange(e)}/>
+                                value={up}
+                                onKeyDown={onMovementUpChange}/>
                         </div>
                     </div>
                     <div class="room__foot__option">
                         <div class="form-field form-field--small form-field--horizontal room__foot__option">
                             <label class="room__foot__option__label">MOVE DOWN</label>
                             <input class="room__foot__option__input"
-                                value={state.movementDown}
-                                onKeyUp={(e) => this.onMovementDownChange(e)}/>
+                                value={down}
+                                onKeyDown={onMovementDownChange}/>
                         </div>
                     </div>
                     <div class="room__foot__option">
                         <div class="form-field form-field--small form-field--horizontal room__foot__option">
                             <label class="room__foot__option__label">MOVE LEFT</label>
                             <input class="room__foot__option__input"
-                                value={state.movementLeft}
-                                onKeyUp={(e) => this.onMovementLeftChange(e)}/>
+                                value={left}
+                                onKeyDown={onMovementLeftChange}/>
                         </div>
                     </div>
                     <div class="room__foot__option">
                         <div class="form-field form-field--small form-field--horizontal room__foot__option">
                             <label class="room__foot__option__label">MOVE RIGHT</label>
                             <input class="room__foot__option__input"
-                                value={state.movementRight}
-                                onKeyUp={(e) => this.onMovementRightChange(e)}/>
+                                value={right}
+                                onKeyDown={onMovementRightChange}/>
                         </div>
                     </div>
                 </div>
-                }
-                <div class="room__foot__option">
-                    <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                        <label class="room__foot__option__label">SHOOT</label>
-                        <input class="room__foot__option__input"
-                            value={state.shoot}
-                            onKeyUp={(e) => this.onShootChange(e)}/>
-                    </div>
-                </div>
-                <div class="room__foot__option">
-                    <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                        <label class="room__foot__option__label">DASH</label>
-                        <input class="room__foot__option__input"
-                            value={state.dash}
-                            onKeyUp={(e) => this.onDashChange(e)}/>
-                    </div>
-                </div>
-                <div class="room__foot__option">
-                    <button class="form-btn form-btn-submit form-btn-submit--primary"
-                        onClick={(e) => this.cancel()}>
-                        Cancel 😢
-                    </button>
-                </div>
-                <div class="room__foot__option">
-                    <button class="form-btn form-btn-submit form-btn-submit--primary"
-                        onClick={(e) => this.saveConfig()}>
-                        Save config
-                    </button>
+            }
+            <div class="room__foot__option">
+                <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                    <label class="room__foot__option__label">SHOOT</label>
+                    <input class="room__foot__option__input"
+                        value={shoot}
+                        onKeyDown={onShootChange}/>
                 </div>
             </div>
-        );
-    }
+            <div class="room__foot__option">
+                <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                    <label class="room__foot__option__label">DASH</label>
+                    <input class="room__foot__option__input"
+                        value={dash}
+                        onKeyDown={onDashChange}/>
+                </div>
+            </div>
+            <div class="room__foot__option">
+                <button class="form-btn form-btn-submit form-btn-submit--primary"
+                    onClick={cancel}>
+                    Cancel 😢
+                </button>
+            </div>
+            <div class="room__foot__option">
+                <button class="form-btn form-btn-submit form-btn-submit--primary"
+                    onClick={saveConfig}>
+                    Save config
+                </button>
+            </div>
+        </div>
+    );
 }
