@@ -64,6 +64,7 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
             User.socket.off('room::changed', onRoomChanged);
             User.socket.off('room::user-left', onUserLeftRoom);
             User.socket.off('room::destroyed', onRoomDestroyed);
+            User.socket.off('game::state', onRoomDestroyed);
         };
     }
 
@@ -83,9 +84,13 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
 
     onRoomChanged(newValue: ILobbyRoom): void {
         if (newValue.playing && !this.state.game) {
-            this.startGame();
+            this.setState({ room: newValue }, () => {
+                this.startGame();
+            });
         } else if (!newValue.playing && this.state.game) {
-            this.breakGame();
+            this.setState({ room: newValue }, () => {
+                this.breakGame();
+            });
         }
         if (newValue.playing) {
             this.state.game?.updateAfkers(newValue.users);
@@ -114,6 +119,7 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
         this.setState({ gameKeysInterval: setInterval(() => {
             KeysHandler.run();
         }, 4)});
+        (document.querySelector('#room') as HTMLElement)?.focus();
     }
 
     breakGame(): void {

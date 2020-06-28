@@ -63,6 +63,7 @@ export default class ConfigurationPage extends Component<any, IConfigurationStat
         const configuration = document.querySelector('#configuration');
         if (!configuration) return;
         configuration.innerHTML = '';
+        (document.querySelector('#room') as HTMLElement)?.focus();
     }
 
     //#region params change

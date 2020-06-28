@@ -48,25 +48,6 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     //#endregion
 
     //#region init
-    onLobbyKey(e): void {
-        if (e.code === 'Escape') {
-            if (this.state.room.playing) {
-                this.setState({ configOverlayOnTop: !this.state.configOverlayOnTop});
-            }
-        }
-        if (e.code === 'Enter') {
-            setTimeout(() => {
-                (document.querySelector('#chat-input') as HTMLElement)?.focus();
-            });
-        }
-    }
-
-    openConfiguration(): void {
-        const element = document.querySelector('#configuration')
-        if (!element) return;
-        render(<ConfigurationPage/>, element)
-    }
-
     bindSocket(): void {
         const onRoomChanged = (room: ILobbyRoom) => {
             this.onRoomChanged(room);
@@ -102,9 +83,6 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     }
 
     onRoomChanged(newValue: ILobbyRoom): void {
-        if (this.state.room && !this.state.room.playing && newValue.playing) {
-            (document.querySelector('#room') as HTMLElement)?.focus();
-        }
         this.setState({ room: newValue });
         this.forceUpdate();
     }
@@ -224,11 +202,13 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     };
 
     onMessageKeyConfirm(e): void {
-        if (e.key !== 'Enter' || !this.state.messageToSend) return;
-        this.sendMessage();
-        setTimeout(() => {
+        if (e.key === 'Enter' && !this.state.messageToSend) {
             (document.querySelector('#room') as HTMLElement)?.focus();
-        });
+            e.stopPropagation();
+        } else if (e.key !== 'Enter' || !this.state.messageToSend) return;
+        this.sendMessage();
+        e.stopPropagation();
+        (document.querySelector('#room') as HTMLElement)?.focus();
     }
 
     onMessageBoxFocus(e): void {
@@ -249,6 +229,26 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
         if (!this.state.messageToSend) return;
         User.socket.emit('room::user-message', { nick: User.nick, avatar: User.avatar, value: this.state.messageToSend });
         this.setState({ messageToSend: ''});
+    }
+
+    onLobbyKey(e): void {
+        if (e.code === 'Escape') {
+            if (this.state.room.playing) {
+                this.setState({ configOverlayOnTop: !this.state.configOverlayOnTop});
+            }
+        }
+        if (e.code === 'Enter') {
+            if (document.activeElement?.id !== 'chat-input') {
+                (document.querySelector('#chat-input') as HTMLElement)?.focus();
+            }
+        }
+    }
+
+    //#region config
+    openConfiguration(): void {
+        const element = document.querySelector('#configuration')
+        if (!element) return;
+        render(<ConfigurationPage/>, element)
     }
     //#endregion
 
@@ -418,7 +418,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                                 placeholder="send message"
                                 onBlur={(e) => this.onMessageBoxBlur(e)}
                                 onFocus={(e) => this.onMessageBoxFocus(e)}
-                                onKeyUp={(e) => this.onMessageKeyConfirm(e)}
+                                onKeyDown={(e) => this.onMessageKeyConfirm(e)}
                                 onInput={(e) => this.onMessageToSendChange(e)}/>
                         </div>
                     </div>
