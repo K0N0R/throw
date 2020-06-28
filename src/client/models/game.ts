@@ -109,6 +109,7 @@ export class Game {
             } else if (keysMap.camera3) {
                 Canvas.changeCamera(CameraKind.Far);
             }
+            this.updateCamera();
             const player = this.players.find(player => player.socketId === User.socket.id);
             if (!player || player.afk) return;
             player.shooting = Boolean(keysMap.shoot);
