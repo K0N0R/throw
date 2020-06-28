@@ -70,21 +70,28 @@
 	&--horizontal
 		flex-direction row
 
-.link
+.login_avatar_link
+	display block
 	color: var(--text-color)
 	text-decoration none
-	padding 15px
-	text-align: center
+	margin-bottom 20px
+	text-align center
 
 .legends
-	margin 15px
+	margin 0 15px
 	margin-top 0
 
-	.avatar
+	.avatars
 		margin-top 10px
 		font-size 20px
 		max-width 400px
 		line-height 150%
+		display flex
+		flex-wrap wrap
+
+		.avatar
+			cursor pointer
+			width 40px
 
 .form-btn
 	border-radius 8px
