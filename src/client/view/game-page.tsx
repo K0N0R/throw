@@ -237,6 +237,7 @@ export default class GamePage extends Component<IGamePageProps, IGamePageState> 
                 }
             </div>
 
+
         );
     }
 }

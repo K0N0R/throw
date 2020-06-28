@@ -1,4 +1,3 @@
-import './../assets/images/grass_big.png';
 import { IPos } from './../../shared/model';
 import { getOffset } from './../../shared/offset';
 import { getCornerPoints } from './../../shared/vertices';
@@ -27,16 +26,7 @@ export class Map {
     }
 
     private setBcgrImg(): void {
-        const imageObj = new Image();
-
-        imageObj.onload = () => {
-            this.bcgrImg = imageObj;
-        };
-        imageObj.onerror = () => {
-            console.log('image cant load');
-        }
-        imageObj.src = './grass_big.7a6b015b.png';
-
+        this.bcgrImg = document.querySelector('#game-asset')
     }
 
     private getTopShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
@@ -84,7 +74,7 @@ export class Map {
 
         // background
         if (this.bcgrImg) {
-            const imgSize = 225;
+            const imgSize = 256;
             const maxX = Math.ceil(map_config[this.mapKind].outerSize.width/imgSize);
             const maxY = Math.ceil(map_config[this.mapKind].outerSize.height/imgSize);
             Canvas.startDraw();
