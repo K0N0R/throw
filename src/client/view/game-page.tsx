@@ -9,37 +9,14 @@ import { Team } from '../../shared/team';
 import { game_config } from './../../shared/callibration';
 import { useState, useEffect } from 'preact/hooks';
 
-// interface IGamePageProps {
-//     room: ILobbyRoom;
-// }
-
-// interface IGamePageState {
-//     room: ILobbyRoom;
-
-//     gameAnimFrame: number;
-//     gameKeysInterval: NodeJS.Timeout;
-//     game: Game | null;
-//     gameWon: Team | null;
-//     gameWonGeneratedMessage: string;
-
-//     scoreLeft: number;
-//     scoreRight: number;
-//     scoreGolden: boolean;
-//     scorer: Team | null;
-//     time: number;
-// }
-
 export default function GamePage(room: ILobbyRoom) {
+    let game: Game | null = null;
+    let gameAnimFrame: number;
+    let gameKeysInterval: any;
     const [, setRoom] = useState<ILobbyRoom | null>(null);
     const [scoreGolden, setScoreGolden] = useState(false);
     const [scoreLeft, setScoreLeft] = useState(0);
     const [scoreRight, setScoreRight] = useState(0);
-    //const [game, setGame] = useState<Game | null>(null);
-    let game: Game | null = null;
-    let gameAnimFrame: number;
-    let gameKeysInterval: any;
-    // const [gameAnimFrame, setGameAnimFrame] = useState(0);
-    // const [gameKeysInterval, setGameKeysInterval] = useState<any>(null);
     const [time, setTime] = useState(0);
     const [gameWon, setGameWon] = useState('');
     const [gameWonMessage, setGameWonMessage] = useState('')
@@ -68,7 +45,6 @@ export default function GamePage(room: ILobbyRoom) {
         } else if (gameState.teamWhoScored) {
             showScorer(gameState.teamWhoScored);
         }
-        // this.forceUpdate();
     }
 
     const onRoomChanged = (newValue: ILobbyRoom) => {
