@@ -36,13 +36,17 @@ export default class ConfigurationPage extends Component<any, IConfigurationStat
             movementDown: KeysHandler.configuration.down,
             movementLeft: KeysHandler.configuration.left,
             movementRight: KeysHandler.configuration.right,
+            camera1: KeysHandler.configuration.camera1,
+            camera2: KeysHandler.configuration.camera2,
+            camera3: KeysHandler.configuration.camera3,
             movementKinds
         });
     }
     //#endregion
 
     saveConfig(): void {
-        if (this.state.shoot && this.state.dash && this.state.movementUp && this.state.movementDown && this.state.movementLeft && this.state.movementRight) {
+        if (this.state.shoot && this.state.dash && this.state.movementUp && this.state.movementDown && this.state.movementLeft && this.state.movementRight &&
+            this.state.camera1 && this.state.camera2 && this.state.camera3) {
             const config: KeysConfiguration = {
                 shoot: this.state.shoot,
                 dash: this.state.dash,
