@@ -1,6 +1,6 @@
-import { useState } from "preact/hooks";
+import { useState } from 'preact/hooks';
 
-export function useLocalStorage(key: string, initialValue: string) {
+export function useLocalStorage(key: string, initialValue: unknown) {
     const [storedValue, setStoredValue] = useState(() => {
         try {
             const item = window.localStorage.getItem(key);

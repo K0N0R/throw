@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { KeysHandler, KeysConfiguration } from './../../shared/keysHandler';
 import { useLocalStorage } from './hooks';
 
@@ -11,29 +11,19 @@ enum MovementKind {
 
 export default function ConfigurationPage() {
 
-    const [keysConfig, setKeysConfig] = useLocalStorage('throw_config', '');
-    const [shoot, setShoot] = useState('');
-    const [dash, setDash] = useState('');
-    const [up, setUp] = useState('');
-    const [down, setDown] = useState('');
-    const [left, setLeft] = useState('');
-    const [right, setRight] = useState('');
-    const [kind, setKind] = useState('');
-    const [kinds, setKinds] = useState<MovementKind[]>([]);
-
-    useEffect(() => {
-        setShoot(keysConfig.shoot ?? KeysHandler.configuration.shoot);
-        setDash(keysConfig.dash ?? KeysHandler.configuration.dash);
-        setUp(keysConfig.up ?? KeysHandler.configuration.up);
-        setDown(keysConfig.down ?? KeysHandler.configuration.down);
-        setLeft(keysConfig.left ?? KeysHandler.configuration.left);
-        setRight(keysConfig.right ?? KeysHandler.configuration.right);
-        setKinds([
-            MovementKind.ARROW,
-            MovementKind.WSAD,
-            MovementKind.CUSTOM
-        ]);
-    }, []);
+    const [kind, setKind] = useLocalStorage('thow_config_set', MovementKind.ARROW);
+    const [, setKeysConfig] = useLocalStorage('throw_config', '');
+    const [shoot, setShoot] = useState(KeysHandler.configuration.shoot);
+    const [dash, setDash] = useState(KeysHandler.configuration.dash);
+    const [up, setUp] = useState(KeysHandler.configuration.up);
+    const [down, setDown] = useState(KeysHandler.configuration.down);
+    const [left, setLeft] = useState(KeysHandler.configuration.left);
+    const [right, setRight] = useState(KeysHandler.configuration.right);
+    const kinds = [
+        MovementKind.ARROW,
+        MovementKind.WSAD,
+        MovementKind.CUSTOM
+    ];
 
     const saveConfig = () => {
         if (shoot && dash && up && down && left && right) {
@@ -45,7 +35,7 @@ export default function ConfigurationPage() {
                 left,
                 right,
             };
-            setKeysConfig('throw_config', JSON.stringify(config));
+            setKeysConfig(config);
             KeysHandler.setConfiguration();
             destroy();
        }
@@ -121,11 +111,11 @@ export default function ConfigurationPage() {
                 <div class="form-field form-field--small form-field--horizontal room__foot__option">
                     <label class="room__foot__option__label">Movement</label>
                     <select class="room__foot__option__input"
-                        value={kinds}
-                        onInput={onMovementKindChange}>
+                        value={kind}
+                        onChange={onMovementKindChange}>
                             {
                                 ...kinds.map(item =>
-                                    <option value={item}>
+                                    <option value={item} selected={item === kind}>
                                         {item}
                                     </option>
                                 )
