@@ -219,6 +219,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
         const user = this.state.room.users.find(user => user.socketId === User.socket.id);
         if (!user) return;
         user.afk = true;
+        User.afk = true;
         this.updateRoom();
     }
 
@@ -226,6 +227,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
         const user = this.state.room.users.find(user => user.socketId === User.socket.id);
         if (!user) return;
         user.afk = false;
+        User.afk = false;
         this.updateRoom();
     }
 

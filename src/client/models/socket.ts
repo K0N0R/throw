@@ -5,6 +5,7 @@ export class User {
     public static socket: SocketIOClient.Socket;
     public static nick: string;
     public static avatar: string;
+    public static afk = false;
 
     public static connect(nick: string, avatar: string, connected: () => void): void {
         this.nick = nick;

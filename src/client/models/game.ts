@@ -102,6 +102,8 @@ export class Game {
 
     private initHandlers(): void {
         KeysHandler.bindHandler((keysMap: KeysMap) => {
+            if (User.afk) return
+
             if (keysMap.camera1) {
                 Canvas.changeCamera(CameraKind.Close);
             } else if (keysMap.camera2) {
@@ -111,7 +113,7 @@ export class Game {
             }
             this.updateCamera();
             const player = this.players.find(player => player.socketId === User.socket.id);
-            if (!player || player.afk) return;
+            if (!player) return;
             player.shooting = Boolean(keysMap.shoot);
             player.dash(Boolean(keysMap.dash));
 
