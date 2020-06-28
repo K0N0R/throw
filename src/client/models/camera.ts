@@ -16,11 +16,16 @@ export class Camera {
     }
 
     public static updatePos(pos1: IPos, pos2: IPos) {
-        const vector = getNormalizedVector(pos1, pos2);
-        const distance = getDistance(pos1, pos2);
-        const pos = {
-            x: pos1.x + (vector.x * distance/2),
-            y: pos1.y + (vector.y * distance/2)
+        let pos: IPos;
+        if (pos1 !== pos2) {
+            const vector = getNormalizedVector(pos1, pos2);
+            const distance = getDistance(pos1, pos2);
+            pos = {
+                x: pos1.x + (vector.x * distance/2),
+                y: pos1.y + (vector.y * distance/2)
+            }
+        } else {
+            pos = pos1;
         }
         const newPos = {
             x: pos.x - Canvas.canvasSize.width / 2,

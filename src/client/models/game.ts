@@ -68,10 +68,9 @@ export class Game {
                 this.ball.pos.x = data.ballMoving.position[0];
                 this.ball.pos.y = data.ballMoving.position[1];
                 this.updateCamera();
-
-                
             }
         });
+        this.updateCamera();
     }
 
     private initEvents(): void {
@@ -82,14 +81,15 @@ export class Game {
                 if (player) {
                     player.pos.x = dataPlayer.position[0];
                     player.pos.y = dataPlayer.position[1];
-                    this.updateCamera();
                 } 
             });
+            this.updateCamera();
         });
         User.socket.emit('game::player-joins')
         User.socket.on('game::init-data', (data: IRoomGameData) => {
             this.players = data.players.map(p => new Player(this.mapKind, p.nick, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
+            this.updateCamera();
         });
 
         User.socket.on('game::player-shooting', (data: IPlayerShooting) => {
