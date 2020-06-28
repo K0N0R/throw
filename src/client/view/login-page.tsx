@@ -28,7 +28,7 @@ export default function LoginPage() {
                 <input
                     value={nick}
                     maxLength={nickMaxLength}
-                    onInput={(e) => setNick((e.target as HTMLInputElement).value).toString().slice(0, nickMaxLength)}/>
+                    onInput={(e) => setNick((e.target as HTMLInputElement).value.toString().slice(0, nickMaxLength))}/>
             </div>
             <div class="form-field form-field--avatar">
                 <label>Avatar</label>
@@ -36,7 +36,7 @@ export default function LoginPage() {
                     <input
                         value={avatar}
                         maxLength={avatarMaxLength}
-                        onInput={(e) => setAvatar((e.target as HTMLInputElement).value.slice(0, avatarMaxLength))}/>
+                        onInput={(e) => setAvatar((e.target as HTMLInputElement).value.toString().slice(0, avatarMaxLength))}/>
                     <div class="legends">
                         <div >LEGENDARY PLAYERS:</div>
                         <div class="avatars">

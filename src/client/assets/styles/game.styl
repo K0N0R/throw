@@ -24,40 +24,36 @@ canvas {
 	align-items center
 
 	&__scorer
-		position absolute
+		position fixed
 		top 40px
-		width 100%
+		left 0
+		width 100vw
 		text-align center
 		font-size 35px
 		font-weight 900
 		height 40px
 		line-height 40px
-		text-shadow 3px 3px 0px black
-
-		&__player
-			text-shadow 2px 2px 0px black
-			font-size 30px
+		text-shadow 2px 2px 0px black
+		white-space nowrap
 
 		&--left
 			color #e56e56
 
 		&--right
 			color #5689e5
-		
-		&--punchline
-			text-shadow 3px 3px 0px black
-			color white
 
 	&__scorer-user
-		position absolute
+		position fixed
 		top 80px
-		width 100%
+		left 0
+		width 100vw
 		text-align center
-		font-size 35px
+		font-size 25px
 		font-weight 900
 		height 40px
 		line-height 40px
-		text-shadow 3px 3px 0px black
+		text-shadow 2px 2px 0px black
+		white-space nowrap
 
 	&__score
 		display flex

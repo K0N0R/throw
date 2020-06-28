@@ -255,7 +255,7 @@ export class Room {
                     const teamWhoWon = this.scoreLeft > this.scoreRight
                         ? Team.Left : Team.Right;
                     this.onGameStateChange({ teamWhoWon });
-                     this.endGame(teamWhoWon);
+                    this.endGame(teamWhoWon);
                 } else {
                     this.scoreGolden = true;
                     this.onGameStateChange();

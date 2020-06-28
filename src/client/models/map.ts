@@ -69,21 +69,36 @@ export class Map {
         ];
     }
 
+    private getBckgrImagePoints(): IPos[] {
+        const points: IPos[] = [];
+        const imgSize = 256;
+        const maxX = Math.ceil(map_config[this.mapKind].outerSize.width/imgSize);
+        const maxY = Math.ceil(map_config[this.mapKind].outerSize.height/imgSize);
+        for (let i = 0; i <= maxX; i++) {
+            for (let j = 0; j <= maxY; j++) {
+                let x = i * imgSize;
+                if (x + imgSize > map_config[this.mapKind].outerSize.width) {
+                    x = map_config[this.mapKind].outerSize.width - imgSize;
+                }
+                let y = j * imgSize;
+                if (y + imgSize > map_config[this.mapKind].outerSize.height) {
+                    y = map_config[this.mapKind].outerSize.height - imgSize;
+                }
+                points.push({ x, y });
+            }
+        }
+        return points;
+    }
+
     public render(): void {
 
-
-        // background
         if (this.bcgrImg) {
-            const imgSize = 256;
-            const maxX = Math.ceil(map_config[this.mapKind].outerSize.width/imgSize);
-            const maxY = Math.ceil(map_config[this.mapKind].outerSize.height/imgSize);
             Canvas.startDraw();
             Canvas.ctx.moveTo(0, 0);
-            for (let i = 0; i < maxX; i++) {
-                for (let j = 0; j < maxY; j++) {
-                    Canvas.ctx.drawImage(this.bcgrImg, i * imgSize, j * imgSize);
-                }
-            }
+            const bckgrImagePoints = this.getBckgrImagePoints();
+            bckgrImagePoints.forEach(pos => {
+                Canvas.ctx.drawImage(this.bcgrImg, pos.x, pos.y);
+            });
             Canvas.stopDraw();
         }
 

@@ -135,13 +135,13 @@ export default function ConfigurationPage() {
                     <select class="room__foot__option__input"
                         value={kind}
                         onChange={onMovementKindChange}>
-                            {
-                                ...kinds.map(item =>
-                                    <option value={item} selected={item === kind}>
-                                        {item}
-                                    </option>
-                                )
-                            }
+                        {
+                            ...kinds.map(item =>
+                                <option value={item} selected={item === kind}>
+                                    {item}
+                                </option>
+                            )
+                        }
                     </select>
                 </div>
             </div>

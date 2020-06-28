@@ -20,7 +20,6 @@ export default function GamePage(room: ILobbyRoom) {
     const [scoreRight, setScoreRight] = useState(0);
     const [time, setTime] = useState(0);
     const [gameWon, setGameWon] = useState('');
-    const [gameWonMessage, setGameWonMessage] = useState('')
     const [scorer, setScorer] = useState('');
     const [scorerUser, setScorerUser] = useState<ILobbyUser | undefined>(void 0);
 
@@ -31,10 +30,10 @@ export default function GamePage(room: ILobbyRoom) {
         User.socket.on('room::user-left', onUserLeftRoom);
         User.socket.on('room::destroyed', onRoomDestroyed);
         return () => {
+            User.socket.off('game::state', onGameStateChanged);
             User.socket.off('room::changed', onRoomChanged);
             User.socket.off('room::user-left', onUserLeftRoom);
             User.socket.off('room::destroyed', onRoomDestroyed);
-            User.socket.off('game::state', onGameStateChanged);
         }
     }, []);
 
@@ -44,12 +43,9 @@ export default function GamePage(room: ILobbyRoom) {
         setScoreRight(gameState.scoreRight);
         setTime(gameState.time);
         if (gameState.teamWhoWon) {
-            showWon(gameState.teamWhoWon);
+            showWon(gameState.teamWhoWon, gameState.userWhoScored);
         } else if (gameState.teamWhoScored) {
-            showScorer(gameState.teamWhoScored);
-            if (gameState?.userWhoScored) {
-                showScorerUser(gameState.userWhoScored);
-            }
+            showScorer(gameState.teamWhoScored, gameState.userWhoScored);
         }
     }
 
@@ -60,6 +56,9 @@ export default function GamePage(room: ILobbyRoom) {
             breakGame();
         }
         setRoom(newValue);
+        if (newValue.playing) {
+            game?.updateAfkers(newValue.users);
+        }
     }
 
     const onUserLeftRoom = () => {
@@ -71,6 +70,7 @@ export default function GamePage(room: ILobbyRoom) {
     }
 
     const startGame = (newValue: ILobbyRoom) => {
+        (document.querySelector('#room') as HTMLElement)?.focus();
         game = new Game(newValue.mapKind);
         const loop = () => {
             gameAnimFrame = requestAnimationFrame(loop);
@@ -101,35 +101,20 @@ export default function GamePage(room: ILobbyRoom) {
         return `${minutes}:${seconds}`;
     }
     
-    const showWon = (team: Team) => {
+    const showWon = (team: Team, userWhoScored?: ILobbyUser) => {
         setGameWon(team);
-        setGameWonMessage(words[Math.floor(Math.random() * 7)])
+        setScorerUser(userWhoScored);
         setTimeout(() => {
             setGameWon('');
+            setScorerUser(void 0);
         }, game_config.endGameResetTimeout);
     }
 
-    const words = [
-        'THAT WAS PURE LUCK!',
-        'MAYBE REMATCH?',
-        'NOOB TEAM!',
-        'GOOD GAME!',
-        'TOO EASY!',
-        'NOT EVEN A CHALLENGE!',
-        'GO PLAY TETRIS!',
-        'YOU SUCK AND YOU KNOW IT!'
-    ];
-
-    const showScorer = (team: Team) => {
+    const showScorer = (team: Team, userWhoScored?: ILobbyUser) => {
         setScorer(team);
-        setTimeout(() => {
-            setScorer('');
-        }, game_config.goalResetTimeout);
-    }
-
-    const showScorerUser = (userWhoScored: ILobbyUser) => {
         setScorerUser(userWhoScored);
         setTimeout(() => {
+            setScorer('');
             setScorerUser(void 0);
         }, game_config.goalResetTimeout);
     }
@@ -139,13 +124,11 @@ export default function GamePage(room: ILobbyRoom) {
             {gameWon === Team.Left &&
                 <div class="game-state__scorer game-state__scorer--left">
                     RED TEAM WON THE GAME!
-                    <div class="game-state__scorer--punchline">{gameWonMessage}</div>
                 </div>
             }
             {gameWon === Team.Right &&
                 <div class="game-state__scorer game-state__scorer--right">
                     BLUE TEAM WON THE GAME!
-                    <div class="game-state__scorer--punchline">{gameWonMessage}</div>
                 </div>
             }
             {scorer === Team.Left &&
@@ -160,9 +143,9 @@ export default function GamePage(room: ILobbyRoom) {
             }
             {scorerUser &&
                 <div class="game-state__scorer-user">
-                    <div className={`game-state__scorer__player ${scorerUser.team === Team.Left ? 'game-state__scorer--left' : 'game-state__scorer--right'}`}>
+                    <div className={`${scorerUser.team === Team.Left ? 'game-state__scorer--left' : 'game-state__scorer--right'}`}>
                         {scorerUser.avatar} {scorerUser.nick}
-                        {scorer === scorerUser.team ? ' - scored goal! ' : ' - scored own goal :('}
+                        {(scorer && scorer === scorerUser.team) || (gameWon && gameWon === scorerUser.team) ? ' - scored goal! ' : ' - scored own goal :('}
                     </div>
                 </div>
             }

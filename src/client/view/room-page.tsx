@@ -275,7 +275,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                     <div class="room__game"
                         id="game"
                         style={state.room.playing && !state.configOverlayOnTop ? '' : 'display:none;'}>
-                        <GamePage room={state.room}></GamePage>
+                        <GamePage {...state.room} ></GamePage>
                     </div>
                     <div class="dialog room__configuration"
                         style={state.room.playing && !state.configOverlayOnTop ? 'display:none;' : ''}>
