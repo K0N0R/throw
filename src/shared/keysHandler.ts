@@ -23,7 +23,7 @@ export interface KeysConfiguration {
 }
 
 export class KeysHandler {
-    public static configuration: KeysConfiguration
+    public static configuration: KeysConfiguration;
 
     public static defaultConfiguration: KeysConfiguration = {
         up: 'ArrowUp',

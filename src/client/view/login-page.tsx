@@ -28,7 +28,7 @@ export default function LoginPage() {
                 <input
                     value={nick}
                     maxLength={nickMaxLength}
-                    onInput={(e) => setNick((e.target as HTMLInputElement).value).slice(0, nickMaxLength)}/>
+                    onInput={(e) => setNick((e.target as HTMLInputElement).value).toString().slice(0, nickMaxLength)}/>
             </div>
             <div class="form-field form-field--avatar">
                 <label>Avatar</label>
@@ -56,7 +56,7 @@ export default function LoginPage() {
                     Where do i find cool avatar?
             </a>
             <button
-                class="form-btn form-btn-submit"
+                class="form-btn form-btn-submit form-btn-submit--primary"
                 onClick={onConfirm}>
                 Throw!
             </button>

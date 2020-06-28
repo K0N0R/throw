@@ -1,4 +1,4 @@
-import * as p2 from 'p2';
+import p2 from 'p2';
 
 import { IPos } from './../../shared/model';
 import { getCornerPoints } from './../../shared/vertices';
