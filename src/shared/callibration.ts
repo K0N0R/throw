@@ -1,7 +1,6 @@
 import { ISize } from './model';
-import { Camera } from './../client/models/camera';
 
-const scale = 1;
+const scale = 2;
 
 //#region MAP CONFIG
 export enum MapKind {
@@ -126,8 +125,8 @@ export enum CameraKind {
     Far = 'Far'
 }
 const cameraBaseSize: ISize = {
-    width: 1280,
-    height: 586
+    width: 1280 * scale,
+    height: 586 * scale
 }
 
 export const game_config = {
