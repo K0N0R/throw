@@ -1,6 +1,7 @@
 import { h } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { KeysHandler, KeysConfiguration } from './../../shared/keysHandler';
+import { useLocalStorage } from './hooks';
 
 enum MovementKind {
     WSAD = "WSAD", 
@@ -10,6 +11,7 @@ enum MovementKind {
 
 export default function ConfigurationPage() {
 
+    const [keysConfig, setKeysConfig] = useLocalStorage('throw_config', '');
     const [shoot, setShoot] = useState('');
     const [dash, setDash] = useState('');
     const [up, setUp] = useState('');
@@ -20,12 +22,12 @@ export default function ConfigurationPage() {
     const [kinds, setKinds] = useState<MovementKind[]>([]);
 
     useEffect(() => {
-        setShoot(KeysHandler.configuration.shoot);
-        setDash(KeysHandler.configuration.dash);
-        setUp(KeysHandler.configuration.up);
-        setDown(KeysHandler.configuration.down);
-        setLeft(KeysHandler.configuration.left);
-        setRight(KeysHandler.configuration.right);
+        setShoot(keysConfig.shoot ?? KeysHandler.configuration.shoot);
+        setDash(keysConfig.dash ?? KeysHandler.configuration.dash);
+        setUp(keysConfig.up ?? KeysHandler.configuration.up);
+        setDown(keysConfig.down ?? KeysHandler.configuration.down);
+        setLeft(keysConfig.left ?? KeysHandler.configuration.left);
+        setRight(keysConfig.right ?? KeysHandler.configuration.right);
         setKinds([
             MovementKind.ARROW,
             MovementKind.WSAD,
@@ -43,7 +45,7 @@ export default function ConfigurationPage() {
                 left,
                 right,
             };
-            window.localStorage.setItem('throw_config', JSON.stringify(config));
+            setKeysConfig('throw_config', JSON.stringify(config));
             KeysHandler.setConfiguration();
             destroy();
        }
