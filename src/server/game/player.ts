@@ -1,4 +1,4 @@
-import * as p2 from 'p2';
+import p2 from 'p2';
 
 import { calculateVectorLength, normalizeVector, getNormalizedVector } from './../../shared/vector';
 import { player_config } from './../../shared/callibration';

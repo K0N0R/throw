@@ -9,8 +9,6 @@ import { Lobby } from './lobby/lobby';
 const app = express();
 const httpServer = http.createServer(app);
 const io = socketIO(httpServer);
-
-const ENV = process.argv.find((arg) => arg.includes('dist')) ? 'production' : 'development';
 const bundler = new Bundler(path.resolve(__dirname, '../client/index.html'));
 
 app.use(bundler.middleware());

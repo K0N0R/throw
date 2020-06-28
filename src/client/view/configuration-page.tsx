@@ -1,4 +1,4 @@
-import { h, Component, render } from 'preact';
+import { h, Component } from 'preact';
 import { KeysHandler, KeysConfiguration } from './../../shared/keysHandler';
 
 enum MovementKind {
