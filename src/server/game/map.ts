@@ -22,8 +22,8 @@ export class Map {
     public constructor(private mapKind: MapKind, material: p2.Material) {
 
         this.pos = {
-            x: map_config[this.mapKind].border,
-            y: map_config[this.mapKind].border
+            x: map_config[this.mapKind].border.side,
+            y: map_config[this.mapKind].border.upDown
         };
 
         this.outerPos = {
@@ -131,16 +131,16 @@ export class Map {
         const offset = getOffset(pos, map_config[this.mapKind].size); // convex use relative position to body
         const mapTickness = 10;
         return [
-            [offset.left - map_config[this.mapKind].border - mapTickness, offset.top - map_config[this.mapKind].border], // top left corner
-            [offset.right + map_config[this.mapKind].border, offset.top - map_config[this.mapKind].border], // top right corner
-            [offset.right + map_config[this.mapKind].border, offset.bottom + map_config[this.mapKind].border], // bot right corner
-            [offset.left - map_config[this.mapKind].border, offset.bottom + map_config[this.mapKind].border], // bot left corner
-            [offset.left - map_config[this.mapKind].border, offset.top - map_config[this.mapKind].border + 1], // connector
-            [offset.left - map_config[this.mapKind].border - mapTickness, offset.top - map_config[this.mapKind].border + 1], // connector outer
-            [offset.left - map_config[this.mapKind].border - mapTickness, offset.bottom + map_config[this.mapKind].border + mapTickness], // bot left outer corner
-            [offset.right + map_config[this.mapKind].border + mapTickness, offset.bottom + map_config[this.mapKind].border + mapTickness], // bot right outer corner
-            [offset.right + map_config[this.mapKind].border + mapTickness, offset.top - map_config[this.mapKind].border - mapTickness], // top right outer corner
-            [offset.left - map_config[this.mapKind].border - mapTickness, offset.top - map_config[this.mapKind].border - mapTickness], // top left outer corner
+            [offset.left - map_config[this.mapKind].border.side - mapTickness, offset.top - map_config[this.mapKind].border.upDown], // top left corner
+            [offset.right + map_config[this.mapKind].border.side, offset.top - map_config[this.mapKind].border.upDown], // top right corner
+            [offset.right + map_config[this.mapKind].border.side, offset.bottom + map_config[this.mapKind].border.upDown], // bot right corner
+            [offset.left - map_config[this.mapKind].border.side, offset.bottom + map_config[this.mapKind].border.upDown], // bot left corner
+            [offset.left - map_config[this.mapKind].border.side, offset.top - map_config[this.mapKind].border.upDown + 1], // connector
+            [offset.left - map_config[this.mapKind].border.side - mapTickness, offset.top - map_config[this.mapKind].border.upDown + 1], // connector outer
+            [offset.left - map_config[this.mapKind].border.side - mapTickness, offset.bottom + map_config[this.mapKind].border.upDown + mapTickness], // bot left outer corner
+            [offset.right + map_config[this.mapKind].border.side + mapTickness, offset.bottom + map_config[this.mapKind].border.upDown + mapTickness], // bot right outer corner
+            [offset.right + map_config[this.mapKind].border.side + mapTickness, offset.top - map_config[this.mapKind].border.upDown - mapTickness], // top right outer corner
+            [offset.left - map_config[this.mapKind].border.side - mapTickness, offset.top - map_config[this.mapKind].border.upDown - mapTickness], // top left outer corner
         ];
     }
 

@@ -15,7 +15,10 @@ interface IMapConfigValue {
     cornerPointsAmount: number;
     cornerRadius: number;
     middleRadius: number;
-    border: number;
+    border: {
+        side: number;
+        upDown: number;
+    };
     goal: {
         size: ISize;
         postRadius: number;
@@ -67,8 +70,8 @@ const generateMapConfig: () => IMapConfig = () => {
             }
         },
         [MapKind.ROUNDED_BIG]: {
-            height: 586 * 1.5,
-            width: 1280 * 1.5,
+            height: 586 * 1.45,
+            width: 1280 * 1.45,
             goal: {
                 height: 220 * 1.2,
                 width: 65,
@@ -84,7 +87,8 @@ const generateMapConfig: () => IMapConfig = () => {
     let enumMapSizes: any = {};
     for (let key in config) {
         if (!config[key]) return;
-        const border = config[key].goal.width * 2 * scale;
+        const upDownBorder = config[key].player.radius * 1.5 * 2 * scale;
+        const sideBorder = config[key].player.radius * 1.5 * 2 * scale + config[key].goal.width * scale;
         enumMapSizes[key] = {
             goal: {
                 size: {
@@ -106,10 +110,13 @@ const generateMapConfig: () => IMapConfig = () => {
                 width: config[key].width * scale
             },
             outerSize: {
-                height: (config[key].height * scale) + border * 2,
-                width: (config[key].width * scale) + border * 2
+                height: (config[key].height * scale) + upDownBorder * 2,
+                width: (config[key].width * scale) + sideBorder * 2
             },
-            border: border,
+            border: {
+                side: sideBorder,
+                upDown: upDownBorder
+            },
             cornerPointsAmount: 16 * scale,
             cornerRadius: config[key].height / 6 * scale,
             middleRadius: config[key].height / 5 * scale,
@@ -135,16 +142,16 @@ export const game_config = {
     interval: 1000/60,
     camera: {
         [CameraKind.Close]: {
-            width: cameraBaseSize.width * 1.1,
-            height: cameraBaseSize.height * 1.1
+            width: cameraBaseSize.width * 1.2,
+            height: cameraBaseSize.height * 1.2
         },
         [CameraKind.Medium]: {
-            width: cameraBaseSize.width * 1.3,
-            height: cameraBaseSize.height * 1.3
+            width: cameraBaseSize.width * 1.4,
+            height: cameraBaseSize.height * 1.4
         },
         [CameraKind.Far]: {
-            width: cameraBaseSize.width * 1.5,
-            height: cameraBaseSize.height * 1.5
+            width: cameraBaseSize.width * 1.6,
+            height: cameraBaseSize.height * 1.6
         }
     },
     ball: {

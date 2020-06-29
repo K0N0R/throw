@@ -13,8 +13,8 @@ export class Map {
     public constructor(private mapKind: MapKind) {
 
         this.pos = {
-            x: map_config[this.mapKind].border,
-            y: map_config[this.mapKind].border
+            x: map_config[this.mapKind].border.side,
+            y: map_config[this.mapKind].border.upDown
         };
 
         this.outerPos = {

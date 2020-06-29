@@ -11,7 +11,7 @@ export class LeftGoal {
     private bottomPostPosition: IPos;
 
     public constructor(private mapKind: MapKind) {
-        this.pos = { x: map_config[this.mapKind].border - (map_config[this.mapKind].goal.size.width), y: (map_config[this.mapKind].outerSize.height / 2) - (map_config[this.mapKind].goal.size.height / 2) };
+        this.pos = { x: map_config[this.mapKind].border.side - (map_config[this.mapKind].goal.size.width), y: (map_config[this.mapKind].outerSize.height / 2) - (map_config[this.mapKind].goal.size.height / 2) };
         this.topPostPosition = { x: this.pos.x + map_config[this.mapKind].goal.size.width, y: this.pos.y };
         this.bottomPostPosition = { x: this.pos.x + map_config[this.mapKind].goal.size.width, y: this.pos.y + map_config[this.mapKind].goal.size.height };
     }

@@ -18,7 +18,7 @@ export class LeftGoal {
 
     public constructor(private mapKind: MapKind, material: p2.Material, postMaterial: p2.Material) {
         this.pos = {
-            x: map_config[this.mapKind].border - map_config[this.mapKind].goal.size.width,
+            x: map_config[this.mapKind].border.side - map_config[this.mapKind].goal.size.width,
             y: (map_config[this.mapKind].outerSize.height / 2) - (map_config[this.mapKind].goal.size.height / 2)
         };
 
