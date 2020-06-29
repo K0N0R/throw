@@ -281,8 +281,9 @@ export class Game {
                 const playerPos = { x: player.body.position[0], y: player.body.position[1] };
                 const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
                 const minDistance = map_config[this.mapKind].player.radius + map_config[this.mapKind].ball.radius;
-                const shootingDistance = 5;
+                const shootingDistance = game_config.player.shootingDistance;
                 if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
+                    this.userWhoLastTouchedBall = player.user;
                     player.shoot();
                     const shootingVector = getNormalizedVector(
                         { x: player.body.position[0], y: player.body.position[1] },

@@ -157,6 +157,7 @@ export const game_config = {
         movementSpeed: 3000 * scale,
         shootingMovementSpeed: 1750 * scale,
         shooting: 125000 * scale,
+        shootingDistance: 5 * scale,
         shootingCooldown: 100,
         dashing: 1250,
         dashDuration: 200,
