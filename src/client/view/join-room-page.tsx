@@ -2,18 +2,18 @@ import { h } from 'preact';
 import LobbyPage from './lobby-page';
 import RoomPage from './room-page';
 import { User } from '../models/socket';
-import { ILobbyRoom, ILobbyRoomListItem } from './../../shared/events';
+import { IRoom, IRoomState } from './../../shared/events';
 import { useState } from 'preact/hooks';
 import { goTo } from './utils';
 
-export default function JoinRoomPage(room: ILobbyRoomListItem) {
+export default function JoinRoomPage(room: IRoom) {
     const [password, setPassword] = useState('');
 
     const onConfirm = () => {
         User.socket.emit('room::join', { id: room.id, password });
-        User.socket.on('room::user-joined', (room: ILobbyRoom) => {
-            goTo(<RoomPage room={room}/>);
-            User.socket.off('room::user-joined');
+        User.socket.on('room::user::joined', (roomState: IRoomState) => {
+            goTo(<RoomPage {...roomState}/>);
+            User.socket.off('room::user::joined');
         });
     }
 

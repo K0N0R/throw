@@ -87,8 +87,8 @@ const generateMapConfig: () => IMapConfig = () => {
     let enumMapSizes: any = {};
     for (let key in config) {
         if (!config[key]) return;
-        const upDownBorder = config[key].player.radius * 1.5 * 2 * scale;
-        const sideBorder = config[key].player.radius * 1.5 * 2 * scale + config[key].goal.width * scale;
+        const upDownBorder = config[key].player.radius * 1.3 * 2 * scale;
+        const sideBorder = config[key].player.radius * 2 * scale + config[key].goal.width * scale;
         enumMapSizes[key] = {
             goal: {
                 size: {

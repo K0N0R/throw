@@ -3,62 +3,80 @@ import { h } from 'preact';
 import { Game } from '../models/game';
 
 import { KeysHandler } from './../../shared/keysHandler'
-import { ILobbyRoom, IGameState } from '../../shared/events';
+import { IRoom, IRoomGameScore } from '../../shared/events';
 import { User } from './../models/socket';
 import { Team } from '../../shared/team';
 import { game_config } from './../../shared/callibration';
 import { useState, useEffect } from 'preact/hooks';
-import { ILobbyUser } from './../../shared/events';
+import { IRoomUser, IRoomGameParams, IRoomGameState } from './../../shared/events';
 
-export default function GamePage(room: ILobbyRoom) {
+interface IRoomComponentState {
+    gameRunning: boolean;
+    gameState: IRoomGameState;
+    gameParams: IRoomGameParams;
+}
+
+export default function GamePage(props: IRoomComponentState) {
     let game: Game | null = null;
     let gameAnimFrame: number;
     let gameKeysInterval: any;
-    const [, setRoom] = useState<ILobbyRoom | null>(null);
-    const [scoreGolden, setScoreGolden] = useState(false);
-    const [scoreLeft, setScoreLeft] = useState(0);
-    const [scoreRight, setScoreRight] = useState(0);
-    const [time, setTime] = useState(0);
+    const [state, setState] = useState(props);
+    const [scoreGolden, setScoreGolden] = useState(state.gameState.golden);
+    const [scoreLeft, setScoreLeft] = useState(state.gameState.left);
+    const [scoreRight, setScoreRight] = useState(state.gameState.right);
+    const [time, setTime] = useState(state.gameState.time);
     const [gameWon, setGameWon] = useState('');
-    const [scorer, setScorer] = useState('');
-    const [scorerUser, setScorerUser] = useState<ILobbyUser | undefined>(void 0);
+    const [scorerTeam, setScorerTeam] = useState('');
+    const [scorerUser, setScorerUser] = useState<IRoomUser | undefined>(void 0);
 
     useEffect(() => {
-        onRoomChanged(room);
-        User.socket.on('game::state', onGameStateChanged);
-        User.socket.on('room::changed', onRoomChanged);
-        User.socket.on('room::user-left', onUserLeftRoom);
+       setState(props);
+   }, [props])
+
+    useEffect(() => {
+        const gameTimeout = setTimeout(() => {
+            if (state.gameRunning) startGame();
+        });
+        User.socket.on('room::game::started', onGameStarted);
+        User.socket.on('room::game::stopped', onGameStopped);
+        User.socket.on('room::game::state', onGameStateChanged);
+        User.socket.on('room::game::winner', onGameWinner);
+        User.socket.on('room::game::scorer', onGameScorer);
+        User.socket.on('room::user::left', onUserLeftRoom);
         User.socket.on('room::destroyed', onRoomDestroyed);
         return () => {
-            User.socket.off('game::state', onGameStateChanged);
-            User.socket.off('room::changed', onRoomChanged);
-            User.socket.off('room::user-left', onUserLeftRoom);
+            clearTimeout(gameTimeout);
+            User.socket.off('room::game::started', onGameStarted);
+            User.socket.off('room::game::stopped', onGameStopped);
+            User.socket.off('room::game::state', onGameStateChanged);
+            User.socket.off('room::game::winner', onGameWinner);
+            User.socket.off('room::game::scorer', onGameScorer);
+            User.socket.off('room::user::left', onUserLeftRoom);
             User.socket.off('room::destroyed', onRoomDestroyed);
         }
     }, []);
 
-    const onGameStateChanged = (gameState: IGameState) => {
-        setScoreGolden(gameState.scoreGolden);
-        setScoreLeft(gameState.scoreLeft);
-        setScoreRight(gameState.scoreRight);
-        setTime(gameState.time);
-        if (gameState.teamWhoWon) {
-            showWon(gameState.teamWhoWon, gameState.userWhoScored);
-        } else if (gameState.teamWhoScored) {
-            showScorer(gameState.teamWhoScored, gameState.userWhoScored);
-        }
+    const onGameStarted = () => {
+        startGame();
     }
 
-    const onRoomChanged = (newValue: ILobbyRoom) => {
-        if (newValue.playing && !game) {
-            startGame(newValue);
-        } else if (!newValue.playing && game) {
-            breakGame();
-        }
-        setRoom(newValue);
-        if (newValue.playing) {
-            game?.updateAfkers(newValue.users);
-        }
+    const onGameStopped = () => {
+        breakGame();
+    }
+
+    const onGameStateChanged = (gameState: IRoomGameState) => {
+        setScoreGolden(gameState.golden);
+        setScoreLeft(gameState.left);
+        setScoreRight(gameState.right);
+        setTime(gameState.time);
+    }
+
+    const onGameWinner = (data: Team) => {
+        showWon(data);
+    }
+
+    const onGameScorer = (data: IRoomGameScore) => {
+        showScorer(data.team, data.scorer);
     }
 
     const onUserLeftRoom = () => {
@@ -69,14 +87,14 @@ export default function GamePage(room: ILobbyRoom) {
         breakGame();
     }
 
-    const startGame = (newValue: ILobbyRoom) => {
+    const startGame = () => {
+        if (!state.gameParams.mapKind) return;
+        if (game) return;
         (document.querySelector('#room') as HTMLElement)?.focus();
-        game = new Game(newValue.mapKind);
+        game = new Game(state.gameParams.mapKind);
         const loop = () => {
             gameAnimFrame = requestAnimationFrame(loop);
-            if (game) {
-                game.run();
-            }
+            game?.run()
         }
         loop();
         gameKeysInterval = setInterval(() => {
@@ -101,20 +119,18 @@ export default function GamePage(room: ILobbyRoom) {
         return `${minutes}:${seconds}`;
     }
     
-    const showWon = (team: Team, userWhoScored?: ILobbyUser) => {
+    const showWon = (team: Team) => {
         setGameWon(team);
-        setScorerUser(userWhoScored);
         setTimeout(() => {
             setGameWon('');
-            setScorerUser(void 0);
         }, game_config.endGameResetTimeout);
     }
 
-    const showScorer = (team: Team, userWhoScored?: ILobbyUser) => {
-        setScorer(team);
-        setScorerUser(userWhoScored);
+    const showScorer = (team: Team, scorer?: IRoomUser) => {
+        setScorerTeam(team);
+        setScorerUser(scorer);
         setTimeout(() => {
-            setScorer('');
+            setScorerTeam('');
             setScorerUser(void 0);
         }, game_config.goalResetTimeout);
     }
@@ -122,21 +138,21 @@ export default function GamePage(room: ILobbyRoom) {
     return (
         <div class="game-state">
             {gameWon === Team.Left &&
-                <div class="game-state__scorer game-state__scorer--left">
+                <div class="game-state__winning-team game-state__scorer--left">
                     RED TEAM WON THE GAME!
                 </div>
             }
             {gameWon === Team.Right &&
-                <div class="game-state__scorer game-state__scorer--right">
+                <div class="game-state__winning-team game-state__scorer--right">
                     BLUE TEAM WON THE GAME!
                 </div>
             }
-            {scorer === Team.Left &&
+            {scorerTeam === Team.Left &&
                 <div class="game-state__scorer game-state__scorer--left">
                     Red team scores!
                 </div>
             }
-            {scorer === Team.Right &&
+            {scorerTeam === Team.Right &&
                 <div class="game-state__scorer game-state__scorer--right">
                     Blue team scores!
                 </div>
@@ -145,7 +161,7 @@ export default function GamePage(room: ILobbyRoom) {
                 <div class="game-state__scorer-user">
                     <div className={`${scorerUser.team === Team.Left ? 'game-state__scorer--left' : 'game-state__scorer--right'}`}>
                         {scorerUser.avatar} {scorerUser.nick}
-                        {(scorer && scorer === scorerUser.team) || (gameWon && gameWon === scorerUser.team) ? ' - scored goal! ' : ' - scored own goal :('}
+                        {(scorerTeam && scorerTeam === scorerUser.team) || (gameWon && gameWon === scorerUser.team) ? ' - scored goal! ' : ' - scored own goal :('}
                     </div>
                 </div>
             }

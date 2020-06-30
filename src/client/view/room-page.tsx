@@ -1,5 +1,5 @@
 import { h, Component, render } from 'preact';
-import { ILobbyRoom, IRoomDataMessage as IRoomMessage } from './../../shared/events';
+import { IRoomUser, IRoomGameParams, IRoomMessage, IRoom, IRoomState } from './../../shared/events';
 import { User } from '../models/socket';
 import { Team } from '../../shared/team';
 import GamePage from './game-page';
@@ -9,15 +9,17 @@ import LobbyPage from './lobby-page';
 import { KeysHandler } from '../../shared/keysHandler';
 import { MapKind } from '../../shared/callibration';
 
-interface IRoomState {
-    room: ILobbyRoom;
+interface IRoomComponentState {
+    users: IRoomUser[];
+    gameRunning: boolean;
+    gameParams: IRoomGameParams;
     messages: IRoomMessage[];
     messageToSend: string;
     mapKinds: MapKind[];
     configOverlayOnTop: boolean;
 }
 
-export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState> {
+export default class RoomPage extends Component<IRoomState, IRoomComponentState> {
     //#region hooks
     componentDidMount() {
         const config =  { ... KeysHandler.configuration };
@@ -41,10 +43,15 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
             MapKind.ROUNDED_MEDIUM,
             MapKind.ROUNDED_BIG
         ]
-        this.setState({ messages: initMessages, mapKinds: initMapKinds });
+        this.setState({
+            users: this.props.users,
+            gameParams: this.props.gameParams,
+            gameRunning: this.props.gameRunning,
+            messages: initMessages,
+            mapKinds: initMapKinds
+        });
         this.bindSocket();
 
-        this.onRoomChanged(this.props.room);
         setTimeout(() => {
             (document.querySelector('#room') as HTMLElement)?.focus();
         });
@@ -53,20 +60,62 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
 
     //#region init
     bindSocket(): void {
-        const onRoomChanged = (room: ILobbyRoom) => {
-            this.onRoomChanged(room);
+
+        const onUserChange = (user: IRoomUser) => {
+            const idx = this.state.users.findIndex(item => item.socketId === user.socketId);
+            if (idx === -1) return;
+            this.state.users[idx].team = user.team;
+            this.forceUpdate();
         };
-        User.socket.on('room::changed', onRoomChanged);
+        User.socket.on('room::user::changed-team', onUserChange);
+
+        const onUserAdd = (user: IRoomUser) => {
+            const idx = this.state.users.findIndex(item => item.socketId === user.socketId);
+            if (idx !== -1) return;
+            this.state.users.push(user);
+            this.forceUpdate();
+        };
+        User.socket.on('room::user::add', onUserAdd);
+
+        const onUserLeftRoom = (user: IRoomUser) => {
+            if (User.socket.id === user.socketId) {
+                this.onUserLeftRoom();
+            } else {
+                const idx = this.state.users.findIndex(item => item.socketId === user.socketId);
+                if (idx === -1) return;
+                this.state.users.splice(idx, 1);
+                this.forceUpdate();
+            }
+        };
+        User.socket.on('room::user::left', onUserLeftRoom);
+
+        const onGameParamsState = (data: IRoomGameParams) => {
+            if (data.mapKind != null) {
+                this.state.gameParams.mapKind = data.mapKind;
+            }
+            if (data.scoreLimit != null) {
+                this.state.gameParams.scoreLimit = data.scoreLimit;
+            }
+            if (data.timeLimit != null) {
+                this.state.gameParams.timeLimit = data.timeLimit;
+            }
+        }
+        User.socket.on('room::game::params-state', onGameParamsState)
+
         const onNewMessage = (message: IRoomMessage) => {
             this.addNewMessage(message);
         }
-        User.socket.on('room::new-message', onNewMessage)
+        User.socket.on('room::user::messaged', onNewMessage)
 
-        const onUserLeftRoom = () => {
-            this.onUserLeftRoom();
-            onDispose();
-        };
-        User.socket.on('room::user-left', onUserLeftRoom);
+        const onGameStart = () => {
+            this.setState({ gameRunning: true });
+        }
+        User.socket.on('room::game::started', onGameStart)
+
+        const onGameStop = () => {
+            this.setState({ gameRunning: false });
+        }
+        User.socket.on('room::game::stopped', onGameStop)
 
         const onRoomDestroyed = () => {
             this.onRoomDestroy();
@@ -75,24 +124,20 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
         User.socket.on('room::destroyed', onRoomDestroyed);
 
         const onDispose = () => {
-            User.socket.off('room::changed', onRoomChanged);
-            User.socket.off('room::new-message', onRoomChanged);
-            User.socket.off('room::user-left', onUserLeftRoom);
+            User.socket.off('room::user::changed-team', onUserChange);
+            User.socket.off('room::user::add', onUserAdd);
+            User.socket.off('room::user::left', onUserLeftRoom);
+            User.socket.off('room::user::messaged', onNewMessage);
             User.socket.off('room::destroyed', onRoomDestroyed);
         };
     }
 
-    updateRoom(): void {
-        User.socket.emit('room::update', this.state.room);
-    }
-
-    onRoomChanged(newValue: ILobbyRoom): void {
-        this.setState({ room: newValue });
-        this.forceUpdate();
+    setRoomState(roomState: IRoomState): void {
+        this.setState({...roomState});
     }
 
     leaveRoom(): void {
-        User.socket.emit('room::user-leave');
+        User.socket.emit('room::user::leave');
     }
     onUserLeftRoom(): void {
         goTo(<LobbyPage/>);
@@ -101,93 +146,91 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     onRoomDestroy(): void {
         goTo(<LobbyPage/>);
     }
+
     //#endregion
 
     //#region params change
     onTimeLimitChange(e: any): void {
-        this.state.room.timeLimit = e.target.value;
-        this.updateRoom();
+        this.state.gameParams.timeLimit = e.target.value;
+        User.socket.emit('room::game::params', { timeLimit: this.state.gameParams.timeLimit });
     };
     
     onScoreLimitChange(e: any): void {
-        this.state.room.scoreLimit = e.target.value;
-        this.updateRoom();
+        this.state.gameParams.scoreLimit = e.target.value;
+        User.socket.emit('room::game::params', { scoreLimit: this.state.gameParams.scoreLimit });
     };
 
     onMapKindChange(e: any): void {
-        this.state.room.mapKind = e.target.value;
-        this.updateRoom();
+        this.state.gameParams.mapKind = e.target.value;
+        User.socket.emit('room::game::params', { mapKind: this.state.gameParams.mapKind });
     };
     //#endregion
 
     //#region user team change
     drag(ev, user): void {
-        if (this.state.room.adminId !== User.socket.id) return;
+        if (this.props.room.adminId !== User.socket.id) return;
         ev.dataTransfer.setData('userId', user.socketId);
     }
 
     dragOver(ev): void {
-        if (this.state.room.adminId !== User.socket.id) return;
+        if (this.props.room.adminId !== User.socket.id) return;
         ev.preventDefault();
     }
 
     drop(ev, team): void {
-        if (this.state.room.adminId !== User.socket.id) return;
+        if (this.props.room.adminId !== User.socket.id) return;
         ev.preventDefault();
         const userId = ev.dataTransfer.getData('userId')
-        const user = this.state.room.users.find(user => user.socketId === userId);
+        const user = this.state.users.find(user => user.socketId === userId);
         if (!user) return;
         user.team = team;
-        this.updateRoom();
+        User.socket.emit('room::user::change-team', user);
     }
 
     rand(): void {
-        if (this.state.room.adminId !== User.socket.id) return;
-        if (this.state.room) {
-            const users = this.state.room.users;
-            users.forEach(user => user.team = Team.Spectator);
-            const teamMax = Math.ceil(users.length / 2);
-            users.forEach(user => {
-                const rand = Math.random();
-                if (rand > 0.5) {
-                    if (users.filter(user => user.team === Team.Left).length < teamMax) {
-                        user.team = Team.Left;
-                    } else {
-                        user.team = Team.Right;
-                    }
+        if (this.props.room.adminId !== User.socket.id) return;
+        const users = this.state.users;
+        users.forEach(user => user.team = Team.Spectator);
+        const teamMax = Math.ceil(users.length / 2);
+        users.forEach(user => {
+            const rand = Math.random();
+            if (rand > 0.5) {
+                if (users.filter(user => user.team === Team.Left).length < teamMax) {
+                    user.team = Team.Left;
                 } else {
-                    if (users.filter(user => user.team === Team.Right).length < teamMax) {
-                        user.team = Team.Right;
-                    } else {
-                        user.team = Team.Left;
-                    }
+                    user.team = Team.Right;
                 }
-            });
-            this.updateRoom();
-        }
+            } else {
+                if (users.filter(user => user.team === Team.Right).length < teamMax) {
+                    user.team = Team.Right;
+                } else {
+                    user.team = Team.Left;
+                }
+            }
+            User.socket.emit('room::user::change-team', user);
+        });
+
     }
 
     reset(): void {
-        if (this.state.room.adminId !== User.socket.id) return;
-        this.state.room.users.forEach((user) => {
+        if (this.props.room.adminId !== User.socket.id) return;
+        this.state.users.forEach((user) => {
             user.team = Team.Spectator;
+            User.socket.emit('room::user::change-team', user);
         });
-        this.updateRoom();
     }
     //#endregion
 
     //#region game
     startGame(): void {
-        if (this.state.room.adminId !== User.socket.id) return;
-        this.state.room.playing = true;
-        this.updateRoom();
+        if (this.props.room.adminId !== User.socket.id) return;
+        User.socket.emit('room::game::start');
     }
 
     endGame(): void {
-        if (this.state.room.adminId !== User.socket.id) return;
-        this.state.room.playing = false;
+        if (this.props.room.adminId !== User.socket.id) return;
+        User.socket.emit('room::game::stop');
         this.setState({ configOverlayOnTop: false});
-        this.updateRoom();
     }
     //#endregion
 
@@ -216,30 +259,30 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     }
 
     onMessageBoxFocus(e): void {
-        const user = this.state.room.users.find(user => user.socketId === User.socket.id);
+        const user = this.state.users.find(user => user.socketId === User.socket.id);
         if (!user) return;
         user.afk = true;
         User.afk = true;
-        this.updateRoom();
+        User.socket.emit('room::user::afk', user.afk);
     }
 
     onMessageBoxBlur(e): void {
-        const user = this.state.room.users.find(user => user.socketId === User.socket.id);
+        const user = this.state.users.find(user => user.socketId === User.socket.id);
         if (!user) return;
         user.afk = false;
         User.afk = false;
-        this.updateRoom();
+        User.socket.emit('room::user::afk', user.afk);
     }
 
     sendMessage(): void {
         if (!this.state.messageToSend) return;
-        User.socket.emit('room::user-message', { nick: User.nick, avatar: User.avatar, value: this.state.messageToSend });
+        User.socket.emit('room::user::message', { nick: User.nick, avatar: User.avatar, value: this.state.messageToSend });
         this.setState({ messageToSend: ''});
     }
 
     onLobbyKey(e): void {
         if (e.code === 'Escape') {
-            if (this.state.room.playing) {
+            if (this.state.gameRunning) {
                 this.setState({ configOverlayOnTop: !this.state.configOverlayOnTop});
             }
         }
@@ -258,9 +301,9 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
     }
     //#endregion
 
-    render(_, state: IRoomState) {
-        if (!state.room) return;
-        const isUserAdmin = state.room.adminId === User.socket.id;
+    render(props: IRoomState, state: IRoomComponentState) {
+        if (!this.state.gameParams) return;
+        const isUserAdmin = props.room.adminId === User.socket.id;
         return (
             <div class="room">
                 <button class="room__config-button form-btn form-btn--small form-btn--accent"
@@ -274,15 +317,15 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                     onKeyDown={(e) => this.onLobbyKey(e)}>
                     <div class="room__game"
                         id="game"
-                        style={state.room.playing && !state.configOverlayOnTop ? '' : 'display:none;'}>
-                        <GamePage {...state.room} ></GamePage>
+                        style={state.gameRunning && !state.configOverlayOnTop ? '' : 'display:none;'}>
+                        <GamePage { ...{ gameRunning: props.gameRunning, gameState: props.gameState, gameParams: state.gameParams}} ></GamePage>
                     </div>
                     <div class="dialog room__configuration"
-                        style={state.room.playing && !state.configOverlayOnTop ? 'display:none;' : ''}>
+                        style={state.gameRunning && !state.configOverlayOnTop ? 'display:none;' : ''}>
 
                         <div class="room__head">
                             <div class="room__head__title">
-                                {state.room.name}
+                                {props.room.name}
                             </div>
                             <div class="room__head__row">
                                 <button class="form-btn form-btn--small"
@@ -293,12 +336,12 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                                 <div class="room__head__row">
                                     <button class="form-btn form-btn--small"
                                         onClick={() => this.rand()}
-                                        disabled={state.room.playing}>
+                                        disabled={state.gameRunning}>
                                         Rand
                                     </button>
                                     <button class="form-btn form-btn--small"
                                         onClick={() => this.reset()}
-                                        disabled={state.room.playing}>
+                                        disabled={state.gameRunning}>
                                         Reset
                                     </button>
                                 </div>
@@ -313,7 +356,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                                 <div class="room__body__team__label">Red</div>
                                 <div class="room__body__team__members"
                                     >
-                                    {   ...(state.room.users.filter(user => user.team === Team.Left).map(item => 
+                                    {   ...(state.users.filter(user => user.team === Team.Left).map(item => 
                                         <div class="room__body__team__member"
                                             onDragStart={(e) => this.drag(e, item)} draggable={true}>
                                             <div>{item.avatar}</div>
@@ -328,7 +371,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                                 onDrop={(ev) => this.drop(ev, Team.Spectator)}>
                                 <div class="room__body__team__label">Spectators</div>
                                 <div class="room__body__team__members">
-                                    {   ...(state.room.users.filter(user => user.team === Team.Spectator).map(item => 
+                                    {   ...(state.users.filter(user => user.team === Team.Spectator).map(item => 
                                         <div class="room__body__team__member"
                                             onDragStart={(e) => this.drag(e, item)} draggable={true}>
                                             <div>{item.avatar}</div>
@@ -343,7 +386,7 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                                 onDrop={(ev) => this.drop(ev, Team.Right)}>
                                 <div class="room__body__team__label">Blue</div>
                                     <div class="room__body__team__members">
-                                    {   ...(state.room.users.filter(user => user.team === Team.Right).map(item => 
+                                    {   ...(state.users.filter(user => user.team === Team.Right).map(item => 
                                         <div class="room__body__team__member"
                                             onDragStart={(e) => this.drag(e, item)} draggable={true}>
                                             <div>{item.avatar}</div>
@@ -358,22 +401,22 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                             <div class="form-field form-field--small form-field--horizontal room__foot__option">
                                 <label class="room__foot__option__label">Time limit</label>
                                 <input class="room__foot__option__input"
-                                    value={state.room.timeLimit}
-                                    readOnly={!isUserAdmin || state.room.playing}
+                                    value={state.gameParams.timeLimit}
+                                    readOnly={!isUserAdmin || state.gameRunning}
                                     onInput={(e) => this.onTimeLimitChange(e)}/>
                             </div>
                             <div class="form-field form-field--small form-field--horizontal room__foot__option">
                                 <label class="room__foot__option__label">Score limit</label>
                                 <input class="room__foot__option__input"
-                                    value={state.room.scoreLimit}
-                                    readOnly={!isUserAdmin || state.room.playing}
+                                    value={state.gameParams.scoreLimit}
+                                    readOnly={!isUserAdmin || state.gameRunning}
                                     onInput={(e) => this.onScoreLimitChange(e)}/>
                             </div>
                             <div class="form-field form-field--small form-field--horizontal room__foot__option">
                                 <label class="room__foot__option__label">Map</label>
                                 <select class="room__foot__option__input"
-                                    value={state.room.mapKind}
-                                    readOnly={!isUserAdmin || state.room.playing}
+                                    value={state.gameParams.mapKind}
+                                    readOnly={!isUserAdmin || state.gameRunning}
                                     onInput={(e) => this.onMapKindChange(e)}>
                                         {   ...(state.mapKinds.map(item => 
                                             <option value={item}>
@@ -385,20 +428,20 @@ export default class RoomPage extends Component<{ room: ILobbyRoom}, IRoomState>
                             </div>
                             { isUserAdmin &&
                             <div class="room__foot__option"
-                                style={state.room.playing ? 'display:none;' : ''}>
+                                style={state.gameRunning ? 'display:none;' : ''}>
                                 <button class="form-btn form-btn-submit form-btn-submit--primary"
                                     onClick={(e) => this.startGame()}
-                                    disabled={state.room.playing}>
+                                    disabled={state.gameRunning}>
                                     Start Game!
                                 </button>
                             </div>
                             }
                             { isUserAdmin &&
                             <div class="room__foot__option"
-                                style={state.room.playing ? '' : 'display:none;'}>
+                                style={state.gameRunning ? '' : 'display:none;'}>
                                 <button class="form-btn form-btn-submit form-btn-submit--primary"
                                     onClick={(e) => this.endGame()}
-                                    disabled={!state.room.playing}>
+                                    disabled={!state.gameRunning}>
                                     Stop Game!
                                 </button>
                             </div>

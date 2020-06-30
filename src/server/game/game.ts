@@ -23,7 +23,7 @@ export class Game {
         lastTime: number;
         maxSteps: number;
     };
-    
+
     private world!: p2.World;
     private mat: Dictionary<p2.Material> = {};
     private contactMat: Dictionary<p2.ContactMaterial> = {};
@@ -32,19 +32,19 @@ export class Game {
     private players: Player[] = [];
     private playersToAdd: Player[] = [];
     private playersToRemove: Player[] = [];
-    private userWhoLastTouchedBall: User | null = null;
+    private userWhoLastTouchedBall!: User | undefined;
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
 
     private reseting!: boolean;
-    private hardResesting!: boolean;
+    public disposing!: boolean;
 
     private initStage: boolean;
-    constructor(private io: io.Server, private mapKind: MapKind, users: User[], public roomId: string,
+    constructor(private io: io.Server, public roomId: string, private mapKind: MapKind, users: User[], 
         private onGameTimeStop: () => void,
         private onGameTimeResume: () => void,
-        private onGameScoreChanged: (team: Team, user: User | null) => void) {
+        private onGameScoreChanged: (team: Team, user?: User) => void) {
         this.initStage = true;
         this.step = {
             fixedTime: 1 / 240,
@@ -59,13 +59,15 @@ export class Game {
     public dispose(): void {
         this.listeners.forEach(listener => listener());
         this.listeners = [];
-        this.userWhoLastTouchedBall = null;
-        this.players.forEach((item) => this.removePlayer(item.user));
+        this.userWhoLastTouchedBall = void 0;
+        const players = [...this.players];
+        players.forEach((item) => this.removePlayer(item.user));
+        this.players = [];
     }
 
     public endGame(): void {
         this.reseting = true;
-        this.hardResesting = true;
+        this.disposing = true;
     }
 
     public getGameData(): IRoomGameData {
@@ -84,34 +86,14 @@ export class Game {
     }
 
     //#region player
-    private initPlayers(users): void {
-        users.filter(item => item.team !== Team.Spectator).forEach((item) => {
+    private initPlayers(users: User[]): void {
+        users.forEach((item) => {
              this.addNewPlayer(item);
         });
     }
 
-    public updatePlayers(users: User[]): void {
-        this.players.forEach(player => {
-            const user = users.find((user) => player.user === user);
-            if (!user || user.team === Team.Spectator) {
-                this.removePlayer(player.user);
-            }
-        });
-
-        users.forEach(user => {
-            const player = this.players.find(player => player.user.socket.id === user.socket.id);
-            if (!player && user.team !== Team.Spectator) {
-                this.addNewPlayer(user);
-            } else if (player && player.team !== user.team) {
-                this.removePlayer(user);
-                if (user.team !== Team.Spectator) {
-                    this.addNewPlayer(user);
-                }
-            }
-        })
-    }
-
     public addNewPlayer(user: User): void {
+        if (user.team === Team.Spectator) return;
         const leftTeam = this.players.filter(item=> item.team === Team.Left);
         const rightTeam = this.players.filter(item=> item.team === Team.Right);
         const initPos = {
@@ -133,11 +115,11 @@ export class Game {
     }
 
     private bindPlayerEvents(player: Player): void {
-        player.user.onDisconnect('player::disconnect', () => {
+        player.user.onDisconnect('room::game::player::disconnect', () => {
             this.playersToRemove.push(player);
         });
 
-        player.user.socket.on('game::player-key', (data: KeysMap) => {
+        player.user.socket.on('room::game::player-key', (data: KeysMap) => {
             for (let key in data) {
                 player.keysMap[key] = data[key];
             }
@@ -149,8 +131,8 @@ export class Game {
         if (player) {
             this.playersToRemove.push(player);
         }
-        user.offDisconnect('player::disconnect');
-        user.socket.removeAllListeners('game::player-key');
+        user.offDisconnect('room::game::player::disconnect');
+        user.socket.removeAllListeners('room::game::player-key');
     }
     //#endregion 
 
@@ -253,7 +235,7 @@ export class Game {
         }
 
         // event
-        this.io.to(this.roomId).emit('game::reset', ({
+        this.io.to(this.roomId).emit('room::game::reset', ({
             players: this.players.map(player => ({
                 socketId: player.user.socket.id,
                 position: player.body.position,
@@ -353,7 +335,7 @@ export class Game {
             this.onGameTimeStop();
             this.reseting = true;
             setTimeout(() => {
-                if (this.hardResesting) return;
+                if (this.disposing) return;
                 this.reset(teamWhoScored);
             }, game_config.goalResetTimeout);
         }
@@ -371,7 +353,7 @@ export class Game {
         if (playersShooting.length != null) data.playersShooting = playersShooting;
         if (ballMoving != null) data.ballMoving = ballMoving;
         if (Object.keys(data).length) {
-            this.io.to(this.roomId).emit('game::step', data);
+            this.io.to(this.roomId).emit('room::game::step', data);
         }
 
     }

@@ -60,36 +60,50 @@ export interface IConnectionData {
     avatar: string;
 }
 
-export interface ILobbyRoomListItem {
+export interface IRoom {
     id: string;
+    adminId: string;
     name: string;
-    players: number;
-    playing: boolean;
 }
 
-export interface ILobbyUser {
+export interface IRoomState {
+    room: IRoom;
+    users: IRoomUser[];
+    gameParams: IRoomGameParams;
+    gameState: IRoomGameState;
+    gameRunning: boolean;
+}
+
+export interface IRoomGameParams {
+    timeLimit?: number;
+    scoreLimit: number;
+    mapKind?: MapKind;
+}
+
+export interface IRoomUser {
     socketId: string;
     nick: string;
     avatar: string;
     afk: boolean;
     team: Team;
 }
-export interface ILobbyRoom extends ILobbyRoomListItem {
-    id: string;
-    name: string;
-    players: number;
-    playing: boolean;
-    adminId: string;
-    users: ILobbyUser[]
-    timeLimit: number;
-    scoreLimit: number;
-    mapKind: MapKind;
-}
 
-export interface IRoomDataMessage {
+export interface IRoomMessage {
     nick: string;
     avatar: string;
     value: string;
+}
+
+export interface IRoomGameState {
+    time: number;
+    left: number;
+    right: number;
+    golden: boolean;
+}
+
+export interface IRoomGameScore {
+    team: Team;
+    scorer?: IRoomUser;
 }
 
 export interface IRoomCreate {
@@ -101,16 +115,5 @@ export interface IRoomCreate {
 export interface IRoomJoin {
     id: string;
     password: string;
-}
-
-export interface IGameState {
-    teamWhoWon?: Team;
-    teamWhoScored?: Team;
-    scoreLeft: number;
-    scoreRight: number;
-    scoreGolden: boolean;
-    goldenScore?: boolean;
-    time: number;
-    userWhoScored?: ILobbyUser;
 }
 //#endregion

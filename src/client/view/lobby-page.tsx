@@ -4,15 +4,15 @@ import JoinRoomPage from './join-room-page';
 import { User } from '../models/socket';
 import { useEffect, useState } from 'preact/hooks';
 import { goTo } from './utils';
-import { ILobbyRoomListItem } from './../../shared/events';
+import { IRoom } from './../../shared/events';
 
 
 export default function LobbyPage() {
-    const [rooms, setRooms] = useState([] as ILobbyRoomListItem[]);
+    const [rooms, setRooms] = useState([] as IRoom[]);
 
     useEffect(() => {
         User.socket.emit('lobby::enter');
-        User.socket.on('lobby::room-list', (rooms: ILobbyRoomListItem[]) => {
+        User.socket.on('lobby::room-list', (rooms: IRoom[]) => {
             setRooms(rooms);
         });
 
@@ -21,7 +21,7 @@ export default function LobbyPage() {
         }
     });
 
-    const joinRoom = (room: ILobbyRoomListItem) => {
+    const joinRoom = (room: IRoom) => {
         goTo(<JoinRoomPage {...room } />);
     }
 
@@ -39,8 +39,6 @@ export default function LobbyPage() {
                         <div class="list-item"
                             onClick={() => joinRoom(room)}>
                             <div class="list-item__column">{room.name}</div>
-                            <div class="list-item__column">{room.playing ? 'Playing!': ''}</div>
-                            <div class="list-item__column list-item__column--small">{room.players}</div>
                         </div>
                     ))
                 }

@@ -1,6 +1,5 @@
-import { map_config, MapKind, CameraKind } from '../../shared/callibration';
-import { getOffset } from '../../shared/offset';
-import { IRoomGameData,  IPlayerShooting, IWorldPostStep, IWorldReset } from '../../shared/events';
+import { MapKind, CameraKind } from '../../shared/callibration';
+import { IRoomGameData,  IWorldPostStep, IWorldReset } from '../../shared/events';
 import { KeysHandler } from '../../shared/keysHandler';
 
 import { Canvas } from './canvas';
@@ -13,7 +12,7 @@ import { Camera } from './camera';
 
 import { User } from './socket';
 import { KeysMap } from './../../shared/keysHandler';
-import { ILobbyUser } from './../../shared/events';
+import { IRoomUser } from './../../shared/events';
 
 export class Game {
     private map!: Map;
@@ -30,7 +29,7 @@ export class Game {
         this.initEntities();
         this.initCamera();
         this.initEvents();
-        User.socket.on('game::step', (data: IWorldPostStep) => {
+        User.socket.on('room::game::step', (data: IWorldPostStep) => {
             if (data.playersToAdd != null) {
                 data.playersToAdd.forEach(player => {
                     this.players.push(new Player(this.mapKind, player.nick, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team));
@@ -74,7 +73,7 @@ export class Game {
     }
 
     private initEvents(): void {
-        User.socket.on('game::reset', (data: IWorldReset) => {
+        User.socket.on('room::game::reset', (data: IWorldReset) => {
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
             data.players.forEach(dataPlayer => {
                 const player = this.players.find(player => player.socketId === dataPlayer.socketId);
@@ -85,18 +84,18 @@ export class Game {
             });
             this.updateCamera();
         });
-        User.socket.emit('game::player-joins')
-        User.socket.on('game::init-data', (data: IRoomGameData) => {
+        User.socket.emit('room::game::user-joined')
+        User.socket.on('room::game::init-data', (data: IRoomGameData) => {
+            if (!data) return;
             this.players = data.players.map(p => new Player(this.mapKind, p.nick, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
             this.updateCamera();
         });
 
-        User.socket.on('game::player-shooting', (data: IPlayerShooting) => {
-            const player = this.players.find(player => player.socketId === data.socketId);
-            if (player) {
-                player.shooting = data.shooting;
-            }
+        User.socket.on('room::user::afk-changed', (user: IRoomUser) => {
+            const player = this.players.find(player => user.socketId === player.socketId);
+            if (!player) return;
+            player.afk = user.afk;
         });
     }
 
@@ -128,7 +127,7 @@ export class Game {
             this.keysMap = keysMap;
 
             if (Object.keys(deltaKeysMap).length > 0) {
-                User.socket.emit('game::player-key', deltaKeysMap as KeysMap);
+                User.socket.emit('room::game::player-key', deltaKeysMap as KeysMap);
             }
         });
     }
@@ -157,23 +156,15 @@ export class Game {
         }
     }
 
-    public updateAfkers(users: ILobbyUser[]): void {
-        this.players.forEach(player => {
-            const user = users.find(user => user.socketId === player.socketId);
-            if (!user) return;
-            player.afk = user.afk;
-        });
-    }
-
     public run(): void {
         this.render();
     }
 
     public dispose(): void {
-        User.socket.off('game::init-data');
-        User.socket.off('game::step');
-        User.socket.off('game::reset');
-        User.socket.off('game::player-shooting');
+        User.socket.off('room::game::init-data');
+        User.socket.off('room::game::step');
+        User.socket.off('room::game::reset');
+        User.socket.off('room::user::afk-changed');
 
         Canvas.removeCanvas();
         KeysHandler.clearHandler();

@@ -23,6 +23,19 @@ canvas {
 	color white
 	align-items center
 
+	&__winning-team
+		position fixed
+		top calc(50% - 150px)
+		left 0
+		width 100vw
+		text-align center
+		height 60px
+		line-height 60px
+		font-size 55px
+		font-weight 900
+		text-shadow 4px 4px 0px black
+		white-space nowrap
+
 	&__scorer
 		position fixed
 		top 40px
@@ -63,6 +76,7 @@ canvas {
 
 		&__value
 			display flex
+			align-items center
 
 	&__time
 		flex 1

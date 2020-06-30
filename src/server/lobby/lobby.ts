@@ -27,30 +27,28 @@ export class Lobby {
         user.socket.on('room::create', (data: IRoomCreate) => {
             const room = new Room(
                 this.io,
-                user.socket.id,
+                user,
                 data.name,
                 data.password,
                 data.maxPlayersAmount,
                 () => {
-                    this.io.emit('lobby::room-list', this.rooms.map(item => item.getListData()));
+                    this.io.emit('lobby::room-list', this.rooms.map(item => item.getData()));
                 },
                 () => {
                     const idx = this.rooms.indexOf(room);
                     this.rooms.splice(idx, 1);
                 });
             this.rooms.push(room);
-            room.userJoins(user);
-            user.socket.emit('room::created', room.getData());
         });
         user.socket.on('room::join', (data: IRoomJoin) => {
             const room = this.rooms.find(item => item.id === data.id);
             if (room  && room.password === data.password) {
-                room.userJoins(user);
+                room.joinUser(user);
             }
         });
 
         user.socket.on('lobby::enter', () => {
-            user.socket.emit('lobby::room-list', this.rooms.map(item => item.getListData()));
+            user.socket.emit('lobby::room-list', this.rooms.map(item => item.getData()));
         });
         //#endregion
     }

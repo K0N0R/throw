@@ -3,7 +3,7 @@ import uuid from 'uuid';
 import { User } from './user';
 import { Game } from './../game/game';
 import { Team } from '../../shared/team';
-import { ILobbyRoom, ILobbyRoomListItem, IGameState, IRoomDataMessage } from './../../shared/events';
+import { IRoom, IRoomGameParams, IRoomUser, IRoomMessage, IRoomState, IRoomGameState, IRoomGameData } from './../../shared/events';
 import { game_config, MapKind } from './../../shared/callibration';
 
 export class Room {
@@ -12,7 +12,6 @@ export class Room {
 
     private game!: Game | null;
     private gameInterval: any;
-    private gameHasEnded: boolean = false;
 
     public time: number = 0; // in seconds
     public timeLimit = 6;
@@ -27,247 +26,226 @@ export class Room {
 
     public constructor(
         public io: io.Server,
-        public adminId: string,
+        public adminUser: User,
         public name: string,
         public password: string,
         public maxPlayersAmount: number,
         private onNotify: () => void,
-        private onDestroy: () => void) {
+        private onDispose: () => void) {
         this.id = uuid();
+        this.onCreate();
     }
 
+    //#region admin
+    public onCreate(): void {
+        this.joinUser(this.adminUser);
+        this.bindAdminEvents();
+        this.onNotify();
+    }
+
+    private bindAdminEvents(): void {
+        this.adminUser.onDisconnect('room::admin::disconnect', () => this.onAdminDisconnect());
+        this.adminUser.socket.on('room::user::leave', () => this.onAdminLeave());
+        this.adminUser.socket.on('room::user::change-team', (data: IRoomUser)  => this.onUserTeamChange(data));
+        this.adminUser.socket.on('room::game::params', (data: IRoomGameParams) => this.onRoomGameParamsChanged(data));
+        this.adminUser.socket.on('room::game::start', () => this.startGame());
+        this.adminUser.socket.on('room::game::stop', () => this.disposeGame());
+    }
+
+    private unbindAdminEvents(): void {
+        this.adminUser.offDisconnect('room::admin::disconnect');
+        this.adminUser.socket.removeAllListeners('room::user::leave');
+        this.adminUser.socket.removeAllListeners('room::game::params');
+        this.adminUser.socket.removeAllListeners('room::user::change-team');
+    }
+
+    private disposeRoom(): void {
+        this.io.to(this.id).emit('room::destroyed');
+        this.unbindAdminEvents();
+        this.disposeGame();
+        this.disposeUsers();
+        this.onDispose();
+    }
+
+    private onAdminDisconnect(): void {
+        this.disposeRoom();
+    }
+
+    private onAdminLeave(): void {
+        this.disposeRoom();
+    }
+
+    private onRoomGameParamsChanged(data: IRoomGameParams) {
+        if (data.mapKind != null) {
+            this.mapKind = data.mapKind;
+        }
+        if (data.scoreLimit != null) {
+            this.scoreLimit = data.scoreLimit;
+        }
+        if (data.timeLimit != null) {
+            this.timeLimit = data.timeLimit;
+        }
+        this.io.to(this.id).emit('room::game::params-state', this.getGameParams());
+    }
+
+    private onUserTeamChange(roomUser: IRoomUser): void {
+        const user = this.users.find(user => user.socket.id === roomUser.socketId);
+        if (!user) return;
+        if (user.team !== roomUser.team) {
+            user.team = roomUser.team;
+            this.io.to(this.id).emit('room::user::changed-team', this.getRoomUser(user));
+
+            this.game?.removePlayer(user);
+            this.game?.addNewPlayer(user);
+        }
+    }
+    //#endregion
+
     //#region user
-    public userJoins(user: User): void {
+    private disposeUsers(): void {
+        const users = [...this.users];
+        users.forEach(user => this.disposeUser(user));
+    }
+
+    private disposeUser(user: User): void {
+        this.io.to(this.id).emit('room::user::left', this.getRoomUser(user));
+        this.removeUser(user);
+        this.onNewMessage({
+            nick: '',
+            avatar: 'SYSTEM',
+            value: `${user.avatar}${user.nick} left the room! :(`
+        });
+    }
+
+    public joinUser(user: User): void {
         const idx = this.users.indexOf(user);
         if (idx !== -1) return;
-        console.log(`
-            roomId: ${this.id},
-            user: ${user.nick}
-        `)
-        user.socket.join(this.id);
-        user.team = Team.Spectator;
-        this.users.push(user);
-        this.onUsersChange();
-        this.sendMessage({
+        this.addUser(user);
+        this.io.to(this.id).emit('room::user::add', this.getRoomUser(user));
+        user.socket.emit('room::user::joined', this.getRoomState());
+        this.onNewMessage({
             nick: '',
             avatar: 'SYSTEM',
             value: `${user.avatar}${user.nick} joined the room! :)`
         });
-
-        user.socket.emit('room::user-joined', this.getData());
-
-        user.socket.on('room::user-message', (message: IRoomDataMessage) => this.sendMessage(message));
-        user.socket.on('room::update', (lobbyRoom: ILobbyRoom) => this.updateRoom(lobbyRoom, user));
-        user.socket.on('room::user-leave', () => this.onUserLeave(user));
-        user.onDisconnect('room::user-disconnect', () => this.onUserLeave(user));
-
-        user.socket.on('game::player-joins', () => this.onUserJoinsGame(user));
+        user.socket.join(this.id);
     }
 
-    public onUsersChange(): void {
-        this.notifyChange();
-        this.game?.updatePlayers(this.users);
+    private addUser(user: User): void {
+        console.log(user.nick);
+        user.team = Team.Spectator;
+        this.users.push(user);
+        this.bindUserEvents(user);
     }
 
-    private onUserLeave(user: User): void {
-        if (user.socket.id === this.adminId) { // admin of room leave
-            this.io.to(this.id).emit('room::destroyed');
-            this.disposeGame();
-            this.users.forEach(user => this.kickUser(user));
-            this.onUsersChange();
-            this.onDestroy();
-        } else { // user of room leave
-            this.kickUser(user);
-            this.onUsersChange();
-            this.sendMessage({
-                nick: '',
-                avatar: 'SYSTEM',
-                value: `${user.avatar}${user.nick} left the room! :(`
-            });
-            user.socket.emit('room::user-left');
-        }
-    }
-
-    private kickUser(user: User): void {
-        user.socket.leave(this.id);
+    private removeUser(user: User): void {
         const idx = this.users.indexOf(user)
         if (idx !== -1) this.users.splice(idx, 1);
-        user.socket.removeAllListeners('game::player-joins');
-        user.socket.removeAllListeners('room::update');
-        user.socket.removeAllListeners('room::user-message');
-        user.socket.removeAllListeners('room::user-leave');
-        user.offDisconnect('room::user-disconnect');
-    }
-    //#endregion
-
-    //#region message
-    public sendMessage(message: IRoomDataMessage): void {
-        this.io.to(this.id).emit('room::new-message', message);
-    }
-    //#endregion
-
-    //#region notify
-    private notifyChange(): void {
-        this.io.to(this.id).emit('room::changed', this.getData());
-        this.onNotify();
+        this.unbindUserEvents(user);
     }
 
-    public getListData(): ILobbyRoomListItem {
-        return {
-            id: this.id,
-            name: this.name,
-            playing: this.game != null,
-            players: this.users.length,
+    private bindUserEvents(user: User): void {
+        user.socket.on('room::game::user-joined', (value) => this.onUserJoinedGame(user))
+        user.socket.on('room::user::afk', (value) => this.onUserAfk(user, value))
+        user.socket.on('room::user::message', (message: IRoomMessage) => this.onNewMessage(message));
+        if (this.adminUser !== user) {
+            user.socket.on('room::user::leave', () => this.onUserLeave(user));
+            user.onDisconnect('room::user::disconnect', () => this.onUserDisconnect(user))
         };
     }
 
-    public getData(): ILobbyRoom {
-        const mapUser = (user: User) => ({
+    private unbindUserEvents(user: User): void {
+        user.socket.leave(this.id);
+        user.socket.removeAllListeners('room::user::message');
+        if (this.adminUser !== user) {
+            user.socket.removeAllListeners('room::user::leave');
+            user.offDisconnect('room::user::disconnect');
+        }
+    }
+
+    private onNewMessage(message: IRoomMessage): void {
+        this.io.to(this.id).emit('room::user::messaged', message);
+    }
+
+    private onUserDisconnect(user: User): void {
+       this.disposeUser(user);
+    }
+
+    private onUserLeave(user: User): void {
+        this.disposeUser(user);
+    }
+
+    private onUserAfk(user: User, value: boolean): void {
+        if (user.afk !== value) {
+            user.afk = value;
+            this.io.to(this.id).emit('room::user::afk-changed', this.getRoomUser(user));
+        }
+    }
+
+    private onUserJoinedGame(user: User): void {
+        user.socket.emit('room::game::init-data', this.getGameInitData());
+    }
+    //#endregion
+
+    //#region mappings
+    public getData(): IRoom {
+        return {
+            id: this.id,
+            adminId: this.adminUser.socket.id,
+            name: this.name,
+        }
+    }
+
+    private getRoomState(): IRoomState {
+        return {
+            room: this.getData(),
+            users: this.getRoomUsers(),
+            gameParams: this.getGameParams(),
+            gameState: this.getGameState(),
+            gameRunning: this.game != null
+        };
+    }
+
+    private getRoomUser(user: User): IRoomUser {
+        return {
             socketId: user.socket.id,
             nick: user.nick,
             avatar: user.avatar,
             team: user.team,
             afk: user.afk
-        });
-        return {
-            ...this.getListData(),
-            adminId: this.adminId,
-            users: this.users.map(mapUser),
-            timeLimit: this.timeLimit,
-            scoreLimit: this.scoreLimit,
-            mapKind: this.mapKind,
-        }
+        };
     }
 
-    public updateRoom(room: ILobbyRoom, user: User): void {
-        if (user.socket.id === this.adminId) {
-            this.adminId = room.adminId;
-            this.timeLimit = Number(room.timeLimit);
-            this.scoreLimit = Number(room.scoreLimit);
-            this.mapKind = room.mapKind;
-        }
-        let usersChanged = this.users.length !== room.users.length;
-        this.users.forEach(thisUser => {
-            const dataUser = room.users.find(item => item.socketId === thisUser.socket.id);
-            if (!dataUser) {
-                usersChanged = true;
-            } else if (thisUser.afk !== dataUser.afk) {
-                usersChanged = true;
-                thisUser.afk = dataUser.afk;
-            } else if (thisUser.team !== dataUser?.team) {
-                usersChanged = true;
-                thisUser.team = dataUser.team ?? Team.Spectator;
-            }
-        });
+    private getRoomUsers(): IRoomUser[] {
+        return this.users.map(this.getRoomUser);
+    }
 
-        // react on data change
-        if (room.playing && !this.game) {
-            this.createGame();
-        } else if(!room.playing && this.game) {
-            this.disposeGame();
-        } else if (room.playing && usersChanged) {
-            this.game?.updatePlayers(this.users);
-        }
+    private getGameParams(): IRoomGameParams {
+        return {
+            mapKind: this.mapKind,
+            scoreLimit: this.scoreLimit,
+            timeLimit: this.timeLimit
+        };
+    }
 
-        this.notifyChange();
+    private getGameState(): IRoomGameState {
+        return {
+            time: this.time,
+            left: this.scoreLeft,
+            right: this.scoreRight,
+            golden: this.scoreGolden
+        };
+    }
+
+    private getGameInitData(): IRoomGameData | undefined {
+        return this.game?.getGameData();
     }
     //#endregion
 
     //#region game
-    public createGame(): void {
-        this.gameHasEnded = false;
-        this.game = new Game(this.io, this.mapKind, this.users, this.id,
-            () => { this.stopTime() },
-            () => { this.startTime() },
-            (team: Team, user: User | null) => {
-                if (user) {
-                    this.updateScore(team, user);
-                } else {
-                    this.updateScore(team);
-                }
-            });
-
+    private resetGame(): void {
         this.resetTime();
         this.resetScore();
-        this.gameInterval = setInterval(() => {
-            if (this.game) this.game.run();
-        }, 0);
-        this.onGameStateChange();
-    }
-    
-
-    public disposeGame(): void {
-        clearInterval(this.gameInterval);
-        if (this.game) this.game.dispose();
-        this.game = null;
-        this.resetTime();
-        this.resetScore();
-    }
-
-    private endGame(teamWhoWon: Team): void {
-        this.sendMessage({
-            nick: '',
-            avatar: 'SYSTEM',
-            value: `${teamWhoWon === Team.Left ? 'Red' : 'Blue' } team won the game!`
-        });
-        this.stopTime();
-        this.game?.endGame();
-        this.gameHasEnded = true;
-        setTimeout(() => {
-            this.disposeGame();
-            this.notifyChange();
-        }, game_config.endGameResetTimeout);
-    }
-
-    private onUserJoinsGame(user: User): void {
-        if (!this.game) return;
-        user.socket.emit('game::init-data', this.game.getGameData());
-    }
-
-    private onGameStateChange(gameState?: {teamWhoScored?: Team, teamWhoWon?: Team, userWhoScored?: User }): void {
-        this.io.to(this.id).emit('game::state', this.getGameState(gameState))
-    }
-
-    private getGameState(gameState?: {teamWhoScored?: Team, teamWhoWon?: Team, userWhoScored?: User }): IGameState {
-        const mapUser = (user: User) => ({
-            socketId: user.socket.id,
-            nick: user.nick,
-            avatar: user.avatar,
-            team: user.team,
-            afk: user.afk
-        });
-        return {
-            time: this.time,
-            scoreRight: this.scoreRight,
-            scoreLeft: this.scoreLeft,
-            scoreGolden: this.scoreGolden,
-            teamWhoScored: gameState?.teamWhoScored ?? void 0,
-            teamWhoWon: gameState?.teamWhoWon ?? void 0,
-            userWhoScored: (gameState?.userWhoScored ? mapUser(gameState.userWhoScored) : void 0) ?? void 0
-        }
-    }
-
-    private startTime(): void {
-        this.timeInterval = setInterval(() => {
-            this.time += 1;
-            if (this.time >= this.timeLimit * 60) {
-                if (this.scoreLeft !== this.scoreRight) {
-                    const teamWhoWon = this.scoreLeft > this.scoreRight
-                        ? Team.Left : Team.Right;
-                    this.onGameStateChange({ teamWhoWon });
-                    this.endGame(teamWhoWon);
-                } else {
-                    this.scoreGolden = true;
-                    this.onGameStateChange();
-                }
-            } else {
-                this.onGameStateChange();
-            }
-        }, 1000);
-    }
-
-    private stopTime(): void {
-        clearInterval(this.timeInterval);
     }
 
     private resetTime(): void {
@@ -275,26 +253,97 @@ export class Room {
         clearInterval(this.timeInterval);
     }
 
-    private updateScore(teamWhoScored: Team, userWhoScored?: User): void {
-        if (this.gameHasEnded) return;
-        if (Team.Left === teamWhoScored) {
-            this.scoreLeft += 1;
-        } else {
-            this.scoreRight += 1;
-        }
-        let teamWhoWon = this.scoreGolden ? teamWhoScored : void 0;
-        if (this.scoreLeft >= this.scoreLimit) teamWhoWon = Team.Left;
-        if (this.scoreRight >= this.scoreLimit) teamWhoWon = Team.Right;
-        this.onGameStateChange({ teamWhoScored, teamWhoWon, userWhoScored });
-        if (teamWhoWon != null) {
-            this.endGame(teamWhoWon);
-        }
-    }
-
     private resetScore(): void {
         this.scoreRight = 0;
         this.scoreLeft = 0;
         this.scoreGolden = false;
     }
+
+    private updateGameState(): void {
+        this.io.to(this.id).emit('room::game::state', this.getGameState());
+    }
+
+    private updateGameWinner(): void {
+        this.io.to(this.id).emit('room::game::winner', this.scoreLeft > this.scoreRight ? Team.Left : Team.Right);
+    }
+
+    private updateGameScorer(team: Team, scorer?: User): void {
+        this.io.to(this.id).emit('room::game::scorer', {
+            team,
+            scorer: scorer ? this.getRoomUser(scorer) : void 0
+        });
+    }
+
+    public startGame(): void {
+        this.io.to(this.id).emit('room::game::started');
+        this.resetGame();
+        this.game = new Game(this.io, this.id, this.mapKind, this.users,
+            () => this.stopGameTime(),
+            () => this.startGameTime(),
+            (team: Team, user: User | undefined) => this.updateGameScore(team, user));
+
+        this.gameInterval = setInterval(() => {
+            if (this.game) this.game.run();
+        }, 0);
+        this.updateGameState();
+    }
+
+    public disposeGame(): void {
+        this.io.to(this.id).emit('room::game::stopped');
+        clearInterval(this.gameInterval);
+        if (this.game) this.game.dispose();
+        this.game = null;
+        this.resetTime();
+        this.resetScore();
+    }
+
+    private endGame(): void {
+        this.updateGameWinner();
+        this.stopGameTime();
+        this.game?.endGame();
+        setTimeout(() => {
+            this.disposeGame();
+        }, game_config.endGameResetTimeout);
+    }
+
+    private startGameTime(): void {
+        this.timeInterval = setInterval(() => {
+            this.onGameTimeChange();
+        }, 1000);
+    }
+
+    private onGameTimeChange(): void {
+        this.time += 1;
+        if (this.time >= this.timeLimit * 60) {
+            if (this.scoreLeft !== this.scoreRight) {
+                this.endGame();
+            } else {
+                this.scoreGolden = true;
+            }
+        }
+        this.updateGameState();
+    }
+
+    private stopGameTime(): void {
+        clearInterval(this.timeInterval);
+    }
+
+    private updateGameScore(team: Team, scorer?: User): void {
+        if (this.game?.disposing ?? false) return;
+        if (Team.Left === team) {
+            this.scoreLeft += 1;
+        } else {
+            this.scoreRight += 1;
+        }
+        let winningTeam = this.scoreGolden ? team : void 0;
+        if (this.scoreLeft >= this.scoreLimit) winningTeam = Team.Left;
+        if (this.scoreRight >= this.scoreLimit) winningTeam = Team.Right;
+        this.updateGameScorer(team, scorer);
+        this.updateGameState();
+        if (winningTeam != null) {
+            this.endGame();
+        }
+    }
+
     //#endregion
 }
