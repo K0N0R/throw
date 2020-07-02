@@ -9,6 +9,7 @@ import { Team } from '../../shared/team';
 import { game_config } from './../../shared/callibration';
 import { useState, useEffect } from 'preact/hooks';
 import { IRoomUser, IRoomGameParams, IRoomGameState } from './../../shared/events';
+import { fpsMeter } from './utils';
 
 interface IRoomComponentState {
     gameRunning: boolean;
@@ -20,6 +21,7 @@ export default function GamePage(props: IRoomComponentState) {
     let game: Game | null = null;
     let gameAnimFrame: number;
     let gameKeysInterval: any;
+    const [fps, setFps] = useState(0);
     const [state, setState] = useState(props);
     const [scoreGolden, setScoreGolden] = useState(state.gameState.golden);
     const [scoreLeft, setScoreLeft] = useState(state.gameState.left);
@@ -93,8 +95,9 @@ export default function GamePage(props: IRoomComponentState) {
         (document.querySelector('#room') as HTMLElement)?.focus();
         game = new Game(state.gameParams.mapKind);
         const loop = () => {
+            setFps(fpsMeter());
             gameAnimFrame = requestAnimationFrame(loop);
-            game?.run()
+            game?.run();
         }
         loop();
         gameKeysInterval = setInterval(() => {
@@ -165,6 +168,7 @@ export default function GamePage(props: IRoomComponentState) {
                     </div>
                 </div>
             }
+            <div>FPS: {fps}</div>
             <div class="game-state__score">
                 <div class="game-state__score__value">
                     <div class="team-cube team-cube--left"></div>
