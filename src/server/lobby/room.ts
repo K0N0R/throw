@@ -142,6 +142,7 @@ export class Room {
         const idx = this.users.indexOf(user)
         if (idx !== -1) this.users.splice(idx, 1);
         this.unbindUserEvents(user);
+        this.game?.removePlayer(user);
     }
 
     private bindUserEvents(user: User): void {

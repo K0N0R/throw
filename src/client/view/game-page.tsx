@@ -81,8 +81,10 @@ export default function GamePage(props: IRoomComponentState) {
         showScorer(data.team, data.scorer);
     }
 
-    const onUserLeftRoom = () => {
-        breakGame();
+    const onUserLeftRoom = (user: IRoomUser) => {
+        if (user.socketId === User.socket.id) {
+            breakGame();
+        }
     }
 
     const onRoomDestroyed = () => {
