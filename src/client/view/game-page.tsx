@@ -3,7 +3,7 @@ import { h } from 'preact';
 import { Game } from '../models/game';
 
 import { KeysHandler } from './../../shared/keysHandler'
-import { IRoom, IRoomGameScore } from '../../shared/events';
+import { IRoom, IRoomGameScore, IRoomGameScoreboardItem } from '../../shared/events';
 import { User } from './../models/socket';
 import { Team } from '../../shared/team';
 import { game_config } from './../../shared/callibration';
@@ -15,6 +15,7 @@ interface IRoomComponentState {
     gameRunning: boolean;
     gameState: IRoomGameState;
     gameParams: IRoomGameParams;
+    gameScoreboard: IRoomGameScoreboardItem[];
 }
 
 export default function GamePage(props: IRoomComponentState) {
@@ -30,6 +31,8 @@ export default function GamePage(props: IRoomComponentState) {
     const [gameWon, setGameWon] = useState('');
     const [scorerTeam, setScorerTeam] = useState('');
     const [scorerUser, setScorerUser] = useState<IRoomUser | undefined>(void 0);
+    const [scoreboard, setScoreboard] = useState<IRoomGameScoreboardItem[]>(state.gameScoreboard);
+    const [scoreboardVisible, setScoreboardVisible] = useState(false);
 
     useEffect(() => {
        setState(props);
@@ -39,6 +42,8 @@ export default function GamePage(props: IRoomComponentState) {
         const gameTimeout = setTimeout(() => {
             if (state.gameRunning) startGame();
         });
+        document.addEventListener('keydown', onKeydown);
+        document.addEventListener('keyup', onKeyup)
         User.socket.on('room::game::started', onGameStarted);
         User.socket.on('room::game::stopped', onGameStopped);
         User.socket.on('room::game::state', onGameStateChanged);
@@ -48,6 +53,8 @@ export default function GamePage(props: IRoomComponentState) {
         User.socket.on('room::destroyed', onRoomDestroyed);
         return () => {
             clearTimeout(gameTimeout);
+            document.removeEventListener('keydown', onKeydown);
+            document.removeEventListener('keyup', onKeyup)
             User.socket.off('room::game::started', onGameStarted);
             User.socket.off('room::game::stopped', onGameStopped);
             User.socket.off('room::game::state', onGameStateChanged);
@@ -57,6 +64,20 @@ export default function GamePage(props: IRoomComponentState) {
             User.socket.off('room::destroyed', onRoomDestroyed);
         }
     }, []);
+
+    const onKeydown = (e) => {
+        if (e.key === 'Tab' && game) {
+            e.preventDefault();
+            setScoreboardVisible(true);
+        }
+    }
+
+    const onKeyup = (e) => {
+        if (e.key === 'Tab' && game) {
+            e.preventDefault();
+            setScoreboardVisible(false);
+        }
+    }
 
     const onGameStarted = () => {
         startGame();
@@ -79,6 +100,26 @@ export default function GamePage(props: IRoomComponentState) {
 
     const onGameScorer = (data: IRoomGameScore) => {
         showScorer(data.team, data.scorer);
+        if (data.scorer) {
+            updateScoreboard(data.scorer,  data.scorer.team !== data.team);
+        }
+    }
+
+    const updateScoreboard = (scorer: IRoomUser, ownGoal: boolean) => {
+        const gameScoreBoardItem = scoreboard.find(item => item.scorer.socketId === scorer.socketId);
+        if (gameScoreBoardItem) {
+            if (ownGoal) {
+                gameScoreBoardItem.ownGoals += 1;
+            } else {
+                gameScoreBoardItem.goals += 1;
+            }
+        } else {
+            scoreboard.push({
+                scorer: scorer,
+                goals: ownGoal ? 0 : 1,
+                ownGoals: ownGoal ? 1 : 0
+            })
+        }
     }
 
     const onUserLeftRoom = (user: IRoomUser) => {
@@ -113,6 +154,7 @@ export default function GamePage(props: IRoomComponentState) {
         if (game) {
             game.dispose();
             game = null;
+            scoreboard.length = 0;
         }
     }
 
@@ -138,6 +180,12 @@ export default function GamePage(props: IRoomComponentState) {
             setScorerTeam('');
             setScorerUser(void 0);
         }, game_config.goalResetTimeout);
+    }
+
+    const sortByGoals = (item: IRoomGameScoreboardItem, nextItem: IRoomGameScoreboardItem) => {
+        if (item.goals < nextItem.goals) return 1;
+        if (item.goals > nextItem.goals) return -1;
+        return 0;
     }
 
     return (
@@ -188,6 +236,25 @@ export default function GamePage(props: IRoomComponentState) {
             </div>
             { scoreGolden &&
                 <div class="game-state__golden">🔔 Golden goal!</div>
+            }
+            { scoreboardVisible &&
+                <div class="scoreboard-wrap">
+                    <div class="scoreboard">
+                        <div class="scoreboard__header">
+                            <div class="scoreboard__column">player</div>
+                            <div class="scoreboard__column scoreboard__column--centered">goals</div>
+                            <div class="scoreboard__column scoreboard__column--centered">own goals</div>
+                        </div>
+                        { ...scoreboard.sort(sortByGoals).map(item =>
+                            <div class={`scoreboard__item ${User.socket.id === item.scorer.socketId ? 'scoreboard__item--self' : ''}`}>
+                                <div class="scoreboard__column"> {item.scorer.avatar} {item.scorer.nick}</div>
+                                <div class="scoreboard__column scoreboard__column--centered">{item.goals}</div>
+                                <div class="scoreboard__column scoreboard__column--centered">{item.ownGoals}</div>
+                            </div>
+                            )
+                        }
+                    </div>
+                </div>
             }
         </div>
     );

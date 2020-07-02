@@ -318,7 +318,7 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
                     <div class="room__game"
                         id="game"
                         style={state.gameRunning && !state.configOverlayOnTop ? '' : 'display:none;'}>
-                        <GamePage { ...{ gameRunning: props.gameRunning, gameState: props.gameState, gameParams: state.gameParams}} ></GamePage>
+                        <GamePage { ...{ gameScoreboard: props.gameScoreboard, gameRunning: props.gameRunning, gameState: props.gameState, gameParams: state.gameParams}} ></GamePage>
                     </div>
                     <div class="dialog room__configuration"
                         style={state.gameRunning && !state.configOverlayOnTop ? 'display:none;' : ''}>

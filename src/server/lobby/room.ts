@@ -3,7 +3,7 @@ import uuid from 'uuid';
 import { User } from './user';
 import { Game } from './../game/game';
 import { Team } from '../../shared/team';
-import { IRoom, IRoomGameParams, IRoomUser, IRoomMessage, IRoomState, IRoomGameState, IRoomGameData } from './../../shared/events';
+import { IRoom, IRoomGameParams, IRoomUser, IRoomMessage, IRoomState, IRoomGameState, IRoomGameData, IRoomGameScoreboardItem } from './../../shared/events';
 import { game_config, MapKind } from './../../shared/callibration';
 
 export class Room {
@@ -12,6 +12,7 @@ export class Room {
 
     private game!: Game | null;
     private gameInterval: any;
+    private gameScoreboard: IRoomGameScoreboardItem[] = [];
 
     public time: number = 0; // in seconds
     public timeLimit = 6;
@@ -203,7 +204,8 @@ export class Room {
             users: this.getRoomUsers(),
             gameParams: this.getGameParams(),
             gameState: this.getGameState(),
-            gameRunning: this.game != null
+            gameRunning: this.game != null,
+            gameScoreboard: this.gameScoreboard
         };
     }
 
@@ -245,8 +247,12 @@ export class Room {
 
     //#region game
     private resetGame(): void {
+        clearInterval(this.gameInterval);
+        this.game?.dispose();
+        this.game = null;
         this.resetTime();
         this.resetScore();
+        this.resetScoreboard();
     }
 
     private resetTime(): void {
@@ -260,6 +266,10 @@ export class Room {
         this.scoreGolden = false;
     }
 
+    private resetScoreboard(): void {
+        this.gameScoreboard = [];
+    }
+
     private updateGameState(): void {
         this.io.to(this.id).emit('room::game::state', this.getGameState());
     }
@@ -268,7 +278,28 @@ export class Room {
         this.io.to(this.id).emit('room::game::winner', this.scoreLeft > this.scoreRight ? Team.Left : Team.Right);
     }
 
+    private updateGameScoreboard(scorer: User, ownGoal: boolean): void {
+        const gameScoreBoardItem = this.gameScoreboard.find(item => item.scorer.socketId === scorer.socket.id);
+        if (gameScoreBoardItem) {
+            if (ownGoal) {
+                gameScoreBoardItem.ownGoals += 1;
+            } else {
+                gameScoreBoardItem.goals += 1;
+            }
+            
+        } else {
+            this.gameScoreboard.push({
+                scorer: this.getRoomUser(scorer),
+                goals: ownGoal ? 0 : 1,
+                ownGoals: ownGoal ? 1 : 0
+            })
+        }
+    }
+
     private updateGameScorer(team: Team, scorer?: User): void {
+        if (scorer) {
+            this.updateGameScoreboard(scorer, scorer?.team !== team);
+        }
         this.io.to(this.id).emit('room::game::scorer', {
             team,
             scorer: scorer ? this.getRoomUser(scorer) : void 0
@@ -291,11 +322,7 @@ export class Room {
 
     public disposeGame(): void {
         this.io.to(this.id).emit('room::game::stopped');
-        clearInterval(this.gameInterval);
-        if (this.game) this.game.dispose();
-        this.game = null;
-        this.resetTime();
-        this.resetScore();
+        this.resetGame();
     }
 
     private endGame(): void {

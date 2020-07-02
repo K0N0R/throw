@@ -106,4 +106,42 @@ canvas {
 	margin-left 8px
 }
 
+.scoreboard-wrap
+	position fixed
+	z-index 10
+	top calc(50% - 200px)
+	left calc(50% - 250px)
+	width 500px
+	height 400px
+	margin auto
 
+	.scoreboard
+		display flex
+		flex-direction column
+		margin auto
+		background rgba(0, 0, 0, 0.5)
+		box-shadow 0 0 10px 0px black
+
+		&__header
+			display flex
+			padding 10px
+			background rgba(0, 0, 0, 0.3)
+
+		&__item
+			display flex
+			align-items center
+			padding 10px
+
+			&:nth-child(even)
+				background rgba(0, 0, 0, 0.1)
+
+			&--self
+				font-weight 900
+				background rgba(255,255,255, 0.2) !important
+
+		&__column
+			flex 1
+			text-shadow 2px 2px 0px black
+
+			&--centered
+				text-align center

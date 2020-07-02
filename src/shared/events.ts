@@ -72,6 +72,7 @@ export interface IRoomState {
     gameParams: IRoomGameParams;
     gameState: IRoomGameState;
     gameRunning: boolean;
+    gameScoreboard: IRoomGameScoreboardItem[];
 }
 
 export interface IRoomGameParams {
@@ -104,6 +105,12 @@ export interface IRoomGameState {
 export interface IRoomGameScore {
     team: Team;
     scorer?: IRoomUser;
+}
+
+export interface IRoomGameScoreboardItem {
+    scorer: IRoomUser;
+    goals: number;
+    ownGoals: number;
 }
 
 export interface IRoomCreate {
