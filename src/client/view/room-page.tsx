@@ -65,6 +65,9 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
             const idx = this.state.users.findIndex(item => item.socketId === user.socketId);
             if (idx === -1) return;
             this.state.users[idx].team = user.team;
+            if (User.socket.id === user.socketId) {
+                User.team = user.team;
+            }
             this.forceUpdate();
         };
         User.socket.on('room::user::changed-team', onUserChange);
@@ -74,6 +77,10 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
             if (idx !== -1) return;
             this.state.users.push(user);
             this.forceUpdate();
+            const element: HTMLAudioElement | null = document.querySelector(`#user-joined-sound`)
+            if (!element) return;
+            element.volume = 0.50;
+            element.play();
         };
         User.socket.on('room::user::add', onUserAdd);
 
@@ -85,6 +92,10 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
                 if (idx === -1) return;
                 this.state.users.splice(idx, 1);
                 this.forceUpdate();
+                const element: HTMLAudioElement | null = document.querySelector(`#user-left-sound`)
+                if (!element) return;
+                element.volume = 0.50;
+                element.play();
             }
         };
         User.socket.on('room::user::left', onUserLeftRoom);

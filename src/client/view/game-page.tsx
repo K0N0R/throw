@@ -174,6 +174,19 @@ export default function GamePage(props: IRoomComponentState) {
     }
 
     const showScorer = (team: Team, scorer?: IRoomUser) => {
+        if (User.team && User.team !== Team.Spectator) {
+            if (team === User.team) {
+                const element: HTMLAudioElement | null = document.querySelector(`#team-scored-sound`);
+                if (!element) return;
+                element.volume = 0.50;
+                element.play();
+            } else {
+                const element: HTMLAudioElement | null = document.querySelector(`#enemy-scored-sound`);
+                if (!element) return;
+                element.volume = 0.50;
+                element.play();
+            }
+        }
         setScorerTeam(team);
         setScorerUser(scorer);
         setTimeout(() => {

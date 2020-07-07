@@ -85,7 +85,7 @@ export class Game {
         });
         User.socket.on('room::game::shoot-sound', (shootSound: number) => {
             const element: HTMLAudioElement | null = document.querySelector(`#shoot-sound-${shootSound}`)
-            if (!element) { console.log(shootSound); return; }
+            if (!element) return;
             element.volume = 0.25;
             element.play();
         });
