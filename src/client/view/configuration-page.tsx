@@ -129,110 +129,87 @@ export default function ConfigurationPage() {
 
     return (
         <div class="dialog dialog--fixed">
-            <div class="room__foot__option">
-                <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                    <label class="room__foot__option__label">Movement</label>
-                    <select class="room__foot__option__input"
-                        value={kind}
-                        onChange={onMovementKindChange}>
-                        {
-                            ...kinds.map(item =>
-                                <option value={item} selected={item === kind}>
-                                    {item}
-                                </option>
-                            )
-                        }
-                    </select>
-                </div>
+            <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                <label class="room__foot__option__label">Movement</label>
+                <select class="room__foot__option__input"
+                    value={kind}
+                    onChange={onMovementKindChange}>
+                    {
+                        ...kinds.map(item =>
+                            <option value={item} selected={item === kind}>
+                                {item}
+                            </option>
+                        )
+                    }
+                </select>
             </div>
             { kind === MovementKind.CUSTOM &&
                 <div>
-                    <div class="room__foot__option">
-                        <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                            <label class="room__foot__option__label">MOVE UP</label>
-                            <input class="room__foot__option__input"
-                                value={up}
-                                onKeyDown={onMovementUpChange}/>
-                        </div>
+                    <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                        <label class="room__foot__option__label">MOVE UP</label>
+                        <input class="room__foot__option__input"
+                            value={up}
+                            onKeyDown={onMovementUpChange}/>
                     </div>
-                    <div class="room__foot__option">
-                        <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                            <label class="room__foot__option__label">MOVE DOWN</label>
-                            <input class="room__foot__option__input"
-                                value={down}
-                                onKeyDown={onMovementDownChange}/>
-                        </div>
+
+                    <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                        <label class="room__foot__option__label">MOVE DOWN</label>
+                        <input class="room__foot__option__input"
+                            value={down}
+                            onKeyDown={onMovementDownChange}/>
                     </div>
-                    <div class="room__foot__option">
-                        <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                            <label class="room__foot__option__label">MOVE LEFT</label>
-                            <input class="room__foot__option__input"
-                                value={left}
-                                onKeyDown={onMovementLeftChange}/>
-                        </div>
+                    <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                        <label class="room__foot__option__label">MOVE LEFT</label>
+                        <input class="room__foot__option__input"
+                            value={left}
+                            onKeyDown={onMovementLeftChange}/>
                     </div>
-                    <div class="room__foot__option">
-                        <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                            <label class="room__foot__option__label">MOVE RIGHT</label>
-                            <input class="room__foot__option__input"
-                                value={right}
-                                onKeyDown={onMovementRightChange}/>
-                        </div>
+                    <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                        <label class="room__foot__option__label">MOVE RIGHT</label>
+                        <input class="room__foot__option__input"
+                            value={right}
+                            onKeyDown={onMovementRightChange}/>
                     </div>
                 </div>
             }
-            <div class="room__foot__option">
-                <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                    <label class="room__foot__option__label">SHOOT</label>
-                    <input class="room__foot__option__input"
-                        value={shoot}
-                        onKeyDown={onShootChange}/>
-                </div>
+            <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                <label class="room__foot__option__label">SHOOT</label>
+                <input class="room__foot__option__input"
+                    value={shoot}
+                    onKeyDown={onShootChange}/>
             </div>
-            <div class="room__foot__option">
-                <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                    <label class="room__foot__option__label">DASH</label>
-                    <input class="room__foot__option__input"
-                        value={dash}
-                        onKeyDown={onDashChange}/>
-                </div>
+            <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                <label class="room__foot__option__label">DASH</label>
+                <input class="room__foot__option__input"
+                    value={dash}
+                    onKeyDown={onDashChange}/>
             </div>
-            <div class="room__foot__option">
-                <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                    <label class="room__foot__option__label">CAMERA 1</label>
-                    <input class="room__foot__option__input"
-                        value={camera1}
-                        onKeyUp={onCamera1Change}/>
-                </div>
+            <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                <label class="room__foot__option__label">CAMERA 1</label>
+                <input class="room__foot__option__input"
+                    value={camera1}
+                    onKeyUp={onCamera1Change}/>
             </div>
-            <div class="room__foot__option">
-                <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                    <label class="room__foot__option__label">CAMERA 2</label>
-                    <input class="room__foot__option__input"
-                        value={camera2}
-                        onKeyUp={onCamera2Change}/>
-                </div>
+            <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                <label class="room__foot__option__label">CAMERA 2</label>
+                <input class="room__foot__option__input"
+                    value={camera2}
+                    onKeyUp={onCamera2Change}/>
             </div>
-            <div class="room__foot__option">
-                <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                    <label class="room__foot__option__label">CAMERA 3</label>
-                    <input class="room__foot__option__input"
-                        value={camera3}
-                        onKeyUp={onCamera3Change}/>
-                </div>
+            <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                <label class="room__foot__option__label">CAMERA 3</label>
+                <input class="room__foot__option__input"
+                    value={camera3}
+                    onKeyUp={onCamera3Change}/>
             </div>
-            <div class="room__foot__option">
-                <button class="button button--primary"
-                    onClick={cancel}>
-                    Cancel 😢
-                </button>
-            </div>
-            <div class="room__foot__option">
-                <button class="button button--primary"
-                    onClick={saveConfig}>
-                    Save config
-                </button>
-            </div>
+            <button class="button button"
+                onClick={cancel}>
+                Cancel 😢
+            </button>
+            <button class="button button--primary"
+                onClick={saveConfig}>
+                Save config
+            </button>
         </div>
     );
 }

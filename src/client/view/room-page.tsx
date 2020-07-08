@@ -317,7 +317,7 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
         const isUserAdmin = props.room.adminId === User.socket.id;
         return (
             <div class="room">
-                <button class="button button--small button--accent"
+                <button class="button button--small button--accent button--content-size"
                     onClick={() => this.openConfiguration()}>
                     🛠️ Configuration 🛠️
                 </button>

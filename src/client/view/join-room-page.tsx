@@ -38,7 +38,7 @@ export default function JoinRoomPage(room: IRoom) {
                 Cancel 😢
             </button>
             <button
-                class="button"
+                class="button button--primary"
                 onClick={onConfirm}>
                 Join room!
             </button>
