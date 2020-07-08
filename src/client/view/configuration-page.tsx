@@ -222,13 +222,13 @@ export default function ConfigurationPage() {
                 </div>
             </div>
             <div class="room__foot__option">
-                <button class="form-btn form-btn-submit form-btn-submit--primary"
+                <button class="button button--primary"
                     onClick={cancel}>
                     Cancel 😢
                 </button>
             </div>
             <div class="room__foot__option">
-                <button class="form-btn form-btn-submit form-btn-submit--primary"
+                <button class="button button--primary"
                     onClick={saveConfig}>
                     Save config
                 </button>

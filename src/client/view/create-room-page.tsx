@@ -52,12 +52,12 @@ export default function CreateRoomPage() {
                     readOnly={true}/>
             </div>
             <button
-                class="form-btn form-btn-submit"
+                class="button"
                 onClick={onCancel}>
                 Cancel 😢
             </button>
             <button
-                class="form-btn form-btn-submit form-btn-submit--primary"
+                class="button button--primary"
                 onClick={onConfirm}>
                 Create room!
             </button>

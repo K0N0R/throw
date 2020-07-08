@@ -317,7 +317,7 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
         const isUserAdmin = props.room.adminId === User.socket.id;
         return (
             <div class="room">
-                <button class="room__config-button form-btn form-btn--small form-btn--accent"
+                <button class="button button--small button--accent"
                     onClick={() => this.openConfiguration()}>
                     🛠️ Configuration 🛠️
                 </button>
@@ -339,18 +339,18 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
                                 {props.room.name}
                             </div>
                             <div class="room__head__row">
-                                <button class="form-btn form-btn--small"
+                                <button class="button button--small"
                                     onClick={() => this.leaveRoom()}>
                                     Leave
                                 </button>
                                 {isUserAdmin &&
                                 <div class="room__head__row">
-                                    <button class="form-btn form-btn--small"
+                                    <button class="button button--small"
                                         onClick={() => this.rand()}
                                         disabled={state.gameRunning}>
                                         Rand
                                     </button>
-                                    <button class="form-btn form-btn--small"
+                                    <button class="button button--small"
                                         onClick={() => this.reset()}
                                         disabled={state.gameRunning}>
                                         Reset
@@ -440,7 +440,7 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
                             { isUserAdmin &&
                             <div class="room__foot__option"
                                 style={state.gameRunning ? 'display:none;' : ''}>
-                                <button class="form-btn form-btn-submit form-btn-submit--primary"
+                                <button class="button button--primary"
                                     onClick={(e) => this.startGame()}
                                     disabled={state.gameRunning}>
                                     Start Game!
@@ -450,7 +450,7 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
                             { isUserAdmin &&
                             <div class="room__foot__option"
                                 style={state.gameRunning ? '' : 'display:none;'}>
-                                <button class="form-btn form-btn-submit form-btn-submit--primary"
+                                <button class="button button--primary"
                                     onClick={(e) => this.endGame()}
                                     disabled={!state.gameRunning}>
                                     Stop Game!

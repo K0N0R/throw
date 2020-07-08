@@ -56,7 +56,7 @@ export default function LoginPage() {
                     Where do i find cool avatar?
             </a>
             <button
-                class="form-btn form-btn-submit form-btn-submit--primary"
+                class="button button--primary"
                 onClick={onConfirm}>
                 Throw!
             </button>

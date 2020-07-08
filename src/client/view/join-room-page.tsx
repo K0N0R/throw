@@ -33,12 +33,12 @@ export default function JoinRoomPage(room: IRoom) {
                     onInput={(e) => setPassword((e.target as HTMLInputElement).value)} />
             </div>
             <button
-                class="form-btn form-btn-submit"
+                class="button"
                 onClick={onCancel}>
                 Cancel 😢
             </button>
             <button
-                class="form-btn form-btn-submit"
+                class="button"
                 onClick={onConfirm}>
                 Join room!
             </button>
