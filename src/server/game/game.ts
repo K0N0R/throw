@@ -266,6 +266,8 @@ export class Game {
                 const shootingDistance = game_config.player.shootingDistance;
                 if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
                     this.userWhoLastTouchedBall = player.user;
+                    const shootSound = Math.round(Math.random() * 3);
+                    this.io.emit('room::game::shoot-sound', shootSound);
                     player.shoot();
                     const shootingVector = getNormalizedVector(
                         { x: player.body.position[0], y: player.body.position[1] },

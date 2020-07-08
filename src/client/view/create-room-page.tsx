@@ -22,7 +22,7 @@ export default function CreateRoomPage() {
             User.socket.emit('room::create', { name: roomName, password, maxPlayersAmount });
             User.socket.on('room::user::joined', (roomState: IRoomState) => {
                 goTo(<RoomPage {...roomState}/>);
-                User.socket.off('room::created');
+                User.socket.off('room::user::joined');
             });
         }
     }

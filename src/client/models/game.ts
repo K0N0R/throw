@@ -1,6 +1,6 @@
 import { MapKind, CameraKind } from '../../shared/callibration';
-import { IRoomGameData,  IWorldPostStep, IWorldReset } from '../../shared/events';
-import { KeysHandler } from '../../shared/keysHandler';
+import { IRoomGameData,  IWorldPostStep, IWorldReset, IRoomUser } from '../../shared/events';
+import { KeysHandler, KeysMap } from '../../shared/keysHandler';
 
 import { Canvas } from './canvas';
 import { Player } from './player';
@@ -11,8 +11,7 @@ import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
 
 import { User } from './socket';
-import { KeysMap } from './../../shared/keysHandler';
-import { IRoomUser } from './../../shared/events';
+
 
 export class Game {
     private map!: Map;
@@ -83,6 +82,12 @@ export class Game {
                 } 
             });
             this.updateCamera();
+        });
+        User.socket.on('room::game::shoot-sound', (shootSound: number) => {
+            const element: HTMLAudioElement | null = document.querySelector(`#shoot-sound-${shootSound}`)
+            if (!element) return;
+            element.volume = 0.25;
+            element.play();
         });
         User.socket.emit('room::game::user-joined')
         User.socket.on('room::game::init-data', (data: IRoomGameData) => {
@@ -165,6 +170,7 @@ export class Game {
         User.socket.off('room::game::step');
         User.socket.off('room::game::reset');
         User.socket.off('room::user::afk-changed');
+        User.socket.off('room::game::shoot-sound');
 
         Canvas.removeCanvas();
         KeysHandler.clearHandler();

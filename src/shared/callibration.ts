@@ -133,7 +133,7 @@ export enum CameraKind {
 }
 const cameraBaseSize: ISize = {
     width: 1280 * scale,
-    height: 586 * scale
+    height: 640 * scale
 }
 
 export const game_config = {
