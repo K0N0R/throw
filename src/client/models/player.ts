@@ -18,7 +18,6 @@ export class Player {
 
     public shooting!: boolean;
     
-
     public constructor(
         private mapKind: MapKind,
         public nick: string,
@@ -26,12 +25,66 @@ export class Player {
         public pos: IPos,
         public socketId: string,
         public team: Team) {
+        this.setAvatarImg();
+        this.setNickImg();
     }
 
     public dispose(): void {
         clearTimeout(this.dashingDurationTimeout);
         clearTimeout(this.dashCooldownTimeout);
         clearInterval(this.dashingCoolownAnimationInterval);
+    }
+
+    private nickImg!: HTMLImageElement;
+    private nickImgWidth!: number;
+    public setNickImg() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            const imageElem = document.createElement('img');
+            const imageSize = map_config[this.mapKind].player.radius;
+            const font = `${imageSize*0.8}px consolas`;
+            ctx.font = font,
+            ctx.canvas.width = ctx.measureText(this.nick).width;
+            this.nickImgWidth = ctx.canvas.width;
+            ctx.canvas.height = imageSize;
+            // debug background
+            // ctx.beginPath();
+            // ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            // ctx.fillStyle = 'blue';
+            // ctx.fill();
+            ctx.fillStyle ='white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = font,
+            ctx.fillText(this.nick, ctx.canvas.width/2, imageSize/2);
+            imageElem.src = ctx.canvas.toDataURL();
+            this.nickImg = imageElem;
+        }
+    }
+
+    private avatarImg!: HTMLImageElement;
+    public setAvatarImg() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            const imageElem = document.createElement('img');
+            const imageSize = map_config[this.mapKind].player.radius * 2;
+            ctx.canvas.width = imageSize;
+            ctx.canvas.height = imageSize + style_config.player.lineWidth;
+            // debug background
+            // ctx.beginPath();
+            // ctx.rect(0, 0, imageSize, imageSize);
+            // ctx.fillStyle = 'yellow';
+            // ctx.fill();
+            ctx.font = `${imageSize*0.6}px consolas`,
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle ='black';
+            ctx.fillText(this.avatar, imageSize/2, imageSize/2 + style_config.player.lineWidth);
+            imageElem.src = ctx.canvas.toDataURL();
+            this.avatarImg = imageElem;
+        }
     }
 
     public dash(dashing: boolean): void {
@@ -95,10 +148,7 @@ export class Player {
 
         // render player avatar
         Canvas.startDraw();
-        Canvas.ctx.textAlign = 'center';
-        Canvas.ctx.font = `${map_config[this.mapKind].player.radius*1.2}px consolas`;
-        Canvas.ctx.fillStyle = 'white';
-        Canvas.ctx.fillText(this.avatar, this.pos.x, this.pos.y + (map_config[this.mapKind].player.radius*0.4));
+        Canvas.ctx.drawImage(this.avatarImg, this.pos.x - map_config[this.mapKind].player.radius, this.pos.y - map_config[this.mapKind].player.radius);
         Canvas.stopDraw();
     }
 
@@ -125,10 +175,7 @@ export class Player {
         }
         // render player nick
         Canvas.startDraw();
-        Canvas.ctx.textAlign = 'center';
-        Canvas.ctx.font = `${map_config[this.mapKind].player.radius*0.8}px consolas`;
-        Canvas.ctx.fillStyle = 'white';
-        Canvas.ctx.fillText(this.nick, this.pos.x, this.pos.y + map_config[this.mapKind].player.radius + map_config[this.mapKind].player.radius/2 + map_config[this.mapKind].player.radius*0.4);
+        Canvas.ctx.drawImage(this.nickImg, this.pos.x - this.nickImgWidth/2, this.pos.y + map_config[this.mapKind].player.radius*1.5);
         Canvas.stopDraw();
 
         // render afk

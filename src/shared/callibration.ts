@@ -1,6 +1,6 @@
 import { ISize } from './model';
 
-const scale = 2;
+const scale = 1;
 
 //#region MAP CONFIG
 export enum MapKind {
@@ -166,7 +166,7 @@ export const game_config = {
         shooting: 125000 * scale,
         shootingDistance: 5 * scale,
         shootingCooldown: 100,
-        dashing: 1250,
+        dashing: 625 * scale,
         dashDuration: 200,
         dashCooldown: 6000,
     }
