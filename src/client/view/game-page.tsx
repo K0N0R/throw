@@ -9,7 +9,7 @@ import { Team } from '../../shared/team';
 import { game_config } from './../../shared/callibration';
 import { useState, useEffect } from 'preact/hooks';
 import { IRoomUser, IRoomGameParams, IRoomGameState } from './../../shared/events';
-import { fpsMeter } from './utils';
+import { fpsMeter, playSound } from './utils';
 
 interface IRoomComponentState {
     gameRunning: boolean;
@@ -167,6 +167,7 @@ export default function GamePage(props: IRoomComponentState) {
     }
     
     const showWon = (team: Team) => {
+        playSound(`#game-ended-sound`, 1);
         setGameWon(team);
         setTimeout(() => {
             setGameWon('');
@@ -176,15 +177,10 @@ export default function GamePage(props: IRoomComponentState) {
     const showScorer = (team: Team, scorer?: IRoomUser) => {
         if (User.team && User.team !== Team.Spectator) {
             if (team === User.team) {
-                const element: HTMLAudioElement | null = document.querySelector(`#team-scored-sound`);
-                if (!element) return;
-                element.volume = 0.50;
-                element.play();
+                playSound(`#team-scored-sound`);
             } else {
-                const element: HTMLAudioElement | null = document.querySelector(`#enemy-scored-sound`);
-                if (!element) return;
-                element.volume = 0.50;
-                element.play();
+                playSound(`#enemy-scored-sound`);
+
             }
         }
         setScorerTeam(team);

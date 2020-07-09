@@ -11,6 +11,7 @@ import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
 
 import { User } from './socket';
+import { playSound, loopSound } from '../view/utils';
 
 
 export class Game {
@@ -22,7 +23,9 @@ export class Game {
     private rightGoal!: RightGoal;
     private keysMap: KeysMap = {};
 
+    private breakSoundLoop: () => void;
     constructor(private mapKind: MapKind) {
+        this.breakSoundLoop = loopSound(`#background-sound`, 13500);
         this.initHandlers();
         this.initCanvas();
         this.initEntities();
@@ -84,10 +87,7 @@ export class Game {
             this.updateCamera();
         });
         User.socket.on('room::game::shoot-sound', (shootSound: number) => {
-            const element: HTMLAudioElement | null = document.querySelector(`#shoot-sound-${shootSound}`)
-            if (!element) return;
-            element.volume = 0.25;
-            element.play();
+            playSound(`#shoot-sound-${shootSound}`)
         });
         User.socket.emit('room::game::user-joined')
         User.socket.on('room::game::init-data', (data: IRoomGameData) => {
@@ -175,6 +175,7 @@ export class Game {
         Canvas.removeCanvas();
         KeysHandler.clearHandler();
         this.players.forEach(player => player.dispose());
+        this.breakSoundLoop();
     }
 
     public render(): void {

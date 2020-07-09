@@ -10,6 +10,7 @@
         "prod:start": "node ./dist/server/server.js"
     },
     "dependencies": {
+        "client": "0.0.1",
         "express": "^4.17.1",
         "p2": "^0.7.1",
         "preact": "^10.4.5",

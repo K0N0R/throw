@@ -4,7 +4,7 @@ import { User } from '../models/socket';
 import { Team } from '../../shared/team';
 import GamePage from './game-page';
 import ConfigurationPage from './configuration-page';
-import { goTo } from './utils';
+import { goTo, playSound } from './utils';
 import LobbyPage from './lobby-page';
 import { KeysHandler } from '../../shared/keysHandler';
 import { MapKind } from '../../shared/callibration';
@@ -77,10 +77,7 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
             if (idx !== -1) return;
             this.state.users.push(user);
             this.forceUpdate();
-            const element: HTMLAudioElement | null = document.querySelector(`#user-joined-sound`)
-            if (!element) return;
-            element.volume = 0.50;
-            element.play();
+            playSound(`#user-joined-sound`);
         };
         User.socket.on('room::user::add', onUserAdd);
 
@@ -92,10 +89,7 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
                 if (idx === -1) return;
                 this.state.users.splice(idx, 1);
                 this.forceUpdate();
-                const element: HTMLAudioElement | null = document.querySelector(`#user-left-sound`)
-                if (!element) return;
-                element.volume = 0.50;
-                element.play();
+                playSound(`#user-left-sound`);
             }
         };
         User.socket.on('room::user::left', onUserLeftRoom);
@@ -119,6 +113,7 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
         User.socket.on('room::user::messaged', onNewMessage)
 
         const onGameStart = () => {
+            playSound(`#game-start-sound`);
             this.setState({ gameRunning: true });
         }
         User.socket.on('room::game::started', onGameStart)
@@ -318,6 +313,7 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
         return (
             <div class="room">
                 <button class="button button--small button--accent button--content-size"
+                    style="position: fixed;"
                     onClick={() => this.openConfiguration()}>
                     🛠️ Configuration 🛠️
                 </button>
