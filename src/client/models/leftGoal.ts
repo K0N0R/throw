@@ -14,8 +14,10 @@ export class LeftGoal {
         this.pos = { x: map_config[this.mapKind].border.side - (map_config[this.mapKind].goal.size.width), y: (map_config[this.mapKind].outerSize.height / 2) - (map_config[this.mapKind].goal.size.height / 2) };
         this.topPostPosition = { x: this.pos.x + map_config[this.mapKind].goal.size.width, y: this.pos.y };
         this.bottomPostPosition = { x: this.pos.x + map_config[this.mapKind].goal.size.width, y: this.pos.y + map_config[this.mapKind].goal.size.height };
+        this.points = this.getPoints(this.pos);
     }
 
+    private points: ([number, number])[];
     private getPoints(pos = { x: 0, y: 0 }): ([number, number])[] {
         const offset = getOffset(pos, map_config[this.mapKind].goal.size)
         const goalTickness = 10;
@@ -37,7 +39,7 @@ export class LeftGoal {
 
     public render(): void {
         Canvas.startDraw();
-        const vertices = this.getPoints(this.pos);
+        const vertices = this.points;
         Canvas.ctx.moveTo(vertices[0][0], vertices[0][1]);
         vertices
             .filter((_, idx) => idx < vertices.length - 4) // skip 4 last

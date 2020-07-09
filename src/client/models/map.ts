@@ -8,7 +8,7 @@ import { Canvas } from './canvas';
 export class Map {
     public pos: IPos;
     public outerPos: IPos;
-    public bcgrImg: any;
+    public bckgrImg: any;
 
     public constructor(private mapKind: MapKind) {
 
@@ -22,13 +22,15 @@ export class Map {
             y: 0
         };
 
-        this.setBcgrImg();
+        this.bckgrImg = document.querySelector('#game-asset')
+
+        this.topShapePoints = this.getTopShapePoints(this.pos);
+        this.bottomShapePoints = this.getBottomShapePoints(this.pos);
+        this.bckgrImagePoints = this.getBckgrImagePoints();
     }
 
-    private setBcgrImg(): void {
-        this.bcgrImg = document.querySelector('#game-asset')
-    }
 
+    private topShapePoints: ([number, number])[];
     private getTopShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
         const offset = getOffset(pos, map_config[this.mapKind].size); // convex use relative position to body
         const mapTickness = 10;
@@ -49,6 +51,7 @@ export class Map {
         ];
     }
 
+    private bottomShapePoints: ([number, number])[];
     private getBottomShapePoints(pos = { x: 0, y: 0 }): ([number, number])[] { // pos for debbuging
         const offset = getOffset(pos, map_config[this.mapKind].size); // convex use relative position to body
         const mapTickness = 10;
@@ -69,6 +72,7 @@ export class Map {
         ];
     }
 
+    private bckgrImagePoints: IPos[];
     private getBckgrImagePoints(): IPos[] {
         const points: IPos[] = [];
         const imgSize = 256;
@@ -92,18 +96,18 @@ export class Map {
 
     public render(): void {
 
-        if (this.bcgrImg) {
+        if (this.bckgrImg) {
             Canvas.startDraw();
             Canvas.ctx.moveTo(0, 0);
-            const bckgrImagePoints = this.getBckgrImagePoints();
+            const bckgrImagePoints = this.bckgrImagePoints;
             bckgrImagePoints.forEach(pos => {
-                Canvas.ctx.drawImage(this.bcgrImg, pos.x, pos.y);
+                Canvas.ctx.drawImage(this.bckgrImg, pos.x, pos.y);
             });
             Canvas.stopDraw();
         }
 
         Canvas.startDraw();
-        const verticesTop = this.getTopShapePoints(this.pos);
+        const verticesTop = this.topShapePoints;
         Canvas.ctx.moveTo(verticesTop[0][0], verticesTop[0][1]);
         verticesTop
             .filter((_, idx) => idx < verticesTop.length - 4) // skip 4 last
@@ -116,7 +120,7 @@ export class Map {
         Canvas.stopDraw();
 
         Canvas.startDraw();
-        const verticesBottom = this.getBottomShapePoints(this.pos);
+        const verticesBottom = this.bottomShapePoints;
         Canvas.ctx.moveTo(verticesBottom[0][0], verticesBottom[0][1]);
         verticesBottom
             .filter((_, idx) => idx < verticesBottom.length - 4) // skip 4 last
@@ -156,7 +160,6 @@ export class Map {
         Canvas.stopDraw();
 
         // middle circle
-        Canvas.ctx.moveTo(this.pos.x + map_config[this.mapKind].size.width / 2, this.pos.y + map_config[this.mapKind].size.height / 2);
         Canvas.startDraw();
         Canvas.ctx.arc(this.pos.x + map_config[this.mapKind].size.width / 2, this.pos.y + map_config[this.mapKind].size.height / 2, map_config[this.mapKind].middleRadius + (style_config.map.lineWidth/2), 0, Math.PI * 2);
         Canvas.ctx.lineWidth = style_config.map.lineWidth;
@@ -164,7 +167,7 @@ export class Map {
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
-        Canvas.ctx.moveTo(this.pos.x + map_config[this.mapKind].size.width / 2, this.pos.y + map_config[this.mapKind].size.height / 2);
+        // mini middle circle
         Canvas.startDraw();
         Canvas.ctx.arc(this.pos.x + map_config[this.mapKind].size.width / 2, this.pos.y + map_config[this.mapKind].size.height / 2, map_config[this.mapKind].ball.radius*3/4, 0, Math.PI * 2);
         Canvas.ctx.fillStyle = style_config.map.strokeStyle;
