@@ -43,7 +43,7 @@ export default function LobbyPage() {
                     ))
                 }
                 <div class="list-footer">
-                    { rooms.length <= 0 ? 'No room find, click to add one.' : 'Click on item in the list to join you dumb ass!'}
+                    { rooms.length <= 0 ? 'No room found, click on the button to add one.' : 'Click on item in the list to join!'}
                 </div>
                 <button class="button button--primary"
                         onClick={() => createNewGame()}>
