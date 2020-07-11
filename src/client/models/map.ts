@@ -44,10 +44,10 @@ export class Map {
             [offset.right, offset.top + map_config[this.mapKind].cornerRadius],
             [offset.right, offset.midVert - map_config[this.mapKind].goal.size.height / 2],
 
-            [offset.right + mapTickness, offset.midVert - map_config[this.mapKind].goal.size.height / 2], // obramówka zewnętrzna
-            [offset.right + mapTickness, offset.top - mapTickness],
-            [offset.left - mapTickness, offset.top - mapTickness],
-            [offset.left - mapTickness, offset.midVert - map_config[this.mapKind].goal.size.height / 2],
+            // [offset.right + mapTickness, offset.midVert - map_config[this.mapKind].goal.size.height / 2], // obramówka zewnętrzna
+            // [offset.right + mapTickness, offset.top - mapTickness],
+            // [offset.left - mapTickness, offset.top - mapTickness],
+            // [offset.left - mapTickness, offset.midVert - map_config[this.mapKind].goal.size.height / 2],
         ];
     }
 
@@ -65,10 +65,10 @@ export class Map {
             [offset.left, offset.bottom - map_config[this.mapKind].cornerRadius],
             [offset.left, offset.midVert + map_config[this.mapKind].goal.size.height / 2],
 
-            [offset.left - mapTickness, offset.midVert + map_config[this.mapKind].goal.size.height / 2],// obramówka zewnętrzna
-            [offset.left - mapTickness, offset.bottom + mapTickness],
-            [offset.right + mapTickness, offset.bottom + mapTickness],
-            [offset.right + mapTickness, offset.midVert + map_config[this.mapKind].goal.size.height / 2],
+            // [offset.left - mapTickness, offset.midVert + map_config[this.mapKind].goal.size.height / 2],// obramówka zewnętrzna
+            // [offset.left - mapTickness, offset.bottom + mapTickness],
+            // [offset.right + mapTickness, offset.bottom + mapTickness],
+            // [offset.right + mapTickness, offset.midVert + map_config[this.mapKind].goal.size.height / 2],
         ];
     }
 
@@ -96,39 +96,21 @@ export class Map {
 
     public render(): void {
 
-        if (this.bckgrImg) {
-            Canvas.startDraw();
-            Canvas.ctx.moveTo(0, 0);
-            const bckgrImagePoints = this.bckgrImagePoints;
-            bckgrImagePoints.forEach(pos => {
-                Canvas.ctx.drawImage(this.bckgrImg, pos.x, pos.y);
-            });
-            Canvas.stopDraw();
-        }
-
+        const pitchPattern = Canvas.ctx.createPattern(this.bckgrImg, 'repeat');
         Canvas.startDraw();
-        const verticesTop = this.topShapePoints;
-        Canvas.ctx.moveTo(verticesTop[0][0], verticesTop[0][1]);
-        verticesTop
-            .filter((_, idx) => idx < verticesTop.length - 4) // skip 4 last
+        const mapBorderVertices = [
+            ...this.topShapePoints,
+            ...this.bottomShapePoints
+        ];
+        Canvas.ctx.moveTo(mapBorderVertices[0][0], mapBorderVertices[0][1]);
+        mapBorderVertices
             .forEach(v => {
                 Canvas.ctx.lineTo(v[0], v[1]);
             });
         Canvas.ctx.lineWidth = style_config.map.lineWidth;
         Canvas.ctx.strokeStyle = style_config.map.strokeStyle;
-        Canvas.ctx.stroke();
-        Canvas.stopDraw();
-
-        Canvas.startDraw();
-        const verticesBottom = this.bottomShapePoints;
-        Canvas.ctx.moveTo(verticesBottom[0][0], verticesBottom[0][1]);
-        verticesBottom
-            .filter((_, idx) => idx < verticesBottom.length - 4) // skip 4 last
-            .forEach(v => {
-                Canvas.ctx.lineTo(v[0], v[1]);
-            });
-        Canvas.ctx.lineWidth = style_config.map.lineWidth;
-        Canvas.ctx.strokeStyle = style_config.map.strokeStyle;
+        Canvas.ctx.fillStyle = pitchPattern ?? '';
+        Canvas.ctx.fill();
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
