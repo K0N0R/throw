@@ -227,25 +227,34 @@ export default function GamePage(props: IRoomComponentState) {
                     </div>
                 </div>
             }
-            <div>FPS: {fps}</div>
+            <div class="game-state__fps">
+                <span class="game-state__fps__value">FPS: {fps}</span>
+                { scoreGolden &&
+                    <span class="game-state__golden">GOLDEN</span>
+                }
+            </div>
             <div class="game-state__score">
                 <div class="game-state__score__value">
                     <div class="team-cube team-cube--left"></div>
-                    <div>{scoreLeft}</div>
+                    <div class={` ${scoreGolden ? 'game-state__golden' : ''}`}>{scoreLeft}</div>
                 </div>
                 <div>-</div>
                 <div class="game-state__score__value">
-                    <div>{scoreRight}</div>
+                    <div class={` ${scoreGolden ? 'game-state__golden' : ''}`}>{scoreRight}</div>
                     <div class="team-cube team-cube--right"></div>
                 </div>
             </div>
+
             <div class="game-state__time"
                 style={scoreGolden ? 'color:gold;': ''}>
-                {showTime()}
+                { scoreGolden &&
+                    <span class="game-state__golden">GOAL!</span>
+                }
+                <span class={`game-state__time__value ${ ((state.gameParams.timeLimit ?? 999) - (time/60) < 0.5 && !scoreGolden) ? 'game-state__time__value--ending' : ''}`}>
+                    {showTime()}
+                </span>
             </div>
-            { scoreGolden &&
-                <div class="game-state__golden">🔔 Golden goal!</div>
-            }
+
             { scoreboardVisible &&
                 <div class="scoreboard-wrap">
                     <div class="scoreboard">

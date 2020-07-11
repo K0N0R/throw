@@ -1,4 +1,14 @@
-
+@keyframes textPulse {
+	0% {
+		color #eef2f0
+	}
+	50% {
+		color red
+	}
+	100% {
+		color #eef2f0
+	}
+}
 
 canvas
 	max-height 100%
@@ -22,6 +32,7 @@ canvas
 	color white
 	align-items center
 	font-size 18px
+	padding 0 10px
 
 	&__winning-team
 		position fixed
@@ -68,26 +79,48 @@ canvas
 		text-shadow 2px 2px 0px black
 		white-space nowrap
 
+	&__fps
+		flex 1
+		display flex
+		align-items center
+		font-size 21px
+		
+
+		&__value
+			margin-right auto
+
 	&__score
 		display flex
 		align-items center
-		flex 1
+		padding 0 10px
 		justify-content center
 
 		&__value
 			display flex
 			align-items center
+			font-size 21px
 
 	&__time
 		flex 1
 		justify-content center
-		text-align center
+		text-align right
+		display flex
+		align-items center
+
+		&__value
+			font-weight 900
+			font-size 21px
+			text-align right
+			margin-left auto
+
+			&--ending
+				animation-name textPulse
+				animation-iteration-count infinite
+				animation-duration 0.7s
 
 	&__golden
-		flex 1
-		justify-content center
-		text-align center
 		color gold
+		font-size 21px
 
 .team-cube
 	width 20px
