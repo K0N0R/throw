@@ -3,7 +3,7 @@ import { IPos } from './../../shared/model';
 
 import { Canvas } from './canvas';
 
-export class Ball  {
+export class Ball {
     public pos: IPos;
     public constructor(private mapKind: MapKind) {
         this.pos = {

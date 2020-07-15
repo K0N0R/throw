@@ -1,10 +1,8 @@
 import p2 from 'p2';
-
 import { game_config, map_config, MapKind } from './../../shared/callibration';
-
 import { BALL, MAP, GOAL, PLAYER, GOAL_POST, GOAL_SCORE } from './collision';
 
-export class Ball  {
+export class Ball {
     public body: p2.Body;
     private shape: p2.Circle;
 
