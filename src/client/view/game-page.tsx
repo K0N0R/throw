@@ -272,7 +272,6 @@ export default function GamePage(props: IRoomComponentState) {
                             )
                         }
                     </div>
-                    <div class='backdrop'></div>
                 </div>
             }
         </div>
