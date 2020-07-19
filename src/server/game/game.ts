@@ -41,7 +41,7 @@ export class Game {
     public disposing!: boolean;
 
     private initStage: boolean;
-    constructor(private io: io.Server, public roomId: string, private mapKind: MapKind, users: User[], 
+    constructor(private io: io.Server, public roomId: string, private mapKind: MapKind, users: User[],
         private onGameTimeStop: () => void,
         private onGameTimeResume: () => void,
         private onGameScoreChanged: (team: Team, user?: User) => void) {
@@ -59,7 +59,7 @@ export class Game {
     public dispose(): void {
         this.listeners.forEach(listener => listener());
         this.listeners = [];
-        this.userWhoLastTouchedBall = void 0;
+        this.userWhoLastTouchedBall = undefined;
         const players = [...this.players];
         players.forEach((item) => this.removePlayer(item.user));
         this.players = [];
@@ -134,7 +134,7 @@ export class Game {
         user.offDisconnect('room::game::player::disconnect');
         user.socket.removeAllListeners('room::game::player-key');
     }
-    //#endregion 
+    //#endregion
 
     private initEntities(): void {
         this.initMaterials();
@@ -347,7 +347,7 @@ export class Game {
             this.reset();
             this.initStage = false;
         }
-        
+
         const data: IWorldPostStep = {};
         if (playersToAdd.length != null) data.playersToAdd = playersToAdd;
         if (playersToRemove.length != null) data.playersToRemove = playersToRemove;

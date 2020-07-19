@@ -1,4 +1,4 @@
-import { style_config, MapKind, game_config, map_config } from './../../shared/callibration';
+import { style_config, MapKind, map_config } from './../../shared/callibration';
 import { IPos } from './../../shared/model';
 
 import { Canvas } from './canvas';

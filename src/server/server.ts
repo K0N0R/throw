@@ -17,6 +17,3 @@ httpServer.listen({ port: PORT, hostname: HOST});
 console.log(`Running on http://${HOST}:${PORT}`);
 
 new Lobby(io);
-
-
-

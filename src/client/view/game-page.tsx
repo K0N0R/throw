@@ -30,7 +30,7 @@ export default function GamePage(props: IRoomComponentState) {
     const [time, setTime] = useState(state.gameState.time);
     const [gameWon, setGameWon] = useState('');
     const [scorerTeam, setScorerTeam] = useState('');
-    const [scorerUser, setScorerUser] = useState<IRoomUser | undefined>(void 0);
+    const [scorerUser, setScorerUser] = useState<IRoomUser | undefined>();
     const [scoreboard, setScoreboard] = useState<IRoomGameScoreboardItem[]>(state.gameScoreboard);
     const [scoreboardVisible, setScoreboardVisible] = useState(false);
 
@@ -165,7 +165,7 @@ export default function GamePage(props: IRoomComponentState) {
         if (seconds.length !== 2) seconds = `0${seconds}`;
         return `${minutes}:${seconds}`;
     }
-    
+
     const showWon = (team: Team) => {
         playSound(`#game-ended-sound`, 1);
         setGameWon(team);
@@ -187,7 +187,7 @@ export default function GamePage(props: IRoomComponentState) {
         setScorerUser(scorer);
         setTimeout(() => {
             setScorerTeam('');
-            setScorerUser(void 0);
+            setScorerUser();
         }, game_config.goalResetTimeout);
     }
 
@@ -272,6 +272,7 @@ export default function GamePage(props: IRoomComponentState) {
                             )
                         }
                     </div>
+                    <div class='backdrop'></div>
                 </div>
             }
         </div>

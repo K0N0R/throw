@@ -1,19 +1,17 @@
-import io from 'socket.io';
-
+import {Server, Socket} from 'socket.io';
 import { IConnectionData, IRoomCreate, IRoomJoin } from './../../shared/events';
-
 import { User } from './user';
 import { Room } from './room';
 
 
 export class Lobby {
     public rooms: Room[] = [];
-    public constructor(private io: io.Server) {
-        this.initConnection(io);
+    public constructor(private io: Server) {
+        this.initConnection();
     }
 
-    public initConnection(io: io.Server): void {
-        this.io.on('connection', (socket: io.Socket) => {
+    public initConnection(): void {
+        this.io.on('connection', (socket: Socket) => {
             socket.on('connection::data', (data: string) => {
                 const parsedData: IConnectionData = JSON.parse(data);
                 const user = new User(socket, parsedData.nick, parsedData.avatar)
@@ -42,7 +40,7 @@ export class Lobby {
         });
         user.socket.on('room::join', (data: IRoomJoin) => {
             const room = this.rooms.find(item => item.id === data.id);
-            if (room  && room.password === data.password) {
+            if (room && room.password === data.password) {
                 room.joinUser(user);
             }
         });

@@ -286,7 +286,7 @@ export class Room {
             } else {
                 gameScoreBoardItem.goals += 1;
             }
-            
+
         } else {
             this.gameScoreboard.push({
                 scorer: this.getRoomUser(scorer),
@@ -302,7 +302,7 @@ export class Room {
         }
         this.io.to(this.id).emit('room::game::scorer', {
             team,
-            scorer: scorer ? this.getRoomUser(scorer) : void 0
+            scorer: scorer ? this.getRoomUser(scorer) : undefined
         });
     }
 
@@ -363,7 +363,7 @@ export class Room {
         } else {
             this.scoreRight += 1;
         }
-        let winningTeam = this.scoreGolden ? team : void 0;
+        let winningTeam = this.scoreGolden ? team : undefined;
         if (this.scoreLeft >= this.scoreLimit) winningTeam = Team.Left;
         if (this.scoreRight >= this.scoreLimit) winningTeam = Team.Right;
         this.updateGameScorer(team, scorer);

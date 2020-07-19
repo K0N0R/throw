@@ -19,7 +19,6 @@ export class Ball {
             radius: map_config[this.mapKind].ball.radius,
             collisionGroup: BALL,
             collisionMask: MAP | GOAL | PLAYER | GOAL_POST | GOAL_SCORE
-
         });
 
         this.shape.material = material;

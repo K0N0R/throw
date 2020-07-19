@@ -82,7 +82,7 @@ export class Game {
                 if (player) {
                     player.pos.x = dataPlayer.position[0];
                     player.pos.y = dataPlayer.position[1];
-                } 
+                }
             });
             this.updateCamera();
         });
@@ -123,7 +123,7 @@ export class Game {
 
             const deltaKeysMap: Partial<KeysMap> = {};
             for (const key in keysMap) {
-                if (this.keysMap[key] === void 0) {
+                if (this.keysMap[key] === undefined) {
                     deltaKeysMap[key] = keysMap[key];
                 } else if (this.keysMap[key] !== keysMap[key]) {
                     deltaKeysMap[key] = keysMap[key];
@@ -136,7 +136,7 @@ export class Game {
             }
         });
     }
-    
+
     private initCanvas(): void {
         Canvas.createCanvas();
     }
