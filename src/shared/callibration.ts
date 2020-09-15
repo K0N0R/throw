@@ -161,7 +161,7 @@ export const game_config = {
     player: {
         mass: 5,
         damping: 0.92,
-        movementSpeed: 3000 * scale,
+        movementSpeed: 3200 * scale,
         shootingMovementSpeed: 1750 * scale,
         shooting: 125000 * scale,
         shootingDistance: 5 * scale,
