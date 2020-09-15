@@ -16,7 +16,6 @@ export class Player {
 
     public shootingCooldown!: boolean;
     public shooting!: boolean;
-    public dashing!: boolean;
 
     public get maxSpeed(): number {
         if (this.shooting) {
@@ -57,42 +56,6 @@ export class Player {
         }, game_config.player.shootingCooldown);
     }
 
-    public dash(vector: IPos): void {
-        if (!this.dashing) {
-            this.dashing = true;
-            const initVelocity = {x: this.body.velocity[0], y: this.body.velocity[1]};
-            const dashingVector = getNormalizedVector(
-                { x: this.body.position[0], y: this.body.position[1] },
-                { x: this.body.position[0] + vector.x, y: this.body.position[1] + vector.y }
-            );
-
-            let dashingTime = 0;
-            let dashingSpeedScale = 0.2;
-            let dashingSpeedScaleMultipiler = 0.01
-            const interval = setInterval(() => {
-                this.body.velocity[0] = (initVelocity.x + dashingVector.x * game_config.player.dashingMaxSpeed * dashingSpeedScale);
-                this.body.velocity[1] = (initVelocity.y + dashingVector.y * game_config.player.dashingMaxSpeed * dashingSpeedScale);
-                dashingSpeedScaleMultipiler *= 2;
-                dashingSpeedScale+= dashingSpeedScaleMultipiler;
-                if (dashingSpeedScale > 1) dashingSpeedScale = 1;
-                dashingTime += game_config.player.dashingTick;
-                if (dashingTime > game_config.player.dashDuration) {
-                    clearInterval(interval);
-                    const moveVector = { x: this.body.velocity[0], y: this.body.velocity[1] };
-                    const normalizedMoveVector = normalizeVector(moveVector);
-                    this.body.velocity[0] = normalizedMoveVector.x * this.maxSpeed / 20;
-                    this.body.velocity[1] = normalizedMoveVector.y * this.maxSpeed / 20;
-
-                    setTimeout(() => {
-                        this.dashing = false;
-                    }, game_config.player.dashCooldown)
-                }
-            }, game_config.player.dashingTick)
-
-
-        }
-    }
-
     public onMovmentChange(): void {
         const moveVector = { x: this.body.force[0], y: this.body.force[1] };
         const movmentLength = calculateVectorLength(moveVector);
@@ -119,13 +82,6 @@ export class Player {
         }
         this.shooting = Boolean(this.keysMap.shoot);
 
-        if (this.keysMap.dash && (this.keysMap.up || this.keysMap.down || this.keysMap.left || this.keysMap.right)) {
-            const vector: IPos = {
-                y: this.keysMap.down ? 1 : (this.keysMap.up ? -1 : 0),
-                x: this.keysMap.right ? 1 : (this.keysMap.left ? -1 : 0)
-            }
-            this.dash(vector);
-        }
         this.onMovmentChange();
     }
 }

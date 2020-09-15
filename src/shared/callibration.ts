@@ -166,10 +166,6 @@ export const game_config = {
         shooting: 125000 * scale,
         shootingDistance: 5 * scale,
         shootingCooldown: 100,
-        dashCooldown: 6000,
-        dashingMaxSpeed: 625 * scale,
-        dashDuration: 325,
-        dashingTick: 25,
     }
 }
 

@@ -8,14 +8,6 @@ import { User } from './socket';
 export class Player {
     public afk: boolean = false;
 
-    public dashing!: boolean;
-    public dashCooldown!: boolean;
-
-    private dashingDurationTimeout;
-    private dashCooldownTimeout;
-    private dashingCoolownAnimationInterval;
-    private dashingCooldownAnimationTimeLeft!: number;
-
     public shooting!: boolean;
     
     public constructor(
@@ -30,9 +22,6 @@ export class Player {
     }
 
     public dispose(): void {
-        clearTimeout(this.dashingDurationTimeout);
-        clearTimeout(this.dashCooldownTimeout);
-        clearInterval(this.dashingCoolownAnimationInterval);
     }
 
     private nickImg!: HTMLImageElement;
@@ -87,32 +76,6 @@ export class Player {
         }
     }
 
-    public dash(dashing: boolean): void {
-        if (!this.dashing && dashing) {
-            this.dashing = true;
-            this.dashingDurationTimeout = setTimeout(() => {
-                this.dashingCooldownTimer();
-                this.dashCooldown = true;
-                this.dashCooldownTimeout = setTimeout(() => {
-                    this.dashing = false;
-                    this.dashCooldown = false;
-                }, game_config.player.dashCooldown);
-            }, game_config.player.dashDuration)
-        }
-    }
-
-    public dashingCooldownTimer() {
-        const animationTick = 50; // the smaller the smoother
-        this.dashingCooldownAnimationTimeLeft = game_config.player.dashCooldown; 
-        this.dashingCoolownAnimationInterval = setInterval(() => {
-            this.dashingCooldownAnimationTimeLeft -= animationTick;
-            if (this.dashingCooldownAnimationTimeLeft < 0 ) {
-                this.dashingCooldownAnimationTimeLeft = game_config.player.dashCooldown;
-                clearInterval(this.dashingCoolownAnimationInterval);
-            }
-        }, animationTick);
-    }
-
     private afkCloudVertices(): IPos[] {
         const afkMessageSize = map_config[this.mapKind].player.radius * 0.7;
         const afkMessageBottomY = map_config[this.mapKind].player.radius * 1.2;
@@ -158,16 +121,6 @@ export class Player {
             Canvas.ctx.globalAlpha = 0.2;
             Canvas.ctx.arc(this.pos.x, this.pos.y, style_config.player.meIndicatorRadius, 0, 2 * Math.PI, true);
             Canvas.ctx.strokeStyle = style_config.player.meIndicatorStrokeStyle;
-            Canvas.ctx.lineWidth = style_config.player.meIndicatorLineWidth;
-            Canvas.ctx.stroke();
-            Canvas.ctx.globalAlpha = 1;
-            Canvas.stopDraw();
-        }
-        if (this.dashCooldown) { // render dash cooldown animation frame
-            Canvas.ctx.moveTo(this.pos.x, this.pos.y);
-            Canvas.startDraw();
-            Canvas.ctx.globalAlpha = 0.5;
-            Canvas.ctx.arc(this.pos.x, this.pos.y, style_config.player.meIndicatorRadius, -Math.PI/2 + (-2 * Math.PI * this.dashingCooldownAnimationTimeLeft/game_config.player.dashCooldown), -Math.PI/2, false);
             Canvas.ctx.lineWidth = style_config.player.meIndicatorLineWidth;
             Canvas.ctx.stroke();
             Canvas.ctx.globalAlpha = 1;

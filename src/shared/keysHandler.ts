@@ -4,7 +4,6 @@ export interface KeysMap {
     left?: boolean;
     right?: boolean;
     shoot?: boolean;
-    dash?: boolean;
     camera1?: boolean;
     camera2?: boolean;
     camera3?: boolean;
@@ -16,7 +15,6 @@ export interface KeysConfiguration {
     left: string;
     right: string;
     shoot: string;
-    dash: string;
     camera1: string;
     camera2: string;
     camera3: string;
@@ -31,7 +29,6 @@ export class KeysHandler {
         left: 'ArrowLeft',
         right: 'ArrowRight',
         shoot: 'KeyX',
-        dash: 'ShiftLeft',
         camera1: 'Digit1',
         camera2: 'Digit2',
         camera3: 'Digit3'

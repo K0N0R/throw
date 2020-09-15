@@ -119,7 +119,6 @@ export class Game {
             const player = this.players.find(player => player.socketId === User.socket.id);
             if (!player) return;
             player.shooting = Boolean(keysMap.shoot);
-            player.dash(Boolean(keysMap.dash));
 
             const deltaKeysMap: Partial<KeysMap> = {};
             for (const key in keysMap) {

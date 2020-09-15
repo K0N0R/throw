@@ -14,7 +14,6 @@ export default function ConfigurationPage() {
     const [kind, setKind] = useLocalStorage('thow_config_set', MovementKind.ARROW);
     const [, setKeysConfig] = useLocalStorage('throw_config', '');
     const [shoot, setShoot] = useState(KeysHandler.configuration.shoot);
-    const [dash, setDash] = useState(KeysHandler.configuration.dash);
     const [up, setUp] = useState(KeysHandler.configuration.up);
     const [down, setDown] = useState(KeysHandler.configuration.down);
     const [left, setLeft] = useState(KeysHandler.configuration.left);
@@ -29,10 +28,9 @@ export default function ConfigurationPage() {
     ];
 
     const saveConfig = () => {
-        if (shoot && dash && up && down && left && right && camera1 && camera2 && camera3) {
+        if (shoot && up && down && left && right && camera1 && camera2 && camera3) {
             const config: KeysConfiguration = {
                 shoot,
-                dash,
                 up,
                 down,
                 left,
@@ -107,11 +105,6 @@ export default function ConfigurationPage() {
         setShoot(e.code);
     };
 
-    const onDashChange = (e: any) => {
-        e.preventDefault();
-        setDash(e.code);
-    };
-
     const onCamera1Change = (e: any) => {
         e.preventDefault();
         setCamera1(e.code);
@@ -177,12 +170,6 @@ export default function ConfigurationPage() {
                 <input class="room__foot__option__input"
                     value={shoot}
                     onKeyDown={onShootChange}/>
-            </div>
-            <div class="form-field form-field--small form-field--horizontal room__foot__option">
-                <label class="room__foot__option__label">DASH</label>
-                <input class="room__foot__option__input"
-                    value={dash}
-                    onKeyDown={onDashChange}/>
             </div>
             <div class="form-field form-field--small form-field--horizontal room__foot__option">
                 <label class="room__foot__option__label">CAMERA 1</label>

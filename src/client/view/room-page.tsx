@@ -29,10 +29,6 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
                 nick: '',
                 avatar: 'SYSTEM'
             }, {
-                value: `SHOOT(${config.shoot}), DASH(${config.dash})`,
-                nick: ``,
-                avatar: 'SYSTEM'
-            }, {
                 value: `CAM_CLOSE(${config.camera1}), CAM_MEDIUM(${config.camera2}), CAM_FAR(${config.camera3}) `,
                 nick: ``,
                 avatar: 'SYSTEM'
