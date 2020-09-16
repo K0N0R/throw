@@ -8,12 +8,12 @@ export class GameMap {
     private static amount: number = 1250;
     public static circles: Circle[] = [];
     private static colors = [
-        '#1987CF',
-        '#7093BC',
-        '#EEFAFF',
-        '#E6F4F1',
-        '#3D4856',
-        '#A0ACBD',
+        '#1987cf',
+        '#b0b8b2',
+        '#ded3c0',
+        '#c2d2ca',
+        '#45969B',
+        '#eef2f0'
     ]
 
     public static createMap(): void {
