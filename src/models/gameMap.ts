@@ -1,8 +1,6 @@
 import { Canvas } from './canvas';
 import { Circle } from './circle';
-import { IPos, ISize } from './../utils/model';
-import { ObjectBase } from './objectBase';
-import { Camera } from './camera';
+import { ISize } from './../utils/model';
 import { normalizeVector } from './../utils/vector';
 
 export class GameMap {
@@ -10,11 +8,12 @@ export class GameMap {
     private static amount: number = 1250;
     public static circles: Circle[] = [];
     private static colors = [
-        '#b0b8b2',
-        '#ded3c0',
-        '#c2d2ca',
-        '#45969B',
-        '#eef2f0'
+        '#1987CF',
+        '#7093BC',
+        '#EEFAFF',
+        '#E6F4F1',
+        '#3D4856',
+        '#A0ACBD',
     ]
 
     public static createMap(): void {

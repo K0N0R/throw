@@ -21,7 +21,8 @@ export class Canvas {
     public static createCanvas(): void {
         this.ele = document.createElement('canvas');
         this.ctx = this.ele.getContext("2d");
-        document.body.appendChild(this.ele);
+        const wrapper = document.getElementById('bubbles-animation')
+        wrapper.appendChild(this.ele);
     }
 
     public static clearCanvas(): void {

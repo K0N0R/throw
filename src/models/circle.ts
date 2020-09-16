@@ -1,4 +1,4 @@
-import { IPos, ISize, Shape } from '../utils/model';
+import { IPos, Shape } from '../utils/model';
 import { Canvas } from './canvas';
 import { ObjectBase } from './objectBase';
 import { EventManager } from './eventManager';

@@ -54,7 +54,7 @@ body {
     height: 100vh;
     width: 100vw;
     overflow: hidden;
-    background-color: #333;
+    background-color: #edf0f3;
 }
 
 canvas {

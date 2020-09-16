@@ -1,9 +1,7 @@
 import { IPos, Shape } from './../utils/model';
 import { getDistance, getDistanceToSegment } from './../utils/vector';
 import { ObjectBase } from './objectBase';
-import { CollisionSide } from './collision';
 import { GameMap } from './gameMap';
-import { Canvas } from './canvas';
 
 export interface CollisionSide {
     top: boolean;
