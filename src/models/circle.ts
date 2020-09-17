@@ -12,8 +12,8 @@ export class Circle extends ObjectBase {
     private maxRadius: number;
     public constructor(pos: IPos, color: string, moveVector: IPos) {
         super(pos, Shape.Circle, 5);
-        this.minRadius = 5;
-        this.maxRadius = 40;
+        this.minRadius = 7;
+        this.maxRadius = 55;
         this.color = color;
         this.moveVector = moveVector;
     }

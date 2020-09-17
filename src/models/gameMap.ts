@@ -5,15 +5,15 @@ import { normalizeVector } from './../utils/vector';
 
 export class GameMap {
     public static size: ISize
-    private static amount: number = 1250;
+    private static amount: number = 1000;
     public static circles: Circle[] = [];
     private static colors = [
         '#1987cf',
-        '#b0b8b2',
+        '#83cdff',
         '#ded3c0',
         '#c2d2ca',
         '#45969B',
-        '#eef2f0'
+        '#094065'
     ]
 
     public static createMap(): void {
