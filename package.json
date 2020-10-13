@@ -7,7 +7,8 @@
         "start": "parcel ./src/client/index.html",
         "build": "ts-node-dev --inspect -- ./src/server/server.ts",
         "prod": "parcel build ./src/client/index.html --out-dir dist/client && parcel build ./src/server/server.ts --out-dir dist/server --target node",
-        "prod:start": "node ./dist/server/server.js"
+        "prod:start": "node ./dist/server/server.js",
+        "prod:forever": "forever start ./dist/server/server.js"
     },
     "dependencies": {
         "client": "0.0.1",
@@ -30,12 +31,12 @@
         "@types/socket.io-client": "^1.4.32",
         "@types/uuid": "^3.4.3",
         "cssnano": "^4.1.10",
-        "forever": "^1.0.0",
+        "forever": "^1.0.1",
         "parcel-bundler": "^1.12.4",
         "stylus": "^0.54.7",
         "ts-node": "^8.5.2",
         "ts-node-dev": "^1.0.0-pre.50",
-        "typescript": "^3.9.6"
+        "typescript": "^3.9.7"
     },
     "alias": {
         "react": "preact-compat",
