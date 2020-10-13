@@ -7,7 +7,8 @@
         "start": "parcel ./src/client/index.html",
         "build": "ts-node-dev --inspect -- ./src/server/server.ts",
         "prod": "parcel build ./src/client/index.html --out-dir dist/client && parcel build ./src/server/server.ts --out-dir dist/server --target node",
-        "prod:start": "node ./dist/server/server.js"
+        "prod:start": "node ./dist/server/server.js",
+        "prod:forever": "forever start ./dist/server/server.js"
     },
     "dependencies": {
         "client": "0.0.1",
