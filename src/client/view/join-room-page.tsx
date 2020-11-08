@@ -1,58 +1,47 @@
-import { render, h, Component } from 'preact';
-import ListPage from './lobby-page';
+import { h } from 'preact';
+import LobbyPage from './lobby-page';
 import RoomPage from './room-page';
-import { User } from './../models/user';
-import { ILobbyRoom } from './../../shared/events';
+import { User } from '../models/socket';
+import { IRoom, IRoomState } from './../../shared/events';
+import { useState } from 'preact/hooks';
+import { goTo } from './utils';
 
-export default class JoinRoomPage extends Component<{ room: ILobbyRoom}> {
-    state = {
-        password: "",
-    };
-    componentDidMount() {
+export default function JoinRoomPage(room: IRoom) {
+    const [password, setPassword] = useState('');
 
-    }
-    
-    onConfirm(): void {
-        User.joinRoom(this.props.room, this.state.password, (room: ILobbyRoom) => {
-            render(<RoomPage room={room}/>, document.getElementById('app') as Element);
+    const onConfirm = () => {
+        User.socket.emit('room::join', { id: room.id, password });
+        User.socket.on('room::user::joined', (roomState: IRoomState) => {
+            goTo(<RoomPage {...roomState}/>);
+            User.socket.off('room::user::joined');
         });
     }
-    onCancel(): void {
-        render(<ListPage />, document.getElementById('app') as Element);
+
+    const onCancel = () => {
+        goTo(<LobbyPage />);
     }
 
-    onNameChange(e: any): void {
-        this.setState({ name: e.target.value });
-    };
-
-    onPasswordChange(e: any): void {
-        this.setState({ password: e.target.value });
-    };
-
-    render({room}, {password}) {
-        return [
-            <div class="dialog">
-                <div class="form-field">
-                    {room.name}
-                </div>
-                <div class="form-field">
-                    <label>Password</label>
-                    <input
-                        value={password}
-                        onInput={this.onPasswordChange.bind(this)}/>
-                </div>
-                <button 
-                    class="form-btn form-btn-submit"
-                    onClick={this.onCancel.bind(this)}>
-                    Cancel :(
-                </button>
-                <button 
-                    class="form-btn form-btn-submit"
-                    onClick={this.onConfirm.bind(this)}>
-                    Join room!
-                </button>
-
+    return (
+        <div class="dialog">
+            <div class="form-field">
+                {name}
             </div>
-        ];
-    }
+            <div class="form-field">
+                <label>Password</label>
+                <input
+                    value={password}
+                    onInput={(e) => setPassword((e.target as HTMLInputElement).value)} />
+            </div>
+            <button
+                class="button"
+                onClick={onCancel}>
+                Cancel 😢
+            </button>
+            <button
+                class="button button--primary"
+                onClick={onConfirm}>
+                Join room!
+            </button>
+        </div>
+    );
 }

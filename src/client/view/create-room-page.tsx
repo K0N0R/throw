@@ -1,74 +1,66 @@
-import { render, h, Component } from 'preact';
-import ListPage from './lobby-page';
+import { h } from 'preact';
+import LobbyPage from './lobby-page';
 import RoomPage from './room-page';
-import { User } from './../models/user';
-import { ILobbyRoom } from 'shared/events';
+import { User } from '../models/socket';
+import { IRoomState } from 'shared/events';
+import { goTo } from './utils';
+import { useLocalStorage } from './hooks';
+import { useState, useEffect } from 'preact/hooks';
 
-export default class CreateRoomPage extends Component {
-    state = {
-        name: window.localStorage.getItem('throw_nick') + "'s room",
-        password: '',
-        maxPlayersAmount: 20
-    };
+export default function CreateRoomPage() {
+    const [name] = useLocalStorage('throw_nick', '');
+    const [roomName, setRoomName] = useLocalStorage('throw_room', `${name}'s room`);
+    const [password, setPassword] = useState('');
+    const maxPlayersAmount = 20;
 
-    componentDidMount() {
+    useEffect(() => {
+        setRoomName(`${name}'s room`);
+    }, [])
 
-    }
-    
-    onConfirm(): void {
-        if (this.state.name) {
-            User.createRoom(this.state, (room: ILobbyRoom) => {
-                render(<RoomPage room={room}/>, document.getElementById('app') as Element);
+    const onConfirm = () => {
+        if (roomName) {
+            User.socket.emit('room::create', { name: roomName, password, maxPlayersAmount });
+            User.socket.on('room::user::joined', (roomState: IRoomState) => {
+                goTo(<RoomPage {...roomState}/>);
+                User.socket.off('room::user::joined');
             });
         }
     }
-    onCancel(): void {
-        render(<ListPage />, document.getElementById('app') as Element);
+
+    const onCancel = () => {
+        goTo(<LobbyPage />);
     }
 
-    onNameChange(e: any): void {
-        this.setState({ name: e.target.value });
-    };
-
-    onPasswordChange(e: any): void {
-        this.setState({ password: e.target.value });
-    };
-
-    render(_, { name, password, maxPlayersAmount}) {
-        return [
-            <div class="dialog">
-                <div class="form-field">
-                    <label>Vault name</label>
-                    <input
-                        value={name}
-                        onInput={this.onNameChange.bind(this)}/>
-                </div>
-                <div class="form-field">
-                    <label>Password</label>
-                    <input
-                        value={password}
-                        onInput={this.onPasswordChange.bind(this)}/>
-                </div>
-                <div class="form-field">
-                    <label>Max players</label>
-                    <input
-                        value={maxPlayersAmount}
-                        readOnly={true}
-                        onInput={this.onNameChange.bind(this)}/>
-                </div>
-
-                <button 
-                    class="form-btn form-btn-submit"
-                    onClick={this.onCancel.bind(this)}>
-                    Cancel :(
-                </button>
-                <button 
-                    class="form-btn form-btn-submit"
-                    onClick={this.onConfirm.bind(this)}>
-                    Create room!
-                </button>
-
+    return (
+        <div class="dialog">
+            <div class="form-field">
+                <label>Vault name</label>
+                <input
+                    value={roomName}
+                    onInput={(e) => setRoomName((e.target as HTMLInputElement).value)}/>
             </div>
-        ];
-    }
+            <div class="form-field">
+                <label>Password</label>
+                <input
+                    value={password}
+                    onInput={(e) => setPassword((e.target as HTMLInputElement).value)}/>
+            </div>
+            <div class="form-field">
+                <label>Max players</label>
+                <input
+                    value={maxPlayersAmount}
+                    readOnly={true}/>
+            </div>
+            <button
+                class="button"
+                onClick={onCancel}>
+                Cancel 😢
+            </button>
+            <button
+                class="button button--primary"
+                onClick={onConfirm}>
+                Create room!
+            </button>
+        </div>
+    );
 }

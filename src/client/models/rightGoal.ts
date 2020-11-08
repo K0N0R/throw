@@ -1,7 +1,7 @@
 import { IPos } from './../../shared/model';
 import { getCornerPoints } from './../../shared/vertices';
 import { getOffset } from './../../shared/offset';
-import { goal_config, goal_style } from './../../shared/callibration';
+import { style_config, map_config, MapKind } from './../../shared/callibration';
 
 import { Canvas } from './canvas';
 
@@ -10,23 +10,25 @@ export class RightGoal {
     private topPostPosition: IPos;
     private bottomPostPosition: IPos;
 
-    public constructor(pos: IPos) {
-        this.pos = { x: pos.x, y: pos.y };
+    public constructor(private mapKind: MapKind) {
+        this.pos = { x: map_config[this.mapKind].outerSize.width - map_config[this.mapKind].border.side, y: (map_config[this.mapKind].outerSize.height / 2) - (map_config[this.mapKind].goal.size.height / 2) };
         this.topPostPosition = { x: this.pos.x, y: this.pos.y };
-        this.bottomPostPosition = { x: this.pos.x, y: this.pos.y + goal_config.size.height };
+        this.bottomPostPosition = { x: this.pos.x, y: this.pos.y + map_config[this.mapKind].goal.size.height };
+        this.points = this.getPoints(this.pos);
     }
 
+    private points: ([number, number])[];
     private getPoints(pos = { x: 0, y: 0 }): ([number, number])[] {
-        const offset = getOffset(pos, goal_config.size)
+        const offset = getOffset(pos, map_config[this.mapKind].goal.size)
         const goalTickness = 10;
         return [
             [offset.left, offset.bottom],
-            [offset.right - goal_config.cornerRadius, offset.bottom],
-            ...getCornerPoints(goal_config.cornerPointsAmount, Math.PI / 2, { x: offset.right - goal_config.cornerRadius, y: offset.bottom - goal_config.cornerRadius }, goal_config.cornerRadius, {clockWise: -1}),
-            [offset.right, offset.bottom - goal_config.cornerRadius],
-            [offset.right, offset.top + goal_config.cornerRadius],
-            ...getCornerPoints(goal_config.cornerPointsAmount, 0, { x: offset.right - goal_config.cornerRadius, y: offset.top + goal_config.cornerRadius }, goal_config.cornerRadius, {clockWise: -1}),
-            [offset.right - goal_config.cornerRadius, offset.top],
+            [offset.right - map_config[this.mapKind].goal.cornerRadius, offset.bottom],
+            ...getCornerPoints(map_config[this.mapKind].goal.cornerPointsAmount, Math.PI / 2, { x: offset.right - map_config[this.mapKind].goal.cornerRadius, y: offset.bottom - map_config[this.mapKind].goal.cornerRadius }, map_config[this.mapKind].goal.cornerRadius, {clockWise: -1}),
+            [offset.right, offset.bottom - map_config[this.mapKind].goal.cornerRadius],
+            [offset.right, offset.top + map_config[this.mapKind].goal.cornerRadius],
+            ...getCornerPoints(map_config[this.mapKind].goal.cornerPointsAmount, 0, { x: offset.right - map_config[this.mapKind].goal.cornerRadius, y: offset.top + map_config[this.mapKind].goal.cornerRadius }, map_config[this.mapKind].goal.cornerRadius, {clockWise: -1}),
+            [offset.right - map_config[this.mapKind].goal.cornerRadius, offset.top],
             [offset.left, offset.top],
             [offset.left, offset.top - goalTickness],
             [offset.right + goalTickness, offset.top - goalTickness],
@@ -37,33 +39,33 @@ export class RightGoal {
 
     public render(): void {
         Canvas.startDraw();
-        const vertices = this.getPoints(this.pos);
+        const vertices = this.points;
         Canvas.ctx.moveTo(vertices[0][0], vertices[0][1]);
         vertices
             .filter((_, idx) => idx < vertices.length - 4) // skip 4 last
             .forEach(v => {
                 Canvas.ctx.lineTo(v[0], v[1]);
             });
-        Canvas.ctx.lineWidth = goal_style.lineWidth;
-        Canvas.ctx.strokeStyle = goal_style.strokeStyle;
+        Canvas.ctx.lineWidth = style_config.goal.lineWidth;
+        Canvas.ctx.strokeStyle = style_config.goal.strokeStyle;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
         Canvas.startDraw();
-        Canvas.ctx.arc(this.topPostPosition.x, this.topPostPosition.y, goal_config.postRadius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = goal_style.rightPostFillStyle;
+        Canvas.ctx.arc(this.topPostPosition.x, this.topPostPosition.y, map_config[this.mapKind].goal.postRadius, 0, 2 * Math.PI, true);
+        Canvas.ctx.fillStyle = style_config.goal.rightPostFillStyle;
         Canvas.ctx.fill();
-        Canvas.ctx.lineWidth = goal_style.postLineWidth;
-        Canvas.ctx.strokeStyle = goal_style.postStrokeStyle;
+        Canvas.ctx.lineWidth = style_config.goal.postLineWidth;
+        Canvas.ctx.strokeStyle = style_config.goal.postStrokeStyle;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
 
         Canvas.startDraw();
-        Canvas.ctx.arc(this.bottomPostPosition.x, this.bottomPostPosition.y, goal_config.postRadius, 0, 2 * Math.PI, true);
-        Canvas.ctx.fillStyle = goal_style.rightPostFillStyle;
+        Canvas.ctx.arc(this.bottomPostPosition.x, this.bottomPostPosition.y, map_config[this.mapKind].goal.postRadius, 0, 2 * Math.PI, true);
+        Canvas.ctx.fillStyle = style_config.goal.rightPostFillStyle;
         Canvas.ctx.fill();
-        Canvas.ctx.lineWidth = goal_style.postLineWidth;
-        Canvas.ctx.strokeStyle = goal_style.postStrokeStyle;
+        Canvas.ctx.lineWidth = style_config.goal.postLineWidth;
+        Canvas.ctx.strokeStyle = style_config.goal.postStrokeStyle;
         Canvas.ctx.stroke();
         Canvas.stopDraw();
     }

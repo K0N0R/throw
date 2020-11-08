@@ -25,10 +25,8 @@
   },
   "paths": {
       "~*": ["./*"],
-      "shared/*": ["shared/*"],
       "react": ["node_modules/preact-compat/"],
       "react-dom": ["node_modules/preact-compat/"]
-
   },
   "typeRoots": ["node_modules/@types"],
   "include": ["src/**/*"],

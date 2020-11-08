@@ -1,0 +1,151 @@
+.room
+	display flex
+	flex-direction column
+	border-radius 5px
+	height 100%
+	width 100%
+	outline none
+
+	&__config-button
+		position fixed
+		top 0
+		left 0
+		width 200px
+
+	&__game
+		position relative
+		top 40px
+		max-height calc(100% - 230px)
+		height 100%
+		margin-left auto
+		margin-right auto
+		margin-bottom auto
+
+	&__configuration
+		display flex
+		flex-direction column
+		margin auto
+
+	&__head
+		display flex
+		margin-top auto
+
+		&__title
+			flex 1
+			font-size 18px
+			font-weight 900
+			color white
+
+		&__row
+			display flex
+
+	&__body
+		display flex
+		margin-top 15px
+		margin-bottom 15px
+		border 1px solid hsl(201deg 20% 23%)
+
+		&__team
+			flex 1
+			margin 1px
+			min-height 300px
+			min-width 200px
+
+			&--red
+				color rgb(229, 110, 86)
+				background-color rgba(229, 110, 86, .0666)
+				border-right 1px solid hsl(201deg 20% 23%)
+
+			&--blue
+				color rgb(129, 174, 255)
+				background-color rgba(129, 174, 255, .0666)
+				border-left 1px solid hsl(201deg 20% 23%)
+
+			&__label
+				text-align center
+				letter-spacing 2px
+				text-transform uppercase
+				padding 10px 0
+				border-bottom 1px solid hsl(201deg 20% 23%)
+
+			&__members
+				display flex
+				flex-direction column
+
+			&__member
+				display flex
+				padding 5px
+
+	&__foot
+		display flex
+		flex-direction column
+		justify-content center
+		margin-bottom auto
+
+		&__option
+			display flex
+			width 400px
+			margin 0 auto
+			align-items center
+
+			&__label
+				flex 1
+
+			&__input
+				flex 1
+
+			&__button
+				margin-top 15px
+				margin-bottom 15px
+				flex 1
+				padding 5px
+				border none
+				border-radius 3px
+				background rgba(0, 0, 0, 0.3)
+				color white
+	&__chat
+		
+		left calc(50% - 300px)
+		display flex
+		flex-direction column
+		max-width 600px
+		justify-content center
+		margin-left auto
+		margin-right auto
+		min-width 600px
+		min-height 0
+		margin-bottom 0
+		margin-top 0
+
+		&__messages
+			display flex
+			flex-direction column
+			max-height 117px
+			overflow auto
+			color white
+
+		&__message
+			display flex
+			padding 0 10px
+			line-height 28px
+
+			&:nth-child(even)
+				background-color rgba(255, 255, 255, 0.02)
+
+			&--system
+				font-size 80%
+				color lightness(#344d50, 56)
+
+			&__value
+				margin-left 10px
+
+		&__input-field
+			display flex
+			align-items center
+
+		&__label
+			padding 5px
+
+		&__input
+			padding 3px
+			flex 1

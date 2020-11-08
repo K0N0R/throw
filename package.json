@@ -5,34 +5,38 @@
     "main": "./dist/server/server.js",
     "scripts": {
         "start": "parcel ./src/client/index.html",
-        "build": "parcel build ./src/client/index.html --out-dir dist/client && cd ./src/server && ts-node-dev --respawn --transpileOnly server.ts && cd ..",
-        "prod": "parcel build ./src/client/index.html --out-dir dist/client && tsc -p ./src/server/tsconfig.json",
-        "prod:deploy": "forever --minUptime 10000 --spinSleepTime 10000 start ./dist/server/server.js"
+        "build": "ts-node-dev --inspect -- ./src/server/server.ts",
+        "prod": "parcel build ./src/client/index.html --out-dir dist/client && parcel build ./src/server/server.ts --out-dir dist/server --target node",
+        "prod:start": "node ./dist/server/server.js",
+        "prod:forever": "forever start ./dist/server/server.js"
     },
     "dependencies": {
+        "client": "0.0.1",
         "express": "^4.17.1",
         "p2": "^0.7.1",
-        "preact": "^10.0.5",
+        "preact": "^10.4.5",
         "preact-compat": "^3.19.0",
+        "shared": "^0.2.0",
         "socket.io": "^2.3.0",
         "socket.io-client": "^2.3.0",
         "uuid": "^3.3.2"
     },
     "devDependencies": {
-        "@types/express": "^4.17.2",
+        "@types/express": "^4.17.7",
         "@types/p2": "^0.7.36",
+        "@types/parcel-bundler": "^1.12.1",
         "@types/react": "^16.9.13",
         "@types/react-dom": "^16.9.4",
         "@types/socket.io": "^2.1.4",
         "@types/socket.io-client": "^1.4.32",
         "@types/uuid": "^3.4.3",
         "cssnano": "^4.1.10",
-        "forever": "^1.0.0",
+        "forever": "^1.0.1",
         "parcel-bundler": "^1.12.4",
         "stylus": "^0.54.7",
         "ts-node": "^8.5.2",
-        "ts-node-dev": "^1.0.0-pre.44",
-        "typescript": "^3.7.2"
+        "ts-node-dev": "^1.0.0-pre.50",
+        "typescript": "^3.9.7"
     },
     "alias": {
         "react": "preact-compat",

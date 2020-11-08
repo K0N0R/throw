@@ -1,58 +1,45 @@
-import io from 'socket.io-client';
-import { goal_config, map_config, player_config } from './../../shared/callibration';
-import { getOffset } from './../../shared/offset';
-import { Keys } from './../../shared/keys';
-import { IPlayerInit, IPlayerKey, IPlayerShooting, IWorldPostStep, IWorldReset } from './../../shared/events';
+import { MapKind, CameraKind } from '../../shared/callibration';
+import { IRoomGameData,  IWorldPostStep, IWorldReset, IRoomUser } from '../../shared/events';
+import { KeysHandler, KeysMap } from '../../shared/keysHandler';
 
 import { Canvas } from './canvas';
-import { KeysHandler } from './../../shared/keysHandler';
 import { Player } from './player';
 import { Map } from './map';
 import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
-import { Score } from './score';
 
-import { host, port } from './../../shared/serverConfig';
+import { User } from './socket';
+import { playSound, loopSound } from '../view/utils';
+
 
 export class Game {
-    private socket: SocketIOClient.Socket;
-
     private map!: Map;
+
     private players: Player[] = [];
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
-    private score!: Score;
-    private keyMap: IPlayerKey = {};
+    private keysMap: KeysMap = {};
 
-    constructor() {
-        const socket = io({
-            host: `${host}:${port}`
-        });
-        this.socket = socket;
-        this.socket.on('connect', (socket) => {
-            this.socket.emit('connection::data', JSON.stringify({socketId: this.socket.id, name: window.localStorage.getItem('throw_nick'), avatar: window.localStorage.getItem('throw_avatar')}));
-        });
-
+    private breakSoundLoop: () => void;
+    constructor(private mapKind: MapKind) {
+        this.breakSoundLoop = loopSound(`#background-sound`, 13500);
         this.initHandlers();
         this.initCanvas();
         this.initEntities();
         this.initCamera();
         this.initEvents();
-        this.socket.on('world::postStep', (data: IWorldPostStep) => {
-            if (data.playersToAdd) {
+        User.socket.on('room::game::step', (data: IWorldPostStep) => {
+            if (data.playersToAdd != null) {
                 data.playersToAdd.forEach(player => {
-                    const isMe = player.socketId === this.socket.id;
-                    this.players.push(new Player(player.name, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team, isMe));
-                    if (isMe) {
-                        Camera.updatePos({ x: player.position[0], y: player.position[1] });
-                    }
+                    this.players.push(new Player(this.mapKind, player.nick, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team));
+                    this.updateCamera();
                 });
             }
 
-            if (data.playersToRemove) {
+            if (data.playersToRemove != null) {
                 data.playersToRemove.forEach(socketId => {
                     const idx = this.players.findIndex(player => socketId === player.socketId);
                     if (idx !== -1) {
@@ -60,19 +47,17 @@ export class Game {
                     }
                 });
             }
-            if (data.playersMoving) {
+            if (data.playersMoving != null) {
                 data.playersMoving.forEach(dataPlayer => {
                     const player = this.players.find(player => player.socketId === dataPlayer.socketId);
                     if (player) {
                         player.pos.x = dataPlayer.position[0];
                         player.pos.y = dataPlayer.position[1];
-                        if (dataPlayer.socketId === this.socket.id) {
-                            Camera.updatePos({ ...player.pos });
-                        }
                     }
+                    this.updateCamera();
                 });
             }
-            if (data.playersShooting) {
+            if (data.playersShooting != null) {
                 data.playersShooting.forEach(dataPlayer => {
                     const player = this.players.find(player => player.socketId === dataPlayer.socketId);
                     if (player) {
@@ -80,108 +65,132 @@ export class Game {
                     }
                 });
             }
-            if (data.ballMoving) {
+            if (data.ballMoving != null) {
                 this.ball.pos.x = data.ballMoving.position[0];
                 this.ball.pos.y = data.ballMoving.position[1];
-            }
-            if (data.scoreLeft || data.scoreRight) {
-                this.score.updateScore({
-                    left: data.scoreLeft || null,
-                    right: data.scoreRight || null
-                });
+                this.updateCamera();
             }
         });
+        this.updateCamera();
     }
 
     private initEvents(): void {
-        this.socket.on('world::reset', (data: IWorldReset) => {
+        User.socket.on('room::game::reset', (data: IWorldReset) => {
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
             data.players.forEach(dataPlayer => {
                 const player = this.players.find(player => player.socketId === dataPlayer.socketId);
                 if (player) {
                     player.pos.x = dataPlayer.position[0];
                     player.pos.y = dataPlayer.position[1];
-                } 
+                }
             });
+            this.updateCamera();
         });
-
-        this.socket.on('player::init', (data: IPlayerInit) => {
-            this.players.push(...data.players.map(p => new Player(p.name, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team)));
+        User.socket.on('room::game::shoot-sound', (shootSound: number) => {
+            playSound(`#shoot-sound-${shootSound}`)
+        });
+        User.socket.emit('room::game::user-joined')
+        User.socket.on('room::game::init-data', (data: IRoomGameData) => {
+            if (!data) return;
+            this.players = data.players.map(p => new Player(this.mapKind, p.nick, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
-            this.score.updateScore(data.score);
+            this.updateCamera();
         });
 
-        this.socket.on('player::shooting', (data: IPlayerShooting) => {
-            const player = this.players.find(player => player.socketId === data.socketId);
-            if (player) {
-                player.shooting = data.shooting;
-            }
+        User.socket.on('room::user::afk-changed', (user: IRoomUser) => {
+            const player = this.players.find(player => user.socketId === player.socketId);
+            if (!player) return;
+            player.afk = user.afk;
         });
     }
 
     private initHandlers(): void {
-        const handleShooting = (player: Player, pressed: { [param: number]: boolean }) => {
-            player.shooting = pressed[Keys.X];
-        };
-        const handleDashing = (player: Player, pressed: { [param: number]: boolean }) => {
-            player.dash(pressed[Keys.Shift]);
-        };
-        KeysHandler.bindEvents((pressed: { [param: number]: boolean }) => {
-            const player = this.players.find(player => player.socketId === this.socket.id);
-            if (player) {
-                handleShooting(player, pressed);
-                handleDashing(player, pressed);
+        KeysHandler.bindHandler((keysMap: KeysMap) => {
+            if (User.afk) return
 
-                const deltaKeysMap: IPlayerKey = {};
-                for(const key in pressed) {
-                    if (this.keyMap[key] == void 0) {
-                        deltaKeysMap[key] = pressed[key];
-                    } else if (this.keyMap[key] !== pressed[key]) {
-                        deltaKeysMap[key] = pressed[key];
-                    }
-                }
-                this.keyMap = pressed;
+            if (keysMap.camera1) {
+                Canvas.changeCamera(CameraKind.Close);
+            } else if (keysMap.camera2) {
+                Canvas.changeCamera(CameraKind.Medium);
+            } else if (keysMap.camera3) {
+                Canvas.changeCamera(CameraKind.Far);
+            }
+            this.updateCamera();
+            const player = this.players.find(player => player.socketId === User.socket.id);
+            if (!player) return;
+            player.shooting = Boolean(keysMap.shoot);
+            player.dash(Boolean(keysMap.dash));
 
-                if (Object.keys(deltaKeysMap).length > 0) {
-                    this.socket.emit('player::key', deltaKeysMap as IPlayerKey);
+            const deltaKeysMap: Partial<KeysMap> = {};
+            for (const key in keysMap) {
+                if (this.keysMap[key] === undefined) {
+                    deltaKeysMap[key] = keysMap[key];
+                } else if (this.keysMap[key] !== keysMap[key]) {
+                    deltaKeysMap[key] = keysMap[key];
                 }
             }
-            
+            this.keysMap = keysMap;
+
+            if (Object.keys(deltaKeysMap).length > 0) {
+                User.socket.emit('room::game::player-key', deltaKeysMap as KeysMap);
+            }
         });
     }
-    
+
     private initCanvas(): void {
         Canvas.createCanvas();
     }
 
     private initEntities(): void {
-        this.map = new Map();
-        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
-        this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 });
-        this.ball = new Ball({ x: this.map.pos.x + map_config.size.width / 2, y: this.map.pos.y + map_config.size.height / 2 });
-        this.score = new Score();
+        this.map = new Map(this.mapKind);
+        this.leftGoal = new LeftGoal(this.mapKind);
+        this.rightGoal = new RightGoal(this.mapKind);
+        this.ball = new Ball(this.mapKind);
     }
 
     private initCamera(): void {
-        Camera.setBounduary(getOffset(this.map.outerPos, map_config.outerSize));
+        Camera.init(this.mapKind);
     }
 
-    public run() {
+    private updateCamera(): void {
+        const player = this.players.find(player => player.socketId === User.socket.id);
+        if (player) {
+            Camera.updatePos(player.pos , this.ball.pos);
+        } else {
+            Camera.updatePos(this.ball.pos, this.ball.pos);
+        }
+    }
+
+    public run(): void {
         this.render();
+    }
+
+    public dispose(): void {
+        User.socket.off('room::game::init-data');
+        User.socket.off('room::game::step');
+        User.socket.off('room::game::reset');
+        User.socket.off('room::user::afk-changed');
+        User.socket.off('room::game::shoot-sound');
+
+        Canvas.removeCanvas();
+        KeysHandler.clearHandler();
+        this.players.forEach(player => player.dispose());
+        this.breakSoundLoop();
     }
 
     public render(): void {
         Canvas.clearCanvas();
         Camera.translateStart();
-
         this.map.render();
         this.leftGoal.render();
         this.rightGoal.render();
         this.players.forEach(player => {
+            player.renderInfo();
+        });
+        this.players.forEach(player => {
             player.render();
         });
         this.ball.render();
-        this.score.render();
 
         Camera.translateEnd();
 

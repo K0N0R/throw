@@ -1,35 +1,29 @@
 import p2 from 'p2';
-
 import io from 'socket.io';
+
 import { Player } from './player';
 import { Map } from './map';
 import { Ball } from './ball';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
-import { goal_config, map_config, player_config, ball_config, canvas_config, game_config } from './../../shared/callibration';
+import { map_config, game_config, MapKind } from './../../shared/callibration';
 import { Dictionary } from './../../shared/model';
 import { getNormalizedVector, getDistance } from './../../shared/vector';
 import { isMoving } from '../../shared/body';
 import { Team } from './../../shared/team';
-import { IPlayerInit, IPlayerKey, IWorldReset, IWorldPostStep, IPlayerShooting } from './../../shared/events';
+import { IWorldReset, IWorldPostStep, IRoomGameData } from './../../shared/events';
 import { User } from './../lobby/user';
-
-export interface IGameConfig {
-    leftTeam: User[];
-    rightTeam: User[];
-    timeLimit: number;
-    scoreLimit: number;
-}
+import { KeysMap } from './../../shared/keysHandler';
+import { isContact } from './../../shared/body';
 
 export class Game {
-    private io: io.Server;
-
+    private listeners: (() => void)[] = [];
     private step: {
         fixedTime: number;
         lastTime: number;
         maxSteps: number;
     };
-    
+
     private world!: p2.World;
     private mat: Dictionary<p2.Material> = {};
     private contactMat: Dictionary<p2.ContactMaterial> = {};
@@ -38,14 +32,20 @@ export class Game {
     private players: Player[] = [];
     private playersToAdd: Player[] = [];
     private playersToRemove: Player[] = [];
+    private userWhoLastTouchedBall!: User | undefined;
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
 
-    private score = { left: 0, right: 0 };
-    private reseting: boolean;
+    private reseting!: boolean;
+    public disposing!: boolean;
 
-    constructor(config: IGameConfig, public roomId: string) {
+    private initStage: boolean;
+    constructor(private io: io.Server, public roomId: string, private mapKind: MapKind, users: User[],
+        private onGameTimeStop: () => void,
+        private onGameTimeResume: () => void,
+        private onGameScoreChanged: (team: Team, user?: User) => void) {
+        this.initStage = true;
         this.step = {
             fixedTime: 1 / 240,
             lastTime: new Date().valueOf(),
@@ -53,59 +53,95 @@ export class Game {
         };
         this.initEntities();
         this.initWorld();
-        this.initPlayers(config);
-        this.reset();
+        this.initPlayers(users);
+    }
+
+    public dispose(): void {
+        this.listeners.forEach(listener => listener());
+        this.listeners = [];
+        this.userWhoLastTouchedBall = undefined;
+        const players = [...this.players];
+        players.forEach((item) => this.removePlayer(item.user));
+        this.players = [];
+    }
+
+    public endGame(): void {
+        this.reseting = true;
+        this.disposing = true;
+    }
+
+    public getGameData(): IRoomGameData {
+        return {
+            players: this.players.map(item => ({
+                nick: item.nick,
+                avatar: item.avatar,
+                socketId: item.user.socket.id,
+                team: item.team,
+                position: item.body.position
+            })),
+            ball: {
+                position: this.ball.body.position
+            }
+        };
     }
 
     //#region player
-    private initPlayers(config: IGameConfig): void {
-        config.leftTeam.forEach(item => {
-            this.addPlayer(item, Team.Left);
-        });
-        config.rightTeam.forEach(item => {
-            this.addPlayer(item, Team.Right);
+    private initPlayers(users: User[]): void {
+        users.forEach((item) => {
+             this.addNewPlayer(item);
         });
     }
 
-    private addPlayer(user: User, team: Team): void {
-        const player = new Player(user.socket.id, user.nick, user.avatar, team, this.mat.player);
-        this.players.push(player);
-        this.world.addBody(player.body);
-        this.bindPlayerEvents(user.socket, player);
-    }
-
-    public assingUserToTeam(user: User, team: Team): void {
-        const player = new Player(user.socket.id, user.nick, user.avatar, team, this.mat.player);
+    public addNewPlayer(user: User): void {
+        if (user.team === Team.Spectator) return;
+        const leftTeam = this.players.filter(item=> item.team === Team.Left);
+        const rightTeam = this.players.filter(item=> item.team === Team.Right);
+        const initPos = {
+            x: user.team === Team.Left
+                ? map_config[this.mapKind].player.radius
+                : map_config[this.mapKind].outerSize.width - map_config[this.mapKind].player.radius,
+            y : user.team === Team.Left
+                ? map_config[this.mapKind].outerSize.height / 2 - map_config[this.mapKind].goal.size.height/2 + ((map_config[this.mapKind].player.radius * 2 + 10) * (leftTeam.length - 1))
+                : map_config[this.mapKind].outerSize.height / 2 - map_config[this.mapKind].goal.size.height/2 + ((map_config[this.mapKind].player.radius * 2 + 10) * (rightTeam.length - 1))
+        };
+        const player = new Player(this.mapKind, user, user.nick, user.avatar, user.team, this.mat.player, initPos);
         this.playersToAdd.push(player);
-        this.bindPlayerEvents(user.socket, player);
     }
 
-    private bindPlayerEvents(socket, player): void {
-        socket.on('disconnect', () => {
+    private addPlayerToWorld(player: Player): void {
+        this.playersToAdd.push(player);
+        this.world.addBody(player.body);
+        this.bindPlayerEvents(player);
+    }
+
+    private bindPlayerEvents(player: Player): void {
+        player.user.onDisconnect('room::game::player::disconnect', () => {
             this.playersToRemove.push(player);
         });
 
-        socket.on('player::key', (data: IPlayerKey) => {
+        player.user.socket.on('room::game::player-key', (data: KeysMap) => {
             for (let key in data) {
-                player.keyMap[key] = data[key];
+                player.keysMap[key] = data[key];
             }
         });
     }
 
     public removePlayer(user: User): void {
-        const player = this.players.find(item => item.socketId === user.socket.id);
-        this.playersToRemove.push(player);
-        user.socket.removeAllListeners('player::key');
-        user.socket.removeAllListeners('disconnect');
+        const player = this.players.find(item => item.user.socket.id === user.socket.id);
+        if (player) {
+            this.playersToRemove.push(player);
+        }
+        user.offDisconnect('room::game::player::disconnect');
+        user.socket.removeAllListeners('room::game::player-key');
     }
-    //#endregion 
+    //#endregion
 
     private initEntities(): void {
         this.initMaterials();
-        this.map = new Map(this.mat.map);
-        this.leftGoal = new LeftGoal({ x: this.map.pos.x - goal_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal, this.mat.map);
-        this.rightGoal = new RightGoal({ x: this.map.pos.x + map_config.size.width, y: this.map.pos.y + map_config.size.height / 2 - goal_config.size.height / 2 }, this.mat.goal, this.mat.map);
-        this.ball = new Ball([this.map.pos.x + map_config.size.width / 2, this.map.pos.y + map_config.size.height / 2], this.mat.ball);
+        this.map = new Map(this.mapKind, this.mat.map);
+        this.leftGoal = new LeftGoal(this.mapKind, this.mat.goal, this.mat.map);
+        this.rightGoal = new RightGoal(this.mapKind, this.mat.goal, this.mat.map);
+        this.ball = new Ball(this.mapKind, this.mat.ball);
     }
 
     private initWorld(): void {
@@ -131,9 +167,14 @@ export class Game {
         this.world.addContactMaterial(this.contactMat.goalBall);
         this.world.addContactMaterial(this.contactMat.mapPlayer);
 
-        this.world.on('postStep', () => {
-            this.logic();
+        const onPostStep = () => this.logic();
+        const onContact = (e) => this.onContactLogic(e);
+        this.world.on('postStep', onPostStep);
+        this.world.on('beginContact', onContact);
+        this.listeners.push(() => {
+            this.world.off('postStep', onPostStep);
         });
+
     }
 
     private initMaterials(): void {
@@ -160,41 +201,43 @@ export class Game {
 
     private reset(teamWhoScored?: Team): void {
         // ball reset
-        this.ball.body.position[0] = this.map.pos.x + map_config.size.width / 2;
-        this.ball.body.position[1] = this.map.pos.y + map_config.size.height / 2;
+        this.ball.body.position[0] = map_config[this.mapKind].outerSize.width / 2;
+        this.ball.body.position[1] = map_config[this.mapKind].outerSize.height / 2;
         this.ball.body.force = [0, 0];
         this.ball.body.velocity = [0, 0];
 
         // players reset
         const leftTeam = this.players.filter(player => player.team === Team.Left);
-        const leftTeamX = this.map.pos.x + goal_config.size.width + player_config.radius;
-        const leftTeamY = this.map.pos.y + map_config.size.height / 2 - ((leftTeam.length - 1) * (player_config.radius * 2 + 10)) / 2
+        const leftTeamX = this.map.pos.x + map_config[this.mapKind].goal.size.width + map_config[this.mapKind].player.radius;
+        const leftTeamY = this.map.pos.y + map_config[this.mapKind].size.height / 2 - ((leftTeam.length - 1) * (map_config[this.mapKind].player.radius * 2 + 10)) / 2
         leftTeam.forEach((player, idx) => {
             player.body.position[0] = leftTeamX;
-            player.body.position[1] = leftTeamY + (player_config.radius * 2 + 10) * idx;
+            player.body.position[1] = leftTeamY + (map_config[this.mapKind].player.radius * 2 + 10) * idx;
             player.body.force = [0, 0];
         });
         const rightTeam = this.players.filter(player => player.team === Team.Right);
-        const rightTeamX = this.map.pos.x + map_config.size.width - goal_config.size.width - player_config.radius;
-        const rightTeamY = this.map.pos.y + map_config.size.height / 2 - ((rightTeam.length - 1) * (player_config.radius * 2 + 10)) / 2
+        const rightTeamX = this.map.pos.x + map_config[this.mapKind].size.width - map_config[this.mapKind].goal.size.width - map_config[this.mapKind].player.radius;
+        const rightTeamY = this.map.pos.y + map_config[this.mapKind].size.height / 2 - ((rightTeam.length - 1) * (map_config[this.mapKind].player.radius * 2 + 10)) / 2
         rightTeam.forEach((player, idx) => {
             player.body.position[0] = rightTeamX;
-            player.body.position[1] = rightTeamY + (player_config.radius * 2 + 10) * idx;
+            player.body.position[1] = rightTeamY + (map_config[this.mapKind].player.radius * 2 + 10) * idx;
             player.body.force = [0, 0];
             player.body.velocity = [0, 0];
         });
 
         // map reset
-        if (teamWhoScored === Team.Left) {
-             this.world.addBody(this.map.leftHalfBody);
-        } else {
-            this.world.addBody(this.map.rightHalfBody);
+        if (teamWhoScored != null) {
+            if (teamWhoScored === Team.Left) {
+                this.world.addBody(this.map.leftHalfBody);
+            } else if (teamWhoScored === Team.Right) {
+                this.world.addBody(this.map.rightHalfBody);
+            }
         }
 
         // event
-        this.io.to(this.roomId).emit('world::reset', ({
+        this.io.to(this.roomId).emit('room::game::reset', ({
             players: this.players.map(player => ({
-                socketId: player.socketId,
+                socketId: player.user.socket.id,
                 position: player.body.position,
             })),
             ball: {
@@ -205,41 +248,46 @@ export class Game {
     }
 
     public logic(): void {
-        const playersShootingMap = this.players.map(player => ({ socketId: player.socketId, shooting: player.shooting }));
+        const playersShootingMap = this.players.map(player => ({ socketId: player.user.socket.id, shooting: player.shooting }));
         this.players.forEach(player => {
             player.logic();
         });
 
         const playersShooting = this.players
-            .filter(player => player.shooting !== playersShootingMap.find(plr => plr.socketId === player.socketId).shooting)
-            .map(player => ({ socketId: player.socketId, shooting: player.shooting }))
+            .filter(player => player.shooting !== playersShootingMap.find(plr => plr.socketId === player.user.socket.id)?.shooting)
+            .map(player => ({ socketId: player.user.socket.id, shooting: player.shooting }))
 
         this.players
             .filter((player) => player.shooting && !player.shootingCooldown)
             .forEach(player => {
                 const playerPos = { x: player.body.position[0], y: player.body.position[1] };
                 const ballPos = { x: this.ball.body.position[0], y: this.ball.body.position[1] };
-                const minDistance = player_config.radius + ball_config.radius;
-                const shootingDistance = 5;
+                const minDistance = map_config[this.mapKind].player.radius + map_config[this.mapKind].ball.radius;
+                const shootingDistance = game_config.player.shootingDistance;
                 if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
+                    this.userWhoLastTouchedBall = player.user;
+                    const shootSound = Math.round(Math.random() * 3);
+                    this.io.emit('room::game::shoot-sound', shootSound);
                     player.shoot();
                     const shootingVector = getNormalizedVector(
                         { x: player.body.position[0], y: player.body.position[1] },
                         { x: this.ball.body.position[0], y: this.ball.body.position[1] }
                     );
-                    this.ball.body.force[0] += (player.body.velocity[0]*0.5) + (shootingVector.x * player_config.shooting);
-                    this.ball.body.force[1] += (player.body.velocity[1]*0.5) + (shootingVector.y * player_config.shooting);
+                    this.ball.body.force[0] += (player.body.velocity[0]*0.5) + (shootingVector.x * game_config.player.shooting);
+                    this.ball.body.force[1] += (player.body.velocity[1]*0.5) + (shootingVector.y * game_config.player.shooting);
                 }
             });
 
 
         const playersToAdd = this.playersToAdd.map(player => {
+            this.addPlayerToWorld(player);
             this.players.push(player);
+
             this.world.addBody(player.body);
             return {
-                name: player.name,
+                nick: player.nick,
                 avatar: player.avatar,
-                socketId: player.socketId,
+                socketId: player.user.socket.id,
                 team: player.team,
                 position: player.body.position,
             };
@@ -250,13 +298,13 @@ export class Game {
             this.world.removeBody(player.body);
             const playerIdx = this.players.indexOf(player);
             this.players.splice(playerIdx, 1);
-            return player.socketId;
+            return player.user.socket.id;
         })
         this.playersToRemove.length = 0;
 
         const playersMoving = this.players
             .filter(player => isMoving(player.body))
-            .map(player => ({ socketId: player.socketId, position: player.body.interpolatedPosition }));
+            .map(player => ({ socketId: player.user.socket.id, position: player.body.interpolatedPosition }));
 
         const ballMoving = isMoving(this.ball.body)
             ? { position: this.ball.body.interpolatedPosition }
@@ -266,41 +314,56 @@ export class Game {
             const rightIdx = this.world.bodies.indexOf(this.map.rightHalfBody)
             if (rightIdx != -1) {
                 this.world.removeBody(this.map.rightHalfBody);
+                this.onGameTimeResume();
             }
             const leftIdx = this.world.bodies.indexOf(this.map.leftHalfBody)
             if (leftIdx != -1) {
                 this.world.removeBody(this.map.leftHalfBody);
+                this.onGameTimeResume();
             }
         }
 
-        const scoreRight = !this.reseting && this.ball.body.position[0] < this.map.pos.x
-            ? ++this.score.right
-            : null;
+        const scoreRight = !this.reseting && this.ball.body.position[0] < this.map.pos.x - map_config[this.mapKind].ball.radius;
 
-        const scoreLeft = !this.reseting && this.ball.body.position[0] > this.map.pos.x + map_config.size.width
-            ? ++this.score.left
-            : null;
+        const scoreLeft = !this.reseting && this.ball.body.position[0] > this.map.pos.x + map_config[this.mapKind].size.width + map_config[this.mapKind].ball.radius;
 
-        if (scoreRight !== null || scoreLeft !== null) {
-            const teamWhoScored = scoreRight ? Team.Right : Team.Left;
+        const scoreChanged = scoreRight || scoreLeft;
+        const teamWhoScored = scoreChanged
+            ? (scoreRight ? Team.Right : Team.Left)
+            : void 0;
+
+        if (scoreChanged) {
+            this.onGameScoreChanged(teamWhoScored as Team, this.userWhoLastTouchedBall);
+            this.onGameTimeStop();
             this.reseting = true;
             setTimeout(() => {
+                if (this.disposing) return;
                 this.reset(teamWhoScored);
             }, game_config.goalResetTimeout);
         }
-        
-        const data: IWorldPostStep = {};
-        if (playersToAdd.length) data.playersToAdd = playersToAdd;
-        if (playersToRemove.length) data.playersToRemove = playersToRemove;
-        if (playersMoving.length) data.playersMoving = playersMoving;
-        if (playersShooting.length) data.playersShooting = playersShooting;
-        if (ballMoving) data.ballMoving = ballMoving;
-        if (scoreRight) data.scoreRight = scoreRight;
-        if (scoreLeft) data.scoreLeft = scoreLeft;
-        if (Object.keys(data).length) {
-            this.io.to(this.roomId).emit('world::postStep', data);
+
+        if (this.initStage) {
+            this.onGameTimeStop();
+            this.reset();
+            this.initStage = false;
         }
 
+        const data: IWorldPostStep = {};
+        if (playersToAdd.length != null) data.playersToAdd = playersToAdd;
+        if (playersToRemove.length != null) data.playersToRemove = playersToRemove;
+        if (playersMoving.length != null) data.playersMoving = playersMoving;
+        if (playersShooting.length != null) data.playersShooting = playersShooting;
+        if (ballMoving != null) data.ballMoving = ballMoving;
+        if (Object.keys(data).length) {
+            this.io.to(this.roomId).emit('room::game::step', data);
+        }
+
+    }
+
+    private onContactLogic(event: { bodyA: p2.Body, bodyB: p2.Body}): void {
+        const player = this.players.find(player => isContact(event, this.ball.body, player.body));
+        if (!player) return;
+        this.userWhoLastTouchedBall = player.user;
     }
 
     public run() {

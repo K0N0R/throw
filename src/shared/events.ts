@@ -1,27 +1,20 @@
 import { Team } from "./team";
 import { User } from './../server/lobby/user';
+import { MapKind } from "./callibration";
 //#region PLAYER
 export interface IPlayerAdd {
-    name: string;
+    nick: string;
     avatar: string;
     socketId: string;
     team: Team;
     position: [number, number];
 }
 
-export interface IPlayerInit {
+export interface IRoomGameData {
     players: IPlayerAdd[];
     ball: {
         position: [number, number];
     };
-    score: {
-        left: number;
-        right: number;
-    }
-}
-
-export interface IPlayerKey {
-    [param: number]: boolean;
 }
 
 export interface IPlayerShooting {
@@ -53,8 +46,6 @@ export interface IWorldPostStep {
     playersToAdd?: IPlayerAdd[];
     playersToRemove?: string[];
     playersShooting?: { socketId: string; shooting: boolean }[];
-    scoreRight?: number | null;
-    scoreLeft?: number | null;
     playersMoving?: {
         socketId: string;
         position: [number, number];
@@ -69,35 +60,63 @@ export interface IConnectionData {
     avatar: string;
 }
 
-export interface ILobbyRoom {
+export interface IRoom {
     id: string;
+    adminId: string;
     name: string;
-    players: number;
-    data?: IRoomData;
 }
 
-export interface IRoomData {
-    adminId: string;
-    left: { socketId: string, nick: string, avatar: string}[];
-    right: { socketId: string, nick: string, avatar: string}[];
-    spectators: { socketId: string, nick: string, avatar: string}[];
-    timeLimit: number;
+export interface IRoomState {
+    room: IRoom;
+    users: IRoomUser[];
+    gameParams: IRoomGameParams;
+    gameState: IRoomGameState;
+    gameRunning: boolean;
+    gameScoreboard: IRoomGameScoreboardItem[];
+}
+
+export interface IRoomGameParams {
+    timeLimit?: number;
     scoreLimit: number;
-    messages?: {
-        nick: string;
-        avatar: string;
-        value: string;
-    }[]
+    mapKind?: MapKind;
+}
+
+export interface IRoomUser {
+    socketId: string;
+    nick: string;
+    avatar: string;
+    afk: boolean;
+    team: Team;
+}
+
+export interface IRoomMessage {
+    nick: string;
+    avatar: string;
+    value: string;
+}
+
+export interface IRoomGameState {
+    time: number;
+    left: number;
+    right: number;
+    golden: boolean;
+}
+
+export interface IRoomGameScore {
+    team: Team;
+    scorer?: IRoomUser;
+}
+
+export interface IRoomGameScoreboardItem {
+    scorer: IRoomUser;
+    goals: number;
+    ownGoals: number;
 }
 
 export interface IRoomCreate {
     name: string;
     password: string;
     maxPlayersAmount: number;
-}
-
-export interface IRoomLeave {
-    id: string;
 }
 
 export interface IRoomJoin {

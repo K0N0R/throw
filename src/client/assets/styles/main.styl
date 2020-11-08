@@ -2,11 +2,77 @@
 @import './game'
 @import './login'
 @import './list'
-@import './lobby'
+@import './room'
 
-body 
-	display flex
-	height 100vh
-	width 100vw
+:root
+	--text-color hsl(97, 13%, 80%)
+	--text-invert-color hsl(201, 20%, 14%)
+	--primary-color hsl(133, 18%, 59%)
+	--primary-light-color hsl(133, 18%, 70%)
+	--secundary-color hsl(165, 19%, 40%)
+	--secundary-color-light hsl(165, 19%, 60%)
+	--background-color hsl(186, 21%, 26%)
+	--surface-color hsl(201, 20%, 23%)
+
+*,
+*::before,
+*::after
+	box-sizing border-box
+
+html,
+body
+	width 100%
+	height 100%
 	overflow hidden
-	background-color #718c5a
+
+html
+	font-size 62.5%
+
+body
+	display flex
+	flex-direction column
+	font-size 1.6rem
+	font-family 'Consolas', 'Courier New', monospace
+	background-color var(--secundary-color)
+	background-image repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.0666) 35px, rgba(255,255,255,.0666) 70px)
+
+.display-none
+	display none
+	visibility hidden
+	opacity 0
+
+.button
+	--button-color var(--primary-color)
+	--button-hover-color var(--primary-light-color)
+
+	background-color transparent
+	border 1px solid var(--primary-color)
+	color var(--text-color)
+	width 100%
+	font-weight 800
+	transition all 0.3s
+	padding 10px 20px
+	margin 10px 0
+	border-radius 8px
+	text-transform uppercase
+	outline none
+	cursor pointer
+
+	&:hover
+		color var(--text-invert-color)
+		background var(--button-hover-color)
+
+	&--content-size
+		width fit-content
+
+	&--small
+		padding 5px 10px
+		margin 0 10px
+
+	&--accent
+		background-color var(--text-color)
+		color var(--surface-color)
+
+	&--primary
+		color var(--text-invert-color)
+		background-color var(--button-color)

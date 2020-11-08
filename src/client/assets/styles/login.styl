@@ -1,88 +1,94 @@
 
-.dialog {
-	position: fixed;
-	left: calc(50% - 150px);
-	top: calc(50% - 150px);
-	background-color: #a4b992;
-	width: 300px;
-	height: 300px;
-	padding: 30px;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	border-radius: 5px;
-}
+.dialog
+	--dialog-bg-color var(--background-color)
+	--dialog-text-color var(--text-color)
 
-.form-field {
-	display:flex;
-	flex-direction: column;
-	margin: 10px;
+	color var(--dialog-text-color)
+	background-color var(--dialog-bg-color)
+	margin auto auto
+	padding 20px
+	box-shadow 0px 10px 43px 0px rgba(0, 0, 0, 0.12)
+	border-radius 8px
 
-}
-.form-field label {
-	padding: 5px 10px;
-	text-transform: uppercase;
-	color: hsla(92, 22%, 15%, 1);
-	font-weight: 500;
-}
+	&--fixed
+		position fixed
+		z-index 2
 
-.form-field input {
-	padding: 5px 10px;
-	border-radius: 5px;
-	border: none;
-	outline: none;
-	font-size: 20px;
-}
+.form-field
+	display flex
+	flex-direction column
+	margin 10px 0 25px 0
 
-.form-field-avatar {
-	display:flex;
-	flex-direction: column;
-	margin: 10px;
-}
+	&--flat
+		margin 5px 0 0 0
+	
+	&__flex
+		display flex
+	
+	& label
+		padding 10px 8px
+		letter-spacing .075em
+		text-transform uppercase
 
-.form-field-avatar label {
-	padding: 5px 3px;
-	text-transform: uppercase;
-	color: hsla(92, 22%, 15%, 1);
-	font-weight: 500;
-}
+	& select,
+	& input
+		font-size 2rem
+		padding 15px 10px
+		background-color var(--text-color)
+		color var(--surface-color)
+		border-radius 5px
+		border none
+		outline none
 
-.form-field-avatar input {
-	padding: 5px;
-	border-radius: 5px;
-	border: none;
-	outline: none;
-	width: 50px;
-	height: 50px;
-	font-size: 30px;
-	text-align: center;
-}
+		&[readonly]
+			background-color rgba(255, 255, 255, 0.2)
+			cursor not-allowed
 
-.link {
-	padding: 15px;
-	text-align: center;
-}
+	&--avatar
 
-.form-btn {
-	margin: 10px;
-	background-color: white;
-	line-height: 40px;
-	border-radius: 5px;
-	border: none;
-	text-transform: uppercase;
-	outline: none;
-	cursor pointer
-}
+		& input
+			padding 5px
+			border-radius 5px
+			border none
+			outline none
+			width 80px
+			height 80px
+			font-size 3em
+			text-align center
 
-.form-btn-submit
-	background-color: #718c5a;
-	color: white;
-	font-weight: 800;
-	transition background 0.3s
-	&:hover
-		background lightness(#718c5a, 40)
+	&--small
+		& label
+			font-size .8em
+			padding 8px
+			text-align end
 
+		& select,
+		& input
+			font-size .8em
+			padding 4px 8px
 
-.display--flex {
-	display: flex;
-}
+	&--horizontal
+		flex-direction row
+
+.login_avatar_link
+	display block
+	color: var(--text-color)
+	text-decoration none
+	margin-bottom 20px
+	text-align center
+
+.legends
+	margin 0 15px
+	margin-top 0
+
+	.avatars
+		margin-top 10px
+		font-size 20px
+		max-width 400px
+		line-height 150%
+		display flex
+		flex-wrap wrap
+
+		.avatar
+			cursor pointer
+			width 40px

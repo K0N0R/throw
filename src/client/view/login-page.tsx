@@ -1,65 +1,65 @@
-import { render, h, Component } from 'preact';
-import ListPage from './lobby-page';
-import { User } from './../models/user';
+import { h } from 'preact';
+import LobbyPage from './lobby-page';
+import { User } from '../models/socket';
+import { useLocalStorage } from './hooks';
+import { goTo } from './utils';
 
-export default class StartPage extends Component {
-    state = {
-        nick: window.localStorage.getItem('throw_nick') || '',
-        avatar: window.localStorage.getItem('throw_avatar') || ''
-    };
-
-    componentDidMount() {
-
-    }
-    
-    onConfirm(): void {
-        if (this.state.nick && this.state.avatar) {
-            window.localStorage.setItem('throw_avatar', this.state.avatar);
-            window.localStorage.setItem('throw_nick', this.state.nick);
-            User.connect(this.state.nick, this.state.avatar, () => {
-                render(<ListPage />, document.getElementById('app') as Element);
+export default function LoginPage() {
+    const [nick, setNick] = useLocalStorage('throw_nick', '');
+    const [avatar, setAvatar] = useLocalStorage('throw_avatar', '');
+    const nickMaxLength = 20;
+    const avatarMaxLength = 2;
+    const avatars = ['👽', '👻','👥','🐗', '🤖','⚽️', '💪', '🐻', '😾', '🐒', '👴', '🎯', '🤡', '🐴', '🐍', '🚽', '🍍', '💎', '👮🏻', '👨'];
+    const onConfirm = () => {
+        if (nick && avatar) {
+            User.connect(nick, avatar, () => {
+                goTo(<LobbyPage />);
             });
         }
     }
-
-    onNickChange(e: any): void {
-        this.setState({ nick: e.target.value });
-    };
-
-    onAvatarChange(e: any): void {
-        this.setState({ avatar: e.target.value });
+    const chooseLegendaryAvatar = (item: string) => {
+        setAvatar(item);
     }
 
-    render(_, { nick, avatar}) {
-        return [
-            <div class="dialog">
-                <div class="form-field">
-                    <label>Nick</label>
+    return (
+        <div class="dialog">
+            <div class="form-field">
+                <label>Nick</label>
+                <input
+                    value={nick}
+                    maxLength={nickMaxLength}
+                    onInput={(e) => setNick((e.target as HTMLInputElement).value.toString().slice(0, nickMaxLength))}/>
+            </div>
+            <div class="form-field form-field--avatar">
+                <label>Avatar</label>
+                <div class="form-field__flex">
                     <input
-                        value={nick}
-                        onInput={this.onNickChange.bind(this)}/>
-                </div>
-                <div class="form-field-avatar">
-                    <label>Avatar</label>
-                    <div class="display--flex">
-                        <input
-                            value={avatar}
-                            onInput={this.onAvatarChange.bind(this)}/>
-                        <a class="link"
-                            target="_blank"
-                            href="https://getemoji.com/">
-                                Where do i find cool avatar?
-                        </a>
+                        value={avatar}
+                        maxLength={avatarMaxLength}
+                        onInput={(e) => setAvatar((e.target as HTMLInputElement).value.toString().slice(0, avatarMaxLength))}/>
+                    <div class="legends">
+                        <div >LEGENDARY PLAYERS:</div>
+                        <div class="avatars">
+                            {   ...avatars.map(item =>
+                                <span class="avatar" onClick={(e) => chooseLegendaryAvatar(item)}>
+                                    {item}
+                                </span>
+                            )
+                            }
+                        </div>
                     </div>
                 </div>
-
-                <button 
-                    class="form-btn form-btn-submit"
-                    onClick={this.onConfirm.bind(this)}>
-                    Throw!
-                </button>
-
             </div>
-        ];
-    }
+            <a class="login_avatar_link"
+                target="_blank"
+                href="https://getemoji.com/">
+                    Where do i find cool avatar?
+            </a>
+            <button
+                class="button button--primary"
+                onClick={onConfirm}>
+                Throw!
+            </button>
+        </div>
+    );
 }
