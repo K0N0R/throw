@@ -49,7 +49,7 @@ const generateMapConfig: () => IMapConfig = () => {
                 width: 65,
             },
             ball: {
-                radius: 17.5
+                radius: 17
             },
             player: {
                 radius: 25,
@@ -63,7 +63,7 @@ const generateMapConfig: () => IMapConfig = () => {
                 width: 65,
             },
             ball: {
-                radius: 17.5
+                radius: 17
             },
             player: {
                 radius: 25,
@@ -77,7 +77,7 @@ const generateMapConfig: () => IMapConfig = () => {
                 width: 65,
             },
             ball: {
-                radius: 17.5
+                radius: 17
             },
             player: {
                 radius: 25,
@@ -160,10 +160,10 @@ export const game_config = {
     },
     player: {
         mass: 5,
-        damping: 0.92,
-        movementSpeed: 3400 * scale,
-        shootingMovementSpeed: 1750 * scale,
-        shooting: 125000 * scale,
+        damping: 0.97,
+        movementSpeed: 4300 * scale,
+        shootingMovementSpeed: 2350 * scale,
+        shooting: 130000 * scale,
         shootingDistance: 5 * scale,
         shootingCooldown: 100,
     }

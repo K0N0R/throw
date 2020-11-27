@@ -53,9 +53,12 @@ export class Game {
                     if (player) {
                         player.pos.x = dataPlayer.position[0];
                         player.pos.y = dataPlayer.position[1];
+                        if (player.socketId === User.socket.id) {
+                            this.updateCamera();
+                        }
                     }
-                    this.updateCamera();
                 });
+                ;
             }
             if (data.playersShooting != null) {
                 data.playersShooting.forEach(dataPlayer => {

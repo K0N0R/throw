@@ -67,7 +67,6 @@ export class Player {
     }
     public counter = 0;
     public logic(): void {
-        
         if (this.keysMap.up) {
             this.body.force[1] = -this.maxSpeed;
         }

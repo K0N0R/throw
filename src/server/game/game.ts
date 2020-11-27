@@ -349,10 +349,10 @@ export class Game {
         }
         
         const data: IWorldPostStep = {};
-        if (playersToAdd.length != null) data.playersToAdd = playersToAdd;
-        if (playersToRemove.length != null) data.playersToRemove = playersToRemove;
-        if (playersMoving.length != null) data.playersMoving = playersMoving;
-        if (playersShooting.length != null) data.playersShooting = playersShooting;
+        if (playersToAdd.length) data.playersToAdd = playersToAdd;
+        if (playersToRemove.length) data.playersToRemove = playersToRemove;
+        if (playersMoving.length) data.playersMoving = playersMoving;
+        if (playersShooting.length) data.playersShooting = playersShooting;
         if (ballMoving != null) data.ballMoving = ballMoving;
         if (Object.keys(data).length) {
             this.io.to(this.roomId).emit('room::game::step', data);
