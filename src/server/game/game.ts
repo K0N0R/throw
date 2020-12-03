@@ -248,14 +248,9 @@ export class Game {
     }
 
     public logic(): void {
-        const playersShootingMap = this.players.map(player => ({ socketId: player.user.socket.id, shooting: player.shooting }));
         this.players.forEach(player => {
             player.logic();
         });
-
-        const playersShooting = this.players
-            .filter(player => player.shooting !== playersShootingMap.find(plr => plr.socketId === player.user.socket.id)?.shooting)
-            .map(player => ({ socketId: player.user.socket.id, shooting: player.shooting }))
 
         this.players
             .filter((player) => player.shooting && !player.shootingCooldown)
@@ -277,34 +272,6 @@ export class Game {
                     this.ball.body.force[1] += (player.body.velocity[1]*0.5) + (shootingVector.y * game_config.player.shooting);
                 }
             });
-
-
-        const playersToAdd = this.playersToAdd.map(player => {
-            this.addPlayerToWorld(player);
-            this.players.push(player);
-
-            this.world.addBody(player.body);
-            return {
-                nick: player.nick,
-                avatar: player.avatar,
-                socketId: player.user.socket.id,
-                team: player.team,
-                position: player.body.position,
-            };
-        });
-        this.playersToAdd.length = 0;
-
-        const playersToRemove = this.playersToRemove.map(player => {
-            this.world.removeBody(player.body);
-            const playerIdx = this.players.indexOf(player);
-            this.players.splice(playerIdx, 1);
-            return player.user.socket.id;
-        })
-        this.playersToRemove.length = 0;
-
-        const playersMoving = this.players
-            .filter(player => isMoving(player.body))
-            .map(player => ({ socketId: player.user.socket.id, position: player.body.interpolatedPosition }));
 
         const ballMoving = isMoving(this.ball.body)
             ? { position: this.ball.body.interpolatedPosition }
@@ -347,17 +314,6 @@ export class Game {
             this.reset();
             this.initStage = false;
         }
-
-        const data: IWorldPostStep = {};
-        if (playersToAdd.length != null) data.playersToAdd = playersToAdd;
-        if (playersToRemove.length != null) data.playersToRemove = playersToRemove;
-        if (playersMoving.length != null) data.playersMoving = playersMoving;
-        if (playersShooting.length != null) data.playersShooting = playersShooting;
-        if (ballMoving != null) data.ballMoving = ballMoving;
-        if (Object.keys(data).length) {
-            this.io.to(this.roomId).emit('room::game::step', data);
-        }
-
     }
 
     private onContactLogic(event: { bodyA: p2.Body, bodyB: p2.Body}): void {
@@ -366,12 +322,62 @@ export class Game {
         this.userWhoLastTouchedBall = player.user;
     }
 
+    private inform(): void {
+        const playersShootingMap = this.players.map(player => ({ socketId: player.user.socket.id, shooting: player.shooting }));
+        const playersShooting = this.players
+            .filter(player => player.shooting !== playersShootingMap.find(plr => plr.socketId === player.user.socket.id)?.shooting)
+            .map(player => ({ socketId: player.user.socket.id, shooting: player.shooting }))
+
+        const playersToAdd = this.playersToAdd.map(player => {
+            this.addPlayerToWorld(player);
+            this.players.push(player);
+
+            this.world.addBody(player.body);
+            return {
+                nick: player.nick,
+                avatar: player.avatar,
+                socketId: player.user.socket.id,
+                team: player.team,
+                position: player.body.position,
+            };
+        });
+        this.playersToAdd.length = 0;
+
+        const playersToRemove = this.playersToRemove.map(player => {
+            this.world.removeBody(player.body);
+            const playerIdx = this.players.indexOf(player);
+            this.players.splice(playerIdx, 1);
+            return player.user.socket.id;
+        })
+        this.playersToRemove.length = 0;
+
+        const playersMoving = this.players
+            .filter(player => isMoving(player.body))
+            .map(player => ({ socketId: player.user.socket.id, position: player.body.interpolatedPosition }));
+
+        const ballMoving = isMoving(this.ball.body)
+            ? { position: this.ball.body.interpolatedPosition }
+            : null;
+
+        const data: IWorldPostStep = {};
+        if (playersToAdd.length) data.playersToAdd = playersToAdd;
+        if (playersToRemove.length) data.playersToRemove = playersToRemove;
+        if (playersMoving.length) data.playersMoving = playersMoving;
+        if (playersShooting.length) data.playersShooting = playersShooting;
+        if (ballMoving) data.ballMoving = ballMoving;
+        if (Object.keys(data).length) {
+            this.io.to(this.roomId).emit('room::game::step', data);
+        }
+    }
+
     public run() {
         // Move bodies forward in time
+        this.inform();
         const time = new Date().valueOf();
         const timeSinceLastCall = time - this.step.lastTime;
         this.step.lastTime = time;
         this.world.step(this.step.fixedTime, timeSinceLastCall/1000, this.step.maxSteps);
+        
     }
 
 }
