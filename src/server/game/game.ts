@@ -252,6 +252,17 @@ export class Game {
             player.logic();
         });
 
+        const getShootingModifier = () => {
+            switch (this.mapKind) {
+                case MapKind.ROUNDED:
+                    return 1;
+                case MapKind.ROUNDED_MEDIUM:
+                    return 1.15;
+                case MapKind.ROUNDED_BIG:
+                    return 1.3;
+            }
+        }
+
         this.players
             .filter((player) => player.shooting && !player.shootingCooldown)
             .forEach(player => {
@@ -268,8 +279,9 @@ export class Game {
                         { x: player.body.position[0], y: player.body.position[1] },
                         { x: this.ball.body.position[0], y: this.ball.body.position[1] }
                     );
-                    this.ball.body.force[0] += (player.body.velocity[0]*0.5) + (shootingVector.x * game_config.player.shooting);
-                    this.ball.body.force[1] += (player.body.velocity[1]*0.5) + (shootingVector.y * game_config.player.shooting);
+                    
+                    this.ball.body.force[0] += (player.body.velocity[0]*0.5) + (shootingVector.x * game_config.player.shooting * getShootingModifier());
+                    this.ball.body.force[1] += (player.body.velocity[1]*0.5) + (shootingVector.y * game_config.player.shooting * getShootingModifier());
                 }
             });
 
