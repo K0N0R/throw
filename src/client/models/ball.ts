@@ -14,7 +14,7 @@ export class Ball {
 
     public render(): void {
         Canvas.startDraw();
-        Canvas.ctx.arc(this.pos.x, this.pos.y, map_config[this.mapKind].ball.radius, 0, 2 * Math.PI, true);
+        Canvas.ctx.arc(this.pos.x, this.pos.y, map_config[this.mapKind].ball.radius - style_config.ball.lineWidth, 0, 2 * Math.PI, true);
         Canvas.ctx.fillStyle = style_config.ball.fillStyle;
         Canvas.ctx.fill();
         Canvas.ctx.strokeStyle = style_config.ball.strokeStyle;
