@@ -21,10 +21,10 @@ export const playSound = (id: string, volume: number = 0.5) => {
     element.play();
 }
 
-export const loopSound = (id: string, time: number) => {
+export const loopSound = (id: string, time: number, volume: number) => {
     const element: HTMLAudioElement | null = document.querySelector(id)
     if (!element) return () => {};
-    element.volume = 0.50;
+    element.volume = volume;
     element.currentTime = 0;
     element.play();
     const interval = setInterval(() => {
@@ -41,4 +41,10 @@ export const stopSound = (id: string) => {
     const element: HTMLAudioElement | null = document.querySelector(id)
     if (!element) return;
     element.pause();
+}
+
+export const setSoundVolume = (id: string, volume: number): void =>  {
+    const element: HTMLAudioElement | null = document.querySelector(id)
+    if (!element) return;
+    element.volume = volume;
 }

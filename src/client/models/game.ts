@@ -25,7 +25,8 @@ export class Game {
 
     private breakSoundLoop: () => void;
     constructor(private mapKind: MapKind) {
-        this.breakSoundLoop = loopSound(`#background-sound`, 13500);
+        const backgroundVolume = window.localStorage.getItem('throw_config_background_volume');
+        this.breakSoundLoop = loopSound(`#background-sound`, 13500, backgroundVolume != null ? Number(backgroundVolume) : 0.5);
         this.initHandlers();
         this.initCanvas();
         this.initEntities();

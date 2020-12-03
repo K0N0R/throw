@@ -2,6 +2,7 @@ import { h } from 'preact';
 import { useState } from 'preact/hooks';
 import { KeysHandler, KeysConfiguration } from './../../shared/keysHandler';
 import { useLocalStorage } from './hooks';
+import { setSoundVolume } from './utils';
 
 enum MovementKind {
     WSAD = "WSAD", 
@@ -11,7 +12,7 @@ enum MovementKind {
 
 export default function ConfigurationPage() {
 
-    const [kind, setKind] = useLocalStorage('thow_config_set', MovementKind.ARROW);
+    const [kind, setKind] = useLocalStorage('throw_config_set', MovementKind.ARROW);
     const [, setKeysConfig] = useLocalStorage('throw_config', '');
     const [shoot, setShoot] = useState(KeysHandler.configuration.shoot);
     const [dash, setDash] = useState(KeysHandler.configuration.dash);
@@ -22,6 +23,7 @@ export default function ConfigurationPage() {
     const [camera1, setCamera1] = useState(KeysHandler.configuration.camera1);
     const [camera2, setCamera2] = useState(KeysHandler.configuration.camera2);
     const [camera3, setCamera3] = useState(KeysHandler.configuration.camera3);
+    const [backgroundVolume, setBackgroundVolume] = useLocalStorage('throw_config_background_volume', 0.5);
     const kinds = [
         MovementKind.ARROW,
         MovementKind.WSAD,
@@ -39,7 +41,7 @@ export default function ConfigurationPage() {
                 right,
                 camera1,
                 camera2,
-                camera3
+                camera3,
             };
             setKeysConfig(config);
             KeysHandler.setConfiguration();
@@ -127,6 +129,12 @@ export default function ConfigurationPage() {
         setCamera3(e.code);
     };
 
+    const onBackgroundVolumeChange = (e: any) => {
+        e.preventDefault();
+        setBackgroundVolume(Number(e.target.value));
+        setSoundVolume('#background-sound', Number(e.target.value));
+    };
+
     return (
         <div class="dialog dialog--fixed">
             <div class="form-field form-field--small form-field--horizontal room__foot__option">
@@ -202,9 +210,22 @@ export default function ConfigurationPage() {
                     value={camera3}
                     onKeyUp={onCamera3Change}/>
             </div>
+            <div class="text--right margin--huge-top">
+                SOUNDS
+            </div>
+            <div class="form-field form-field--small form-field--horizontal room__foot__option">
+                <label class="room__foot__option__label">BACKGROUND VOLUME</label>
+                <input class="room__foot__option__input"
+                    type="number"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={backgroundVolume}
+                    onChange={onBackgroundVolumeChange}/>
+            </div>
             <button class="button button"
                 onClick={cancel}>
-                Cancel 😢
+                Close
             </button>
             <button class="button button--primary"
                 onClick={saveConfig}>
