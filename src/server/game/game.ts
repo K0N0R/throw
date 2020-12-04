@@ -257,9 +257,9 @@ export class Game {
                 case MapKind.ROUNDED:
                     return 1;
                 case MapKind.ROUNDED_MEDIUM:
-                    return 1.15;
+                    return 1.09;
                 case MapKind.ROUNDED_BIG:
-                    return 1.3;
+                    return 1.18;
             }
         }
 
