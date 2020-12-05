@@ -1,6 +1,7 @@
 import { Team } from "./team";
-import { User } from './../server/lobby/user';
 import { MapKind } from "./callibration";
+import { POWERUP_KIND } from "./powerup";
+import { IPos } from './model';
 //#region PLAYER
 export interface IPlayerAdd {
     nick: string;
@@ -14,6 +15,10 @@ export interface IRoomGameData {
     players: IPlayerAdd[];
     ball: {
         position: [number, number];
+    };
+    powerup: {
+        pos: IPos;
+        kind: POWERUP_KIND;
     };
 }
 
@@ -51,6 +56,7 @@ export interface IWorldPostStep {
         position: [number, number];
     }[];
     ballMoving?: { position: [number, number] } | null;
+    powerupChange?: { pos: IPos; kind: POWERUP_KIND; };
 }
 //#endregion
 

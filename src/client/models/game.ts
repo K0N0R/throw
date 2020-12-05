@@ -6,6 +6,7 @@ import { Canvas } from './canvas';
 import { Player } from './player';
 import { Map } from './map';
 import { Ball } from './ball';
+import { Powerup } from './powerup';
 import { RightGoal } from './rightGoal';
 import { LeftGoal } from './leftGoal';
 import { Camera } from './camera';
@@ -13,12 +14,12 @@ import { Camera } from './camera';
 import { User } from './socket';
 import { playSound, loopSound } from '../view/utils';
 
-
 export class Game {
     private map!: Map;
 
     private players: Player[] = [];
     private ball!: Ball;
+    private powerup!: Powerup;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
     private keysMap: KeysMap = {};
@@ -66,6 +67,11 @@ export class Game {
                     }
                 });
             }
+            if (data.powerupChange != null) {
+                this.powerup.kind = data.powerupChange.kind;
+                this.powerup.pos = data.powerupChange.pos;
+            }
+
             if (data.ballMoving != null) {
                 this.ball.pos.x = data.ballMoving.position[0];
                 this.ball.pos.y = data.ballMoving.position[1];
@@ -95,6 +101,10 @@ export class Game {
             if (!data) return;
             this.players = data.players.map(p => new Player(this.mapKind, p.nick, p.avatar, { x: p.position[0], y: p.position[1], }, p.socketId, p.team));
             this.ball.pos = { x: data.ball.position[0], y: data.ball.position[1] };
+            if (data.powerup) {
+                this.powerup.pos = data.powerup.pos;
+                this.powerup.kind = data.powerup.kind;
+            }
             this.updateCamera();
         });
 
@@ -120,7 +130,6 @@ export class Game {
             const player = this.players.find(player => player.socketId === User.socket.id);
             if (!player) return;
             player.shooting = Boolean(keysMap.shoot);
-            player.dash(Boolean(keysMap.dash));
 
             const deltaKeysMap: Partial<KeysMap> = {};
             for (const key in keysMap) {
@@ -147,6 +156,7 @@ export class Game {
         this.leftGoal = new LeftGoal(this.mapKind);
         this.rightGoal = new RightGoal(this.mapKind);
         this.ball = new Ball(this.mapKind);
+        this.powerup = new Powerup(this.mapKind);
     }
 
     private initCamera(): void {
@@ -185,6 +195,7 @@ export class Game {
         this.map.render();
         this.leftGoal.render();
         this.rightGoal.render();
+        this.powerup.render();
         this.players.forEach(player => {
             player.renderInfo();
         });

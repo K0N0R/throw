@@ -12,6 +12,7 @@ export class Room {
 
     private game!: Game | null;
     private gameInterval: any;
+    private gameInformInterval: any;
     private gameScoreboard: IRoomGameScoreboardItem[] = [];
 
     public time: number = 0; // in seconds
@@ -248,6 +249,7 @@ export class Room {
     //#region game
     private resetGame(): void {
         clearInterval(this.gameInterval);
+        clearInterval(this.gameInformInterval);
         this.game?.dispose();
         this.game = null;
         this.resetTime();
@@ -317,6 +319,9 @@ export class Room {
         this.gameInterval = setInterval(() => {
             if (this.game) this.game.run();
         }, 0);
+        this.gameInformInterval = setInterval(() => {
+            if (this.game) this.game.inform();
+        }, 1000/60);
         this.updateGameState();
     }
 

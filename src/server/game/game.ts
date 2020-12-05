@@ -15,6 +15,7 @@ import { IWorldReset, IWorldPostStep, IRoomGameData } from './../../shared/event
 import { User } from './../lobby/user';
 import { KeysMap } from './../../shared/keysHandler';
 import { isContact } from './../../shared/body';
+import { Powerup } from './powerup';
 
 export class Game {
     private listeners: (() => void)[] = [];
@@ -32,10 +33,12 @@ export class Game {
     private players: Player[] = [];
     private playersToAdd: Player[] = [];
     private playersToRemove: Player[] = [];
-    private userWhoLastTouchedBall!: User | undefined;
+    private playerWhoLastTouchedBall!: User | undefined;
     private ball!: Ball;
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
+    private powerup!: Powerup;
+    private powerUpStateChanged = false;
 
     private reseting!: boolean;
     public disposing!: boolean;
@@ -54,12 +57,13 @@ export class Game {
         this.initEntities();
         this.initWorld();
         this.initPlayers(users);
+        this.initPowerupTimer();
     }
 
     public dispose(): void {
         this.listeners.forEach(listener => listener());
         this.listeners = [];
-        this.userWhoLastTouchedBall = undefined;
+        this.playerWhoLastTouchedBall = undefined;
         const players = [...this.players];
         players.forEach((item) => this.removePlayer(item.user));
         this.players = [];
@@ -81,6 +85,10 @@ export class Game {
             })),
             ball: {
                 position: this.ball.body.position
+            },
+            powerup: {
+                pos: this.powerup.pos,
+                kind: this.powerup.kind
             }
         };
     }
@@ -136,12 +144,33 @@ export class Game {
     }
     //#endregion
 
+    //#region powerup
+
+    private initPowerupTimer(): void {
+        this.powerUpStateChanged = true;
+        this.powerup.pos.x = -1000;
+        this.powerup.pos.y = -1000;
+        const powerupTimer = setTimeout(() => {
+            //TODO: full rand position or  rand preset positions
+            //TODO: rand powerkind
+            this.powerup.pos.x = map_config[this.mapKind].outerSize.width / 3;
+            this.powerup.pos.y = map_config[this.mapKind].outerSize.height / 3;
+            this.powerUpStateChanged = true;
+            const idx = this.listeners.indexOf(clearFnc);
+            if (idx != -1) this.listeners.splice(idx, 1);
+        }, 3000);
+        const clearFnc = () => clearTimeout(powerupTimer);
+        this.listeners.push(clearFnc);
+    }
+    //#endregion
+
     private initEntities(): void {
         this.initMaterials();
         this.map = new Map(this.mapKind, this.mat.map);
         this.leftGoal = new LeftGoal(this.mapKind, this.mat.goal, this.mat.map);
         this.rightGoal = new RightGoal(this.mapKind, this.mat.goal, this.mat.map);
         this.ball = new Ball(this.mapKind, this.mat.ball);
+        this.powerup = new Powerup(this.mapKind);
     }
 
     private initWorld(): void {
@@ -250,6 +279,11 @@ export class Game {
     public logic(): void {
         this.players.forEach(player => {
             player.logic();
+            const distance = getDistance({ x: player.body.position[0], y: player.body.position[1]}, { x: this.powerup.pos.x, y: this.powerup.pos.y });
+            if (distance < map_config[this.mapKind].powerup.radius + map_config[this.mapKind].player.radius) {
+                player.power = this.powerup.kind;
+                this.initPowerupTimer();
+            }
         });
 
         const getShootingModifier = () => {
@@ -271,7 +305,7 @@ export class Game {
                 const minDistance = map_config[this.mapKind].player.radius + map_config[this.mapKind].ball.radius;
                 const shootingDistance = game_config.player.shootingDistance;
                 if (getDistance(playerPos, ballPos) - minDistance < shootingDistance) {
-                    this.userWhoLastTouchedBall = player.user;
+                    this.playerWhoLastTouchedBall = player.user;
                     const shootSound = Math.round(Math.random() * 3);
                     this.io.emit('room::game::shoot-sound', shootSound);
                     player.shoot();
@@ -312,7 +346,7 @@ export class Game {
             : void 0;
 
         if (scoreChanged) {
-            this.onGameScoreChanged(teamWhoScored as Team, this.userWhoLastTouchedBall);
+            this.onGameScoreChanged(teamWhoScored as Team, this.playerWhoLastTouchedBall);
             this.onGameTimeStop();
             this.reseting = true;
             setTimeout(() => {
@@ -329,12 +363,11 @@ export class Game {
     }
 
     private onContactLogic(event: { bodyA: p2.Body, bodyB: p2.Body}): void {
-        const player = this.players.find(player => isContact(event, this.ball.body, player.body));
-        if (!player) return;
-        this.userWhoLastTouchedBall = player.user;
+        const playerWhoTouchedTheBall = this.players.find(player => isContact(event, this.ball.body, player.body));
+        if (playerWhoTouchedTheBall) this.playerWhoLastTouchedBall = playerWhoTouchedTheBall.user;
     }
 
-    private inform(): void {
+    public inform(): void {
         const playersShootingMap = this.players.map(player => ({ socketId: player.user.socket.id, shooting: player.shooting }));
         const playersShooting = this.players
             .filter(player => player.shooting !== playersShootingMap.find(plr => plr.socketId === player.user.socket.id)?.shooting)
@@ -367,6 +400,13 @@ export class Game {
             .filter(player => isMoving(player.body))
             .map(player => ({ socketId: player.user.socket.id, position: player.body.interpolatedPosition }));
 
+        const powerupChange = this.powerUpStateChanged
+            ? { pos: this.powerup.pos, kind: this.powerup.kind }
+            : null;
+        if (this.powerUpStateChanged) {
+            this.powerUpStateChanged = false;
+        }
+
         const ballMoving = isMoving(this.ball.body)
             ? { position: this.ball.body.interpolatedPosition }
             : null;
@@ -377,6 +417,7 @@ export class Game {
         if (playersMoving.length) data.playersMoving = playersMoving;
         if (playersShooting.length) data.playersShooting = playersShooting;
         if (ballMoving) data.ballMoving = ballMoving;
+        if (powerupChange) data.powerupChange = powerupChange;
         if (Object.keys(data).length) {
             this.io.to(this.roomId).emit('room::game::step', data);
         }
@@ -384,12 +425,10 @@ export class Game {
 
     public run() {
         // Move bodies forward in time
-        this.inform();
         const time = new Date().valueOf();
         const timeSinceLastCall = time - this.step.lastTime;
         this.step.lastTime = time;
         this.world.step(this.step.fixedTime, timeSinceLastCall/1000, this.step.maxSteps);
-        
     }
 
 }

@@ -24,13 +24,16 @@ interface IMapConfigValue {
         postRadius: number;
         cornerPointsAmount: number;
         cornerRadius: number;
-    },
+    };
     ball: {
         radius: number;
-    },
+    };
     player: {
         radius: number;
-    }
+    };
+    powerup: {
+        radius: number;
+    };
 }
 
 interface IMapConfig {
@@ -53,6 +56,9 @@ const generateMapConfig: () => IMapConfig = () => {
             },
             player: {
                 radius: 25,
+            },
+            powerup: {
+                radius: 20
             }
         },
         [MapKind.ROUNDED_MEDIUM]: {
@@ -67,6 +73,9 @@ const generateMapConfig: () => IMapConfig = () => {
             },
             player: {
                 radius: 25,
+            },
+            powerup: {
+                radius: 20
             }
         },
         [MapKind.ROUNDED_BIG]: {
@@ -81,6 +90,9 @@ const generateMapConfig: () => IMapConfig = () => {
             },
             player: {
                 radius: 25,
+            },
+            powerup: {
+                radius: 20
             }
         },
     }
@@ -98,6 +110,9 @@ const generateMapConfig: () => IMapConfig = () => {
                 postRadius: 13 * scale,
                 cornerRadius: config[key].goal.width * scale * 0.5,
                 cornerPointsAmount: 10 * scale,
+            },
+            powerup: {
+                radius: config[key].powerup.radius * scale,
             },
             ball: {
                 radius: config[key].ball.radius * scale
@@ -201,6 +216,11 @@ export const style_config = {
         meIndicatorStrokeStyle: '#FFFFFF',
         meIndicatorLineWidth: 5 * scale,
         meIndicatorRadius: 40 * scale
+    },
+    powerup: {
+        strokeStyle: 'black',
+        fillStyle: 'pink',
+        lineWidth: 2,
     }
 }
 //#endregion
