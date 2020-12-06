@@ -38,7 +38,6 @@ export class Game {
     private leftGoal!: LeftGoal;
     private rightGoal!: RightGoal;
     private powerup!: Powerup;
-    private powerUpStateChanged = false;
 
     private reseting!: boolean;
     public disposing!: boolean;
@@ -57,12 +56,12 @@ export class Game {
         this.initEntities();
         this.initWorld();
         this.initPlayers(users);
-        this.initPowerupTimer();
     }
 
     public dispose(): void {
         this.listeners.forEach(listener => listener());
         this.listeners = [];
+        clearTimeout(this.powerupTimer);
         this.playerWhoLastTouchedBall = undefined;
         const players = [...this.players];
         players.forEach((item) => this.removePlayer(item.user));
@@ -145,22 +144,13 @@ export class Game {
     //#endregion
 
     //#region powerup
-
+    private powerupTimer: any;
     private initPowerupTimer(): void {
-        this.powerUpStateChanged = true;
-        this.powerup.pos.x = -1000;
-        this.powerup.pos.y = -1000;
-        const powerupTimer = setTimeout(() => {
-            //TODO: full rand position or  rand preset positions
-            //TODO: rand powerkind
-            this.powerup.pos.x = map_config[this.mapKind].outerSize.width / 3;
-            this.powerup.pos.y = map_config[this.mapKind].outerSize.height / 3;
-            this.powerUpStateChanged = true;
-            const idx = this.listeners.indexOf(clearFnc);
-            if (idx != -1) this.listeners.splice(idx, 1);
-        }, 3000);
-        const clearFnc = () => clearTimeout(powerupTimer);
-        this.listeners.push(clearFnc);
+        this.powerup.reset();
+        clearTimeout(this.powerupTimer);
+        this.powerupTimer = setTimeout(() => {
+            this.powerup.setRandom();
+        }, game_config.powerup.cooldown);
     }
     //#endregion
 
@@ -314,8 +304,8 @@ export class Game {
                         { x: this.ball.body.position[0], y: this.ball.body.position[1] }
                     );
                     
-                    this.ball.body.force[0] += (player.body.velocity[0]*0.5) + (shootingVector.x * game_config.player.shooting * getShootingModifier());
-                    this.ball.body.force[1] += (player.body.velocity[1]*0.5) + (shootingVector.y * game_config.player.shooting * getShootingModifier());
+                    this.ball.body.force[0] += (player.body.velocity[0]*0.4) + (shootingVector.x * game_config.player.shooting * getShootingModifier());
+                    this.ball.body.force[1] += (player.body.velocity[1]*0.4) + (shootingVector.y * game_config.player.shooting * getShootingModifier());
                 }
             });
 
@@ -324,12 +314,15 @@ export class Game {
             : null;
 
         if (ballMoving) {
-            const rightIdx = this.world.bodies.indexOf(this.map.rightHalfBody)
+            const rightIdx = this.world.bodies.indexOf(this.map.rightHalfBody);
+            const leftIdx = this.world.bodies.indexOf(this.map.leftHalfBody);
+            if (rightIdx != -1 || leftIdx != -1) {
+                this.initPowerupTimer();
+            }
             if (rightIdx != -1) {
                 this.world.removeBody(this.map.rightHalfBody);
                 this.onGameTimeResume();
             }
-            const leftIdx = this.world.bodies.indexOf(this.map.leftHalfBody)
             if (leftIdx != -1) {
                 this.world.removeBody(this.map.leftHalfBody);
                 this.onGameTimeResume();
@@ -349,6 +342,8 @@ export class Game {
             this.onGameScoreChanged(teamWhoScored as Team, this.playerWhoLastTouchedBall);
             this.onGameTimeStop();
             this.reseting = true;
+            this.powerup.reset();
+            clearTimeout(this.powerupTimer);
             setTimeout(() => {
                 if (this.disposing) return;
                 this.reset(teamWhoScored);
@@ -400,12 +395,10 @@ export class Game {
             .filter(player => isMoving(player.body))
             .map(player => ({ socketId: player.user.socket.id, position: player.body.interpolatedPosition }));
 
-        const powerupChange = this.powerUpStateChanged
+        const powerupChange = this.powerup.stateChanged
             ? { pos: this.powerup.pos, kind: this.powerup.kind }
             : null;
-        if (this.powerUpStateChanged) {
-            this.powerUpStateChanged = false;
-        }
+        if (this.powerup.stateChanged) this.powerup.stateChanged = false;
 
         const ballMoving = isMoving(this.ball.body)
             ? { position: this.ball.body.interpolatedPosition }

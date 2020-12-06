@@ -52,7 +52,7 @@ const generateMapConfig: () => IMapConfig = () => {
                 width: 65,
             },
             ball: {
-                radius: 16.5
+                radius: 17
             },
             player: {
                 radius: 25,
@@ -69,7 +69,7 @@ const generateMapConfig: () => IMapConfig = () => {
                 width: 65,
             },
             ball: {
-                radius: 16.5
+                radius: 17
             },
             player: {
                 radius: 25,
@@ -86,7 +86,7 @@ const generateMapConfig: () => IMapConfig = () => {
                 width: 65,
             },
             ball: {
-                radius: 16.5
+                radius: 17
             },
             player: {
                 radius: 25,
@@ -185,6 +185,9 @@ export const game_config = {
         dashingMaxSpeed: 325 * scale,
         dashDuration: 212,
         dashingTick: 25,
+    },
+    powerup: {
+        cooldown: 5000
     }
 }
 
