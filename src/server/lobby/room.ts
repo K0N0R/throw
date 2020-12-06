@@ -316,10 +316,14 @@ export class Room {
             () => this.startGameTime(),
             (team: Team, user: User | undefined) => this.updateGameScore(team, user));
 
-        this.gameInterval = setInterval(() => {
+        this.gameInterval = setInterval(() => { // run simulation
             this.game?.run();
-            this.game?.inform();
         }, 0);
+
+        this.gameInterval = setInterval(() => { // inform players about changes
+            this.game?.inform();
+        }, 1000/60);
+
         this.updateGameState();
     }
 
