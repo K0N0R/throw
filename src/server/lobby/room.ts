@@ -320,9 +320,9 @@ export class Room {
             this.game?.run();
         }, 0);
 
-        this.gameInterval = setInterval(() => { // inform players about changes
+        this.gameInformInterval = setInterval(() => { // inform players about changes
             this.game?.inform();
-        }, 1000/120);
+        }, 0);
 
         this.updateGameState();
     }
