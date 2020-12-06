@@ -25,14 +25,14 @@ export class Player {
             return game_config.player.shootingMovementSpeed;
         }
         return game_config.player.movementSpeed;
-    } 
+    }
 
     public constructor(
         private mapKind: MapKind,
         public user: User,
         public nick: string,
         public avatar: string,
-        public team: Team, 
+        public team: Team,
         material: p2.Material,
         initPos: IPos) {
 
@@ -45,7 +45,7 @@ export class Player {
         this.shape = new p2.Circle({
             radius: map_config[this.mapKind].player.radius,
             collisionGroup: PLAYER,
-            collisionMask: PLAYER | MAP_BORDER | BALL | GOAL_POST 
+            collisionMask: PLAYER | MAP_BORDER | BALL | GOAL_POST
         });
         this.shape.material = material;
         this.body.addShape(this.shape);
@@ -102,7 +102,7 @@ export class Player {
     }
     public counter = 0;
     public logic(): void {
-        
+
         if (this.keysMap.up) {
             this.body.force[1] = -this.maxSpeed;
         }

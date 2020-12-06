@@ -317,11 +317,9 @@ export class Room {
             (team: Team, user: User | undefined) => this.updateGameScore(team, user));
 
         this.gameInterval = setInterval(() => {
-            if (this.game) this.game.run();
+            this.game?.run();
+            this.game?.inform();
         }, 0);
-        this.gameInformInterval = setInterval(() => {
-            if (this.game) this.game.inform();
-        }, 1000/60);
         this.updateGameState();
     }
 

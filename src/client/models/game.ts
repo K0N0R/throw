@@ -33,7 +33,8 @@ export class Game {
         this.initEntities();
         this.initCamera();
         this.initEvents();
-        User.socket.on('room::game::step', (data: IWorldPostStep) => {
+        User.socket.on('room::game::step', (dataStr: string) => {
+            const data = JSON.parse(dataStr) as IWorldPostStep;
             if (data.playersToAdd != null) {
                 data.playersToAdd.forEach(player => {
                     this.players.push(new Player(this.mapKind, player.nick, player.avatar, { x: player.position[0], y: player.position[1] }, player.socketId, player.team));

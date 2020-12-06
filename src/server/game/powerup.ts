@@ -15,7 +15,6 @@ export class Powerup {
         const keys = Object.values(POWERUP_KIND);
         const randomIndex = Math.round((Math.random() * (keys.length - 1)));
         this.kind = keys[randomIndex];
-        console.log(this.kind, 'setRandPower');
         this.stateChanged = true;
     }
 
@@ -30,7 +29,6 @@ export class Powerup {
         ]
         const randomIndex = Math.round((Math.random() * (presetPos.length - 1)));
         this.pos = presetPos[randomIndex];
-        console.log(this.pos, 'setRandomPosition');
         this.stateChanged = true;
     }
 

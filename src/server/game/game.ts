@@ -303,7 +303,6 @@ export class Game {
                         { x: player.body.position[0], y: player.body.position[1] },
                         { x: this.ball.body.position[0], y: this.ball.body.position[1] }
                     );
-                    
                     this.ball.body.force[0] += (player.body.velocity[0]*0.4) + (shootingVector.x * game_config.player.shooting * getShootingModifier());
                     this.ball.body.force[1] += (player.body.velocity[1]*0.4) + (shootingVector.y * game_config.player.shooting * getShootingModifier());
                 }
@@ -412,7 +411,7 @@ export class Game {
         if (ballMoving) data.ballMoving = ballMoving;
         if (powerupChange) data.powerupChange = powerupChange;
         if (Object.keys(data).length) {
-            this.io.to(this.roomId).emit('room::game::step', data);
+            this.io.to(this.roomId).emit('room::game::step', JSON.stringify(data));
         }
     }
 
