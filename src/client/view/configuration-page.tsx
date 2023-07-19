@@ -10,7 +10,7 @@ enum MovementKind {
     CUSTOM = "CUSTOM"
 }
 
-export default function ConfigurationPage() {
+export default function ConfigurationPage(props: { hide: () => void}) {
 
     const [kind, setKind] = useLocalStorage('throw_config_set', MovementKind.ARROW);
     const [, setKeysConfig] = useLocalStorage('throw_config', '');
@@ -45,19 +45,12 @@ export default function ConfigurationPage() {
             };
             setKeysConfig(config);
             KeysHandler.setConfiguration();
-            destroy();
+            props.hide();
        }
     }
 
     const cancel = () => {
-        destroy();
-    }
-
-    const destroy = () => {
-        const configuration = document.querySelector('#configuration');
-        if (!configuration) return;
-        configuration.innerHTML = '';
-        (document.querySelector('#room') as HTMLElement)?.focus();
+        props.hide();
     }
 
     //#region params change

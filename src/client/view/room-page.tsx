@@ -303,7 +303,10 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
     openConfiguration(): void {
         const element = document.querySelector('#configuration')
         if (!element) return;
-        render(<ConfigurationPage/>, element)
+        const closeConfiguration = () => {
+            render('', element)  
+        }
+        render(<ConfigurationPage hide={closeConfiguration}/>, element)
     }
     //#endregion
 
@@ -423,6 +426,7 @@ export default class RoomPage extends Component<IRoomState, IRoomComponentState>
                                 <label class="room__foot__option__label">Map</label>
                                 <select class="room__foot__option__input"
                                     value={state.gameParams.mapKind}
+                                    disabled={!isUserAdmin || state.gameRunning}
                                     readOnly={!isUserAdmin || state.gameRunning}
                                     onInput={(e) => this.onMapKindChange(e)}>
                                         {   ...(state.mapKinds.map(item => 

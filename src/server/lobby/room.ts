@@ -4,7 +4,7 @@ import { User } from './user';
 import { Game } from './../game/game';
 import { Team } from '../../shared/team';
 import { IRoom, IRoomGameParams, IRoomUser, IRoomMessage, IRoomState, IRoomGameState, IRoomGameData, IRoomGameScoreboardItem } from './../../shared/events';
-import { game_config, MapKind } from './../../shared/callibration';
+import { game_config, MapKind } from './../../shared/callibrationServer';
 
 export class Room {
     public id: string;
@@ -32,7 +32,6 @@ export class Room {
         public name: string,
         public password: string,
         public maxPlayersAmount: number,
-        private onNotify: () => void,
         private onDispose: () => void) {
         this.id = uuid();
         this.onCreate();
@@ -42,7 +41,6 @@ export class Room {
     public onCreate(): void {
         this.joinUser(this.adminUser);
         this.bindAdminEvents();
-        this.onNotify();
     }
 
     private bindAdminEvents(): void {
