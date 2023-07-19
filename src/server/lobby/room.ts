@@ -4,7 +4,7 @@ import { User } from './user';
 import { Game } from './../game/game';
 import { Team } from '../../shared/team';
 import { IRoom, IRoomGameParams, IRoomUser, IRoomMessage, IRoomState, IRoomGameState, IRoomGameData, IRoomGameScoreboardItem } from './../../shared/events';
-import { game_config, MapKind } from './../../shared/callibrationServer';
+import { game_config, MapKind } from './../../shared/callibration';
 
 export class Room {
     public id: string;
