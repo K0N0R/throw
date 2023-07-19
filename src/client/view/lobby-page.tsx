@@ -15,11 +15,10 @@ export default function LobbyPage() {
         User.socket.on('lobby::room-list', (rooms: IRoom[]) => {
             setRooms(rooms);
         });
-
         return () => {
             User.socket.off('lobby::room-list')
         }
-    });
+    }, []);
 
     const joinRoom = (room: IRoom) => {
         goTo(<JoinRoomPage {...room } />);
