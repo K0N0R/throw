@@ -371,7 +371,6 @@ export class Game {
             this.addPlayerToWorld(player);
             this.players.push(player);
 
-            this.world.addBody(player.body);
             return {
                 nick: player.nick,
                 avatar: player.avatar,
