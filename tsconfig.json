@@ -5,6 +5,7 @@
         "moduleResolution": "Node",
         "esModuleInterop": true,
         "strict": true,
+        "skipLibCheck": true,
         "outDir": "dist",
         "baseUrl": ".",
         "paths": {
@@ -15,8 +16,8 @@
             "@world/*": ["frontend/core/containers/world/*"],
             "@entities/*": ["frontend/core/containers/entities/*"],
             "@systems/*": ["frontend/core/systems/*"],
-            "@common": ["frontend/common/index.ts"],
+            "@common": ["frontend/common/index.ts"]
         }
     },
-    "include": ["backend", "frontend"]
+    "include": ["backend", "frontend", "shared", "tests"]
 }

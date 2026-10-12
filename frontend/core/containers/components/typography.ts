@@ -4,7 +4,7 @@ type TTypographyHorizontalAlign = 'left' | 'center' | 'right';
 type TTypographyVerticalAlign = 'top' | 'center' | 'bottom';
 type TTypographyFontWeight = 'bold' | 'normal';
 
-interface ITypographyParams {
+export interface ITypographyParams {
     text: string | number;
     size: number;
     fontFamily: string;

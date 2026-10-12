@@ -6,9 +6,13 @@
         "build": "cross-env ENV=release node build.release.mjs",
         "build-run": "npm run build && node dist/release/server.js",
         "lint": "eslint . --ext .ts,.mjs,.tsx,.json",
-        "lint-fix": "eslint . --ext .ts,.mjs --fix,.tsx --fix,.json --fix"
+        "lint-fix": "eslint . --ext .ts,.mjs --fix,.tsx --fix,.json --fix",
+        "test": "node scripts/test-game.mjs",
+        "typecheck": "tsc --noEmit",
+        "benchmark": "node scripts/benchmark.mjs"
     },
     "dependencies": {
+        "@dimforge/rapier2d-compat": "^0.21.0",
         "@pixi/layers": "^2.1.0",
         "@pixi/sound": "^6.0.1",
         "@tweenjs/tween.js": "^25.0.0",

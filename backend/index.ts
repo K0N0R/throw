@@ -1,14 +1,16 @@
-import express from 'express';
-import http from 'http';
-import path from 'path';
+import { createGameServer } from './server';
 import { CONFIG } from './config';
-
-const app = express();
-const server = http.createServer(app);
-
-// serve files from public folder
-app.use(express.static(path.resolve(__dirname, 'public')));
-
-server.listen(CONFIG.PORT, () => {
-    console.log(`🌐 Server running on http://localhost:${CONFIG.PORT}`);
-});
+createGameServer()
+    .then(({ server, match }) => {
+        server.listen(CONFIG.PORT, () => console.log(`Throw http://localhost:${CONFIG.PORT}`));
+        const shutdown = () => {
+            match.dispose();
+            server.close();
+        };
+        process.once('SIGINT', shutdown);
+        process.once('SIGTERM', shutdown);
+    })
+    .catch((error) => {
+        console.error(error);
+        process.exitCode = 1;
+    });

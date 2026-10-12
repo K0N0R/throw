@@ -138,7 +138,7 @@ function startWatchers() {
     assetsWatcher.on('add', handleAssetsChange);
     assetsWatcher.on('unlink', handleAssetsChange);
 
-    chokidar.watch('backend').on('change', async () => {
+    chokidar.watch(['backend', 'shared']).on('change', async () => {
         console.log('🔁 Backend changed');
         await buildBackend();
     });
