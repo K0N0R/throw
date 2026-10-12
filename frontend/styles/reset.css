@@ -1,0 +1,17 @@
+html, body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    overflow: hidden;
+}
+
+body,
+button {
+    font-family: 'Trebuchet MS';
+}
+
+canvas {
+    background-color: #000000;
+}

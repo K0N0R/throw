@@ -1,9 +1,27 @@
-#Throw - game
----
-**Requires node in 8.4v**
+# boiler
 
-Instalation - ``npm install``
+## Install Dependencies
 
-Development server - ``npm start``
+```bash
+npm install
+```
 
-Production build - ``npm run build``
+## Run Development
+
+```bash
+npm run start
+```
+
+## Run Release Build
+
+```bash
+npm run build
+```
+
+## Run Release Build And Start App
+
+```bash
+npm run build-run
+```
+
+

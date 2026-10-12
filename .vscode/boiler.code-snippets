@@ -1,0 +1,10 @@
+{
+    "pixi": {
+        "scope": "javascript,typescript",
+        "prefix": "pix",
+        "body": [
+            "import * as PIXI from 'pixi.js'",
+        ],
+        "description": "Import PIXI"
+    }
+}

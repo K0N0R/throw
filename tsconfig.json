@@ -1,34 +1,22 @@
 {
-  "compilerOptions": {
-      "target": "es2018",
-      "module": "commonjs",
-      "lib": ["dom", "es2018"],
-      "declaration": false,
-      "sourceMap": true,
-      "outDir": "./dist",
-      "rootDir": "./src",
-      "noResolve": false,
-      "skipLibCheck": true,
-      "strict": true,
-      "noUnusedLocals": false,
-      "noUnusedParameters": false,
-      "noImplicitReturns": true,
-      "noImplicitAny": false,
-      "moduleResolution": "node",
-      "baseUrl": "src",
-      "allowSyntheticDefaultImports": true,
-      "resolveJsonModule": true,
-      "esModuleInterop": true,
-      "experimentalDecorators": true,
-      "jsx": "react",
-      "jsxFactory": "h"
-  },
-  "paths": {
-      "~*": ["./*"],
-      "react": ["node_modules/preact-compat/"],
-      "react-dom": ["node_modules/preact-compat/"]
-  },
-  "typeRoots": ["node_modules/@types"],
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "package.json", "dist"]
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "esModuleInterop": true,
+        "strict": true,
+        "outDir": "dist",
+        "baseUrl": ".",
+        "paths": {
+            "@config/*": ["frontend/core/config/*"],
+            "@components/*": ["frontend/core/containers/components/*"],
+            "@popup/*": ["frontend/core/containers/popup/*"],
+            "@ui/*": ["frontend/core/containers/ui/*"],
+            "@world/*": ["frontend/core/containers/world/*"],
+            "@entities/*": ["frontend/core/containers/entities/*"],
+            "@systems/*": ["frontend/core/systems/*"],
+            "@common": ["frontend/common/index.ts"],
+        }
+    },
+    "include": ["backend", "frontend"]
 }

@@ -1,50 +1,38 @@
 {
-    "name": "blank",
+    "name": "boiler",
     "version": "1.0.0",
-    "private": true,
-    "main": "./dist/server/server.js",
     "scripts": {
-        "start": "parcel ./src/client/index.html",
-        "build": "ts-node-dev --inspect -- ./src/server/server.ts",
-        "prod": "parcel build ./src/client/index.html --out-dir dist/client && parcel build ./src/server/server.ts --out-dir dist/server --target node",
-        "prod:start": "node ./dist/server/server.js",
-        "prod:forever": "forever start ./dist/server/server.js",
-        "run": "npm run prod && npm run prod:start"
+        "start": "cross-env ENV=development node build.development.mjs",
+        "build": "cross-env ENV=release node build.release.mjs",
+        "build-run": "npm run build && node dist/release/server.js",
+        "lint": "eslint . --ext .ts,.mjs,.tsx,.json",
+        "lint-fix": "eslint . --ext .ts,.mjs --fix,.tsx --fix,.json --fix"
     },
     "dependencies": {
-        "client": "0.0.1",
-        "express": "^4.17.1",
-        "p2": "^0.7.1",
-        "preact": "^10.4.5",
-        "preact-compat": "^3.19.0",
-        "shared": "^0.2.0",
-        "socket.io": "^2.3.0",
-        "socket.io-client": "^2.3.0",
-        "uuid": "^3.3.2"
+        "@pixi/layers": "^2.1.0",
+        "@pixi/sound": "^6.0.1",
+        "@tweenjs/tween.js": "^25.0.0",
+        "express": "^4.18.2",
+        "pixi.js": "^8.11.0",
+        "ws": "^8.13.0"
     },
     "devDependencies": {
-        "@types/express": "^4.17.7",
-        "@types/p2": "^0.7.36",
-        "@types/parcel-bundler": "^1.12.1",
-        "@types/react": "^16.9.13",
-        "@types/react-dom": "^16.9.4",
-        "@types/socket.io": "^2.1.4",
-        "@types/socket.io-client": "^1.4.32",
-        "@types/uuid": "^3.4.3",
-        "cssnano": "^4.1.10",
-        "forever": "^1.0.1",
-        "parcel-bundler": "^1.12.4",
-        "stylus": "^0.54.7",
-        "ts-node": "^8.5.2",
-        "ts-node-dev": "^1.0.0-pre.50",
-        "typescript": "^3.9.7"
-    },
-    "alias": {
-        "react": "preact-compat",
-        "react-dom": "preact-compat"
-    },
-    "author": "",
-    "license": "ISC",
-    "keywords": [],
-    "description": ""
+        "@eslint/js": "^9.31.0",
+        "@eslint/json": "^0.13.0",
+        "@types/express": "^5.0.3",
+        "@types/node": "^24.0.13",
+        "@types/ws": "^8.18.1",
+        "@typescript-eslint/eslint-plugin": "^8.36.0",
+        "@typescript-eslint/parser": "^8.36.0",
+        "chokidar": "^3.5.3",
+        "cross-env": "^7.0.3",
+        "esbuild": "^0.20.0",
+        "eslint": "^9.31.0",
+        "eslint-config-prettier": "^10.1.5",
+        "eslint-plugin-prettier": "^5.5.1",
+        "globals": "^16.3.0",
+        "prettier": "^3.6.2",
+        "typescript": "^5.3.3",
+        "typescript-eslint": "^8.36.0"
+    }
 }
