@@ -1,4 +1,4 @@
-# Throw — mecz online 1 na 1
+# Throw — mecz online do 4 graczy
 
 PixiJS 8 + Rapier 2D, fizyka 60 Hz na serwerze Node, aktualizacje świata 20 Hz przez WebSocket.
 Parametry ruchu, strzałów, odbić i wymiary boiska pozostały takie jak w prototypie lokalnym.
@@ -10,11 +10,17 @@ npm install
 npm start
 ```
 
-Otwórz http://localhost:3000 w dwóch przeglądarkach (lub dwóch kartach).
-Pierwsze połączenie zajmuje miejsce niebieskich, drugie pomarańczowych.
-Kolejne połączenia oglądają mecz. Gdy oba miejsca są zajęte, gra rusza automatycznie.
-Po wyjściu gracza mecz wraca do oczekiwania i wynik jest resetowany.
-Widz zostaje widzem; żeby zająć zwolnione miejsce, odśwież stronę.
+Otwórz http://localhost:3000 w maksymalnie czterech przeglądarkach/kartach graczy.
+Socket zajmuje pierwsze wolne miejsce: A (niebiescy), B (pomarańczowi),
+C (niebiescy), D (pomarańczowi). Litery są widoczne na postaciach.
+Piąte i kolejne połączenia oglądają mecz. Widz zostaje widzem; żeby zająć
+zwolnione miejsce, odśwież stronę. Pozycje pozostałych graczy zachowują swoje litery.
+
+Mecz rusza, gdy obie drużyny mają co najmniej jednego gracza: 1 na 1, 2 na 1 lub 2 na 2.
+Na boisku są widoczne i biorą udział w kolizjach wyłącznie miejsca z podłączonym socketem.
+Rozłączenie usuwa postać z widoku i wyłącza jej ciało fizyczne.
+Zmiana składu resetuje akcję, zachowując wynik. Reset wyniku i R są dostępne
+najniższemu zajętemu miejscu (zwykle A; po jego wyjściu kolejnemu graczowi).
 
 Jeśli port 3000 jest zajęty, w PowerShell:
 
@@ -33,8 +39,8 @@ Na stronie HTTPS klient automatycznie używa WSS.
 
 - WASD / strzałki: ruch własnego gracza.
 - X / spacja: strzał od gracza przez piłkę. Można przytrzymać; ruch jest wtedy wolniejszy.
-- R: reset akcji, bez kasowania wyniku (niebieski gracz).
-- „Reset wyniku”: nowy mecz (niebieski gracz).
+- R: reset akcji, bez kasowania wyniku (gospodarz — najniższe zajęte miejsce).
+- „Reset wyniku”: nowy mecz (gospodarz — najniższe zajęte miejsce).
 
 Cała piłka musi przekroczyć linię bramkową. Gol naliczany jest raz;
 po 1,3 sekundy serwer resetuje pozycje. W tym czasie gracze i piłka nadal się poruszają,
@@ -56,7 +62,7 @@ Symulator opóźnienia nie dodaje utraty pakietów ani zmiennego jittera.
 
 ## Architektura
 
-- `shared/game/simulation.ts`: wspólna fizyka, dwa ciała graczy, zasady, snapshoty i przywracanie stanu.
+- `shared/game/simulation.ts`: wspólna fizyka, do czterech aktywnych ciał graczy, zasady, snapshoty i przywracanie stanu.
   Bez DOM, Pixi i transportu. Konfiguracja `RULES` zachowuje wartości z etapu 1.
 - `shared/game/protocol.ts`: typy komunikatów i walidacja wejścia.
 - `backend/game/match.ts`: jeden mecz, miejsca i widzowie, kolejki wejść,
@@ -68,7 +74,7 @@ Symulator opóźnienia nie dodaje utraty pakietów ani zmiennego jittera.
   Korekty zachowują ciągłość widoku również po dużym błędzie: 60 ms dla własnego gracza,
   120 ms dla przeciwnika i 90 ms dla piłki, z ograniczeniem szybkości doganiania.
   Kontakty są korygowane w widoku bez kasowania całego wygładzania.
-  Nowa akcja i zmiana fazy nadal natychmiast ustawiają właściwy stan gry.
+  Nowa akcja natychmiast ustawia właściwy stan gry; samo naliczenie gola zachowuje interpolację.
 - `frontend/game/gameView.ts`: wspólny widok Pixi i sterowanie.
 
 Klient wysyła paczki dwóch wejść 30 razy/s (wejścia symulacji 60 Hz).
@@ -81,7 +87,7 @@ Niepoprawne dane, wejścia od widzów i nadmierny backlog są odrzucane.
 Nieznane jeszcze wejścia przeciwnika są przewidywane z jego ostatniego sterowania. Przy zmianie
 kierunku lub strzale pod dużym opóźnieniem nadal możliwe są korekty; nie ma lag compensation.
 
-To pierwszy prototyp online: jeden wspólny mecz, bez lobby, matchmakingu, rankingu i power-upów.
+To pierwszy prototyp online: jeden wspólny mecz do 4 graczy, bez lobby, matchmakingu, rankingu i power-upów.
 Dotychczasowe komponenty boilera w `frontend/core` pozostają dostępne.
 
 ## Weryfikacja i pomiary

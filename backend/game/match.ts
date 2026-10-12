@@ -17,8 +17,10 @@ interface Client {
     lastReset: number;
 }
 export async function attachMatch(server: Server) {
-    const game = await Simulation.create(true);
+    const game = await Simulation.create(4);
     const wss = new WebSocketServer({ server, path: '/game', maxPayload: 2048 });
+    game.setConnectedSeats([]);
+    const slots = [0, 1, 2, 3];
     const clients = new Set<Client>();
     const started = performance.now();
     let tick = 0,
@@ -32,7 +34,12 @@ export async function attachMatch(server: Server) {
         outboundBytes: 0,
         droppedSeconds: 0,
     };
-    const ready = () => [...clients].filter((c) => c.seat !== null).length === 2;
+    const ready = () =>
+        [0, 1].every((team) => [...clients].some((c) => c.seat !== null && c.seat % 2 === team));
+    const syncRoster = () =>
+        game.setConnectedSeats([...clients].flatMap((c) => (c.seat !== null ? [c.seat] : [])));
+    const hostSeat = () =>
+        Math.min(...[...clients].flatMap((c) => (c.seat !== null ? [c.seat] : [])));
     const send = (c: Client, data: string) => {
         if (c.socket.readyState !== WebSocket.OPEN) return;
         if (c.socket.bufferedAmount > 65536) {
@@ -43,13 +50,13 @@ export async function attachMatch(server: Server) {
         c.socket.send(data);
     };
     const state = (): ServerState => {
-        const seats = [0, 1].map((seat) => [...clients].find((c) => c.seat === seat));
+        const seats = slots.map((seat) => [...clients].find((c) => c.seat === seat));
         return {
             type: 'state',
             tick,
             time: performance.now(),
             ready: ready(),
-            ack: [seats[0]?.ack ?? 0, seats[1]?.ack ?? 0],
+            ack: seats.map((c) => c?.ack ?? 0),
             inputs: seats.map((c) => c?.input ?? NEUTRAL),
             game: game.snapshot(),
         };
@@ -71,7 +78,7 @@ export async function attachMatch(server: Server) {
         broadcast();
     };
     wss.on('connection', (socket) => {
-        const seat = [0, 1].find((seat) => ![...clients].some((c) => c.seat === seat)) ?? null;
+        const seat = slots.find((seat) => ![...clients].some((c) => c.seat === seat)) ?? null;
         const c: Client = {
             socket,
             seat,
@@ -87,8 +94,10 @@ export async function attachMatch(server: Server) {
         };
         clients.add(c);
         send(c, JSON.stringify({ type: 'welcome', seat }));
-        if (seat !== null) reset(true);
-        else send(c, JSON.stringify(state()));
+        if (seat !== null) {
+            syncRoster();
+            reset(false);
+        } else send(c, JSON.stringify(state()));
         socket.on('pong', () => {
             c.alive = true;
         });
@@ -118,7 +127,7 @@ export async function attachMatch(server: Server) {
             if (
                 message.type === 'reset' &&
                 typeof message.match === 'boolean' &&
-                c.seat === 0 &&
+                c.seat === hostSeat() &&
                 now - c.lastReset > 500
             ) {
                 c.lastReset = now;
@@ -156,7 +165,10 @@ export async function attachMatch(server: Server) {
         });
         socket.on('close', () => {
             clients.delete(c);
-            if (c.seat !== null) reset(true);
+            if (c.seat !== null && !disposed) {
+                syncRoster();
+                reset(false);
+            }
         });
     });
     const timer = setInterval(() => {
@@ -169,8 +181,9 @@ export async function attachMatch(server: Server) {
             tick++;
             let urgent = false;
             if (ready()) {
-                const inputs = [0, 1].map((seat) => {
-                    const c = [...clients].find((c) => c.seat === seat)!;
+                const inputs = slots.map((seat) => {
+                    const c = [...clients].find((c) => c.seat === seat);
+                    if (!c) return NEUTRAL;
                     const previous = c.input;
                     const command = c.queue.shift();
                     if (command) {

@@ -56,11 +56,13 @@ test('server owns movement, goals, reset, slots and reconnect; rejects stale or 
         const a = await connect();
         assert.equal(a.seat, 0);
         assert.equal(a.state!.ready, false);
+        assert.deepEqual(
+            a.state!.game.players.map((p) => p.active),
+            [true, false, false, false],
+        );
         const b = await connect();
         assert.equal(b.seat, 1);
         await until(() => a.state!.ready && b.state!.ready);
-        const spectator = await connect();
-        assert.equal(spectator.seat, null);
         const initialEpoch = a.state!.game.epoch;
         a.socket.send('{bad json');
         a.socket.send(
@@ -70,7 +72,6 @@ test('server owns movement, goals, reset, slots and reconnect; rejects stale or 
                 commands: [{ seq: 1, x: 999, y: 0, shoot: false }],
             }),
         );
-        spectator.socket.send(JSON.stringify({ type: 'reset', match: true }));
         b.socket.send(JSON.stringify({ type: 'reset', match: true }));
         a.socket.send(JSON.stringify({ type: 'score', score: [999, 0] }));
         await wait(100);
@@ -87,7 +88,7 @@ test('server owns movement, goals, reset, slots and reconnect; rejects stale or 
             await wait(34);
         }
         await until(() => a.state!.game.score[0] === 1);
-        await until(() => b.state!.game.score[0] === 1 && spectator.state!.game.score[0] === 1);
+        await until(() => b.state!.game.score[0] === 1);
         assert.equal(a.state!.game.phase, 'goal');
         await until(() => a.state!.game.phase === 'playing');
         assert.equal(a.state!.game.ball.x, 12);
@@ -111,8 +112,32 @@ test('server owns movement, goals, reset, slots and reconnect; rejects stale or 
             a.states - beforeStates >= 4 && a.states - beforeStates <= 8,
             'Snapshots bounded to about 20 Hz',
         );
+        const c = await connect(),
+            d = await connect();
+        assert.equal(c.seat, 2);
+        assert.equal(d.seat, 3);
+        const spectator = await connect();
+        assert.equal(spectator.seat, null);
+        await until(() => a.state!.game.players.every((p) => p.active));
+        assert.equal(a.state!.game.players.length, 4);
+        const rosterEpoch = a.state!.game.epoch;
+        spectator.socket.send(JSON.stringify({ type: 'reset', match: true }));
+        await wait(100);
+        assert.equal(a.state!.game.epoch, rosterEpoch);
+        const cy = c.state!.game.players[2].y,
+            dy = d.state!.game.players[3].y;
+        for (let i = 0; i < 8; i++) {
+            input(c, 0, 1, true);
+            input(d, 0, 1);
+            await wait(34);
+        }
+        await until(() => c.state!.ack[2] > 0 && d.state!.ack[3] > 0);
+        assert.ok(c.state!.game.players[2].y > cy);
+        assert.ok(d.state!.game.players[3].y > dy);
+        assert.equal(c.state!.game.players[2].shooting, true);
         a.socket.close();
-        await until(() => !b.state!.ready);
+        await until(() => !b.state!.game.players[0].active);
+        assert.equal(b.state!.ready, true, 'C keeps the blue team active after A disconnects');
         const replacement = await connect();
         assert.equal(replacement.seat, 0);
         await until(() => replacement.state!.ready);
@@ -120,7 +145,7 @@ test('server owns movement, goals, reset, slots and reconnect; rejects stale or 
         assert.ok(stats.steps > 60);
         assert.ok(stats.inboundBytes > 0);
         assert.ok(stats.outboundBytes > 0);
-        assert.equal(stats.players, 2);
+        assert.equal(stats.players, 4);
         assert.equal(stats.spectators, 1);
     } finally {
         match.dispose();

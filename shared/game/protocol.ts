@@ -8,7 +8,7 @@ export interface ServerState {
     tick: number;
     time: number;
     ready: boolean;
-    ack: [number, number];
+    ack: number[];
     inputs: Input[];
     game: GameSnapshot;
 }

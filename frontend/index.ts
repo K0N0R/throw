@@ -6,7 +6,8 @@ import { GameView } from './game/gameView';
 async function init() {
     const params = new URLSearchParams(location.search);
     const local = params.has('local');
-    const simulation = await Simulation.create(!local);
+    const simulation = await Simulation.create(local ? false : 4);
+    if (!local) simulation.setConnectedSeats([]);
     const app = new Application();
     await app.init({
         resizeTo: window,

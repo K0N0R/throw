@@ -77,6 +77,11 @@ export class WorldPrediction {
         for (let pass = 0; pass < 4; pass++) {
             for (let i = 0; i < bodies.length; i++)
                 for (let j = i + 1; j < bodies.length; j++) {
+                    if (
+                        (i < state.players.length && !state.players[i].active) ||
+                        (j < state.players.length && !state.players[j].active)
+                    )
+                        continue;
                     const a = bodies[i],
                         b = bodies[j];
                     let dx = b.x - a.x,

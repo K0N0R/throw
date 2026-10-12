@@ -28,6 +28,7 @@ export interface Position {
 export interface BodyState extends Position {
     velocity: Position;
     shooting: boolean;
+    active: boolean;
 }
 export interface GameSnapshot {
     players: BodyState[];
@@ -56,14 +57,15 @@ export class Simulation {
     private pause = 0;
     private cooldowns: number[] = [];
     private shooting: boolean[] = [];
+    private activePlayers: boolean[] = [];
     private lastScorer: 'left' | 'right' | null = null;
 
-    static async create(multiplayer = false) {
+    static async create(multiplayer: boolean | number = false) {
         await RAPIER.init();
         return new Simulation(multiplayer);
     }
 
-    private constructor(multiplayer: boolean) {
+    private constructor(multiplayer: boolean | number) {
         this.world = new RAPIER.World({ x: 0, y: 0 });
         this.world.timestep = RULES.timestep;
         this.world.integrationParameters.numSolverIterations = 8;
@@ -118,7 +120,13 @@ export class Simulation {
             this.ball,
         );
         this.players.push(this.player);
-        if (multiplayer) {
+        const count =
+            typeof multiplayer === 'number'
+                ? Math.max(1, Math.min(4, Math.floor(multiplayer)))
+                : multiplayer
+                  ? 2
+                  : 1;
+        for (let index = 1; index < count; index++) {
             const opponent = this.world.createRigidBody(
                 RAPIER.RigidBodyDesc.dynamic()
                     .lockRotations()
@@ -135,17 +143,36 @@ export class Simulation {
             );
             this.players.push(opponent);
         }
+        this.activePlayers = this.players.map(() => true);
         this.resetRound();
     }
 
+    setConnectedSeats(seats: number[]) {
+        this.activePlayers = this.players.map((body, index) => {
+            const active = seats.includes(index);
+            body.setEnabled(active);
+            return active;
+        });
+    }
+
     resetRound() {
-        for (const [body, x] of [
-            ...this.players.map(
-                (body, index) => [body, RULES.width / 2 + (index === 0 ? -2 : 2)] as const,
-            ),
-            [this.ball, RULES.width / 2],
+        for (const [body, x, y] of [
+            ...this.players.map((body, index) => {
+                const team = this.players
+                    .map((_, seat) => seat)
+                    .filter((seat) => this.activePlayers[seat] && seat % 2 === index % 2);
+                const row = this.activePlayers[index]
+                    ? team.indexOf(index) - (team.length - 1) / 2
+                    : 0;
+                return [
+                    body,
+                    RULES.width / 2 + (index % 2 === 0 ? -2 : 2),
+                    RULES.height / 2 + row * 1.6,
+                ] as const;
+            }),
+            [this.ball, RULES.width / 2, RULES.height / 2],
         ] as const) {
-            body.setTranslation({ x, y: RULES.height / 2 }, true);
+            body.setTranslation({ x, y }, true);
             body.setLinvel({ x: 0, y: 0 }, true);
             body.resetForces(true);
             body.resetTorques(true);
@@ -174,6 +201,7 @@ export class Simulation {
             }
         }
         this.players.forEach((player, index) => {
+            if (!this.activePlayers[index]) return;
             const input = Array.isArray(inputs)
                 ? (inputs[index] ?? { x: 0, y: 0, shoot: false })
                 : index === 0
@@ -193,7 +221,8 @@ export class Simulation {
             const change = Math.hypot(dxv, dyv);
             // Keep free movement unchanged; allow an idle player to yield to contact impulses.
             const touchingPlayer = this.players.some(
-                (other) =>
+                (other, otherIndex) =>
+                    this.activePlayers[otherIndex] &&
                     other !== player &&
                     Math.hypot(
                         other.translation().x - player.translation().x,
@@ -257,6 +286,7 @@ export class Simulation {
             ...body.translation(),
             velocity: { ...body.linvel() },
             shooting: this.shooting[index] ?? false,
+            active: this.activePlayers[index] ?? true,
         });
         return {
             players: this.players.map(bodyState),
@@ -280,6 +310,9 @@ export class Simulation {
             body.setLinvel(value.velocity, true);
             body.resetForces(true);
         });
+        this.setConnectedSeats(
+            state.players.flatMap((player, index) => (player.active ? [index] : [])),
+        );
         this.cooldowns = [...state.cooldowns];
         this.shooting = state.players.map((player) => player.shooting);
         this.pause = state.pause;

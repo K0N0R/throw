@@ -13,6 +13,7 @@ export interface GameSession {
     readonly debug: string;
     readonly multiplayer: boolean;
     readonly seat: number | null;
+    readonly canReset: boolean;
     step(input: Input): void;
     snapshot(): GameSnapshot;
     reset(match: boolean): void;
@@ -25,6 +26,7 @@ export class LocalSession implements GameSession {
     readonly debug = '';
     readonly multiplayer = false;
     readonly seat = 0;
+    readonly canReset = true;
     constructor(private readonly simulation: Simulation) {}
     step(input: Input) {
         this.simulation.step(input);
@@ -71,14 +73,19 @@ export class OnlineSession implements GameSession {
             1000,
         );
     }
+    get canReset() {
+        return (
+            this.seat !== null && this.latest?.game.players.findIndex((p) => p.active) === this.seat
+        );
+    }
     get label() {
-        return `ONLINE 1 NA 1  /  ${this.seat === null ? 'WIDZ' : this.seat === 0 ? 'TY: NIEBIESCY' : 'TY: POMARAŃCZOWI'}`;
+        return `ONLINE / DO 4 GRACZY / ${this.seat === null ? 'WIDZ' : `TY: ${'ABCD'[this.seat]} · ${this.seat % 2 === 0 ? 'NIEBIESCY' : 'POMARAŃCZOWI'}`}`;
     }
     get status() {
         if (!this.connected) return 'Łączenie z serwerem…';
         if (!this.latest?.ready)
-            return 'Czekamy na przeciwnika — otwórz ten link w drugiej przeglądarce';
-        if (this.seat === null) return 'Oglądasz mecz — oba miejsca są zajęte';
+            return 'Czekamy na przeciwną drużynę — otwórz ten link w kolejnej przeglądarce';
+        if (this.seat === null) return 'Oglądasz mecz — cztery miejsca są zajęte';
         return null;
     }
     get debug() {
@@ -175,7 +182,7 @@ export class OnlineSession implements GameSession {
         return this.prediction.snapshot();
     }
     reset(match: boolean) {
-        if (this.seat === 0) this.send({ type: 'reset', match });
+        if (this.canReset) this.send({ type: 'reset', match });
     }
     release() {
         this.batch = [];

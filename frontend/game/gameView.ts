@@ -9,14 +9,13 @@ const COLORS = { blue: 0x6bbcff, orange: 0xffaa69, ink: 0xe6eef4, muted: 0x8cabb
 
 export class GameView {
     private readonly scene = new Container();
-    private readonly player = new Graphics();
     private readonly ball = new Graphics();
-    private readonly opponent = new Graphics();
     private subtitle!: Text;
     private resetLabel!: Text;
-    private renderedSeat: number | null | undefined;
-    private shootingShown?: boolean;
-    private opponentShootingShown?: boolean;
+    private readonly avatars = new Map<
+        number,
+        { container: Container; body: Graphics; shooting?: boolean }
+    >();
     private diagnostics!: Text;
     private readonly aim = new Graphics();
     private readonly keys = new Set<string>();
@@ -143,16 +142,13 @@ export class GameView {
         this.scene.addChild(reset);
         this.announcement.anchor.set(0.5);
         this.announcement.position.set(800, 350);
-        this.drawPlayer(this.player, COLORS.blue);
-        this.drawPlayer(this.opponent, COLORS.orange);
-        this.opponent.visible = this.session.multiplayer;
         this.ball.circle(2, 4, RULES.ballRadius * SCALE).fill({ color: 0x000000, alpha: 0.3 });
         this.ball
             .circle(0, 0, RULES.ballRadius * SCALE)
             .fill(0xfff5df)
             .stroke({ color: 0x162a35, width: 2 });
         this.ball.circle(0, 0, 5).fill(0x425963);
-        this.scene.addChild(this.aim, this.player, this.opponent, this.ball, this.announcement);
+        this.scene.addChild(this.aim, this.ball, this.announcement);
     }
 
     private bindInput() {
@@ -223,41 +219,42 @@ export class GameView {
                 OFFSET.x + (before.x + (after.x - before.x) * alpha) * SCALE,
                 OFFSET.y + (before.y + (after.y - before.y) * alpha) * SCALE,
             );
-        position(this.player, this.previous.player, this.current.player);
-        if (this.renderedSeat !== this.session.seat) {
-            this.renderedSeat = this.session.seat;
-            this.shootingShown = undefined;
-            this.opponentShootingShown = undefined;
-            this.resetLabel.text =
-                this.session.multiplayer && this.session.seat !== 0
-                    ? 'Reset: niebiescy'
-                    : 'Reset wyniku';
-        }
-        const shooting =
-            this.session.seat === null
-                ? this.current.players[0].shooting
-                : this.keys.has('KeyX') || this.keys.has('Space');
-        if (this.shootingShown !== shooting) {
-            this.shootingShown = shooting;
-            this.drawPlayer(
-                this.player,
-                this.session.seat === 1 ? COLORS.orange : COLORS.blue,
-                shooting,
-            );
-        }
-        if (this.session.multiplayer) {
-            const index = this.session.seat === 1 ? 0 : 1;
-            position(this.opponent, this.previous.players[index], this.current.players[index]);
-            const opponentShooting = this.current.players[index].shooting;
-            if (this.opponentShootingShown !== opponentShooting) {
-                this.opponentShootingShown = opponentShooting;
+        this.current.players.forEach((player, index) => {
+            let avatar = this.avatars.get(index);
+            if (!player.active) {
+                if (avatar) avatar.container.visible = false;
+                return;
+            }
+            if (!avatar) {
+                const container = new Container();
+                const body = new Graphics();
+                const letter = this.text('ABCD'[index], 22, 0x0b2530);
+                letter.style.fontWeight = 'bold';
+                letter.anchor.set(0.5);
+                container.addChild(body, letter);
+                this.scene.addChild(container);
+                avatar = { container, body };
+                this.avatars.set(index, avatar);
+            }
+            avatar.container.visible = true;
+            const before = this.previous.players[index];
+            position(avatar.container, before?.active ? before : player, player);
+            const shooting =
+                index === this.session.seat
+                    ? this.keys.has('KeyX') || this.keys.has('Space')
+                    : player.shooting;
+            if (avatar.shooting !== shooting) {
+                avatar.shooting = shooting;
                 this.drawPlayer(
-                    this.opponent,
-                    this.session.seat === 1 ? COLORS.blue : COLORS.orange,
-                    opponentShooting,
+                    avatar.body,
+                    index % 2 === 0 ? COLORS.blue : COLORS.orange,
+                    shooting,
                 );
             }
-        }
+        });
+        const own =
+            this.session.seat === null ? undefined : this.avatars.get(this.session.seat)?.container;
+        this.resetLabel.text = this.session.canReset ? 'Reset wyniku' : 'Reset: gospodarz';
         this.subtitle.text = this.session.label;
         this.diagnostics.text = new URLSearchParams(location.search).has('debug')
             ? this.session.debug
@@ -281,20 +278,14 @@ export class GameView {
                 ? `GOL!  ${this.current.lastScorer === 'left' ? 'NIEBIESCY' : 'POMARAŃCZOWI'}`
                 : '';
         this.aim.clear();
-        if (inRange) {
-            this.aim
-                .circle(
-                    this.player.x,
-                    this.player.y,
-                    (RULES.playerRadius + RULES.kickRange) * SCALE,
-                )
-                .stroke({
-                    color: this.current.kickReady ? COLORS.blue : COLORS.muted,
-                    alpha: 0.5,
-                    width: 2,
-                });
-            const dx = this.ball.x - this.player.x,
-                dy = this.ball.y - this.player.y,
+        if (inRange && own?.visible) {
+            this.aim.circle(own.x, own.y, (RULES.playerRadius + RULES.kickRange) * SCALE).stroke({
+                color: this.current.kickReady ? COLORS.blue : COLORS.muted,
+                alpha: 0.5,
+                width: 2,
+            });
+            const dx = this.ball.x - own.x,
+                dy = this.ball.y - own.y,
                 d = Math.hypot(dx, dy);
             if (d > 0)
                 this.aim

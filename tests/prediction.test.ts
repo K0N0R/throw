@@ -351,3 +351,44 @@ for (const right of [false, true])
                 client.dispose();
             }
         });
+test('inactive slots do not block the ball or other players and survive snapshot restore', async () => {
+    const server = await Simulation.create(4),
+        client = await Simulation.create(4);
+    try {
+        server.setConnectedSeats([0, 3]);
+        server.resetRound();
+        assert.deepEqual(
+            server.snapshot().players.map((p) => p.active),
+            [true, false, false, true],
+        );
+        assert.equal(server.players[1].isEnabled(), false);
+        assert.equal(server.players[2].isEnabled(), false);
+        server.players[0].setTranslation({ x: 8, y: 2 }, true);
+        server.players[3].setTranslation({ x: 18, y: 2 }, true);
+        server.ball.setTranslation({ x: 9, y: 6 }, true);
+        server.ball.setLinvel({ x: 6, y: 0 }, true);
+        for (let i = 0; i < 20; i++) server.step([NEUTRAL, NEUTRAL, NEUTRAL, NEUTRAL]);
+        assert.ok(
+            server.ball.translation().x > 10.5,
+            'Absent C at x=10 must not collide with the ball',
+        );
+        client.restore(server.snapshot());
+        assert.deepEqual(
+            client.snapshot().players.map((p) => p.active),
+            [true, false, false, true],
+        );
+        assert.equal(client.players[1].isEnabled(), false);
+        assert.equal(client.players[2].isEnabled(), false);
+        const prediction = new WorldPrediction(client);
+        const state = frame(server, 20);
+        state.inputs = [NEUTRAL, NEUTRAL, NEUTRAL, NEUTRAL];
+        state.ack = [0, 0, 0, 0];
+        prediction.reconcile(state, 3, []);
+        prediction.step({ x: 0, y: 1, shoot: true });
+        assert.ok(prediction.snapshot().players[3].y > 2);
+        assert.equal(prediction.snapshot().players[3].shooting, true);
+    } finally {
+        server.dispose();
+        client.dispose();
+    }
+});
