@@ -4,7 +4,7 @@ import { once } from 'node:events';
 import { setTimeout as wait } from 'node:timers/promises';
 import { WebSocket } from 'ws';
 import { createGameServer } from '../backend/server';
-import { Simulation } from '../shared/game/simulation';
+import { Simulation, RULES } from '../shared/game/simulation';
 import { validCommand, type ServerState } from '../shared/game/protocol';
 
 async function until(check: () => boolean, timeout = 4000) {
@@ -58,7 +58,7 @@ test('server owns movement, goals, reset, slots and reconnect; rejects stale or 
         assert.equal(a.state!.ready, false);
         assert.deepEqual(
             a.state!.game.players.map((p) => p.active),
-            [true, false, false, false],
+            Array.from({ length: RULES.maxPlayers }, (_, index) => index === 0),
         );
         const b = await connect();
         assert.equal(b.seat, 1);
@@ -116,10 +116,16 @@ test('server owns movement, goals, reset, slots and reconnect; rejects stale or 
             d = await connect();
         assert.equal(c.seat, 2);
         assert.equal(d.seat, 3);
+        const additional: (typeof peers)[number][] = [];
+        for (let seat = 4; seat < RULES.maxPlayers; seat++) {
+            const peer = await connect();
+            assert.equal(peer.seat, seat);
+            additional.push(peer);
+        }
         const spectator = await connect();
         assert.equal(spectator.seat, null);
         await until(() => a.state!.game.players.every((p) => p.active));
-        assert.equal(a.state!.game.players.length, 4);
+        assert.equal(a.state!.game.players.length, RULES.maxPlayers);
         const rosterEpoch = a.state!.game.epoch;
         spectator.socket.send(JSON.stringify({ type: 'reset', match: true }));
         await wait(100);
@@ -135,6 +141,17 @@ test('server owns movement, goals, reset, slots and reconnect; rejects stale or 
         assert.ok(c.state!.game.players[2].y > cy);
         assert.ok(d.state!.game.players[3].y > dy);
         assert.equal(c.state!.game.players[2].shooting, true);
+        for (let i = 0; i < 8; i++) {
+            additional.forEach((peer) => input(peer, 1, 0, true));
+            await wait(34);
+        }
+        await until(() => additional.every((peer) => peer.state!.ack[peer.seat!] > 0));
+        for (const peer of additional) {
+            const player = peer.state!.game.players[peer.seat!];
+            const startX = peer.seat! % 2 === 0 ? 10 : 14;
+            assert.ok(player.x > startX, 'Each extra socket controls its own player');
+            assert.equal(player.shooting, true);
+        }
         a.socket.close();
         await until(() => !b.state!.game.players[0].active);
         assert.equal(b.state!.ready, true, 'C keeps the blue team active after A disconnects');
@@ -145,7 +162,7 @@ test('server owns movement, goals, reset, slots and reconnect; rejects stale or 
         assert.ok(stats.steps > 60);
         assert.ok(stats.inboundBytes > 0);
         assert.ok(stats.outboundBytes > 0);
-        assert.equal(stats.players, 4);
+        assert.equal(stats.players, RULES.maxPlayers);
         assert.equal(stats.spectators, 1);
     } finally {
         match.dispose();

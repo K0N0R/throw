@@ -228,7 +228,7 @@ export class GameView {
             if (!avatar) {
                 const container = new Container();
                 const body = new Graphics();
-                const letter = this.text('ABCD'[index], 22, 0x0b2530);
+                const letter = this.text(String.fromCharCode(65 + index), 22, 0x0b2530);
                 letter.style.fontWeight = 'bold';
                 letter.anchor.set(0.5);
                 container.addChild(body, letter);

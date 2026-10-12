@@ -392,3 +392,40 @@ test('inactive slots do not block the ball or other players and survive snapshot
         client.dispose();
     }
 });
+test('ten-player spawns fit the pitch and prediction keeps crowded players separated', async () => {
+    const game = await Simulation.create(RULES.maxPlayers);
+    try {
+        const spawned = game.snapshot();
+        assert.equal(spawned.players.length, 10);
+        for (const player of spawned.players) {
+            assert.ok(
+                player.y >= RULES.playerRadius && player.y <= RULES.height - RULES.playerRadius,
+            );
+        }
+        const inputs = spawned.players.map((player, seat) => ({
+            x: seat % 2 === 0 ? 1 : -1,
+            y: Math.sign(6 - player.y),
+            shoot: false,
+        }));
+        const prediction = new WorldPrediction(game);
+        const state = frame(game, 0);
+        state.inputs = inputs;
+        state.ack = inputs.map(() => 0);
+        prediction.reconcile(state, 9, []);
+        for (let tick = 0; tick < 120; tick++) {
+            prediction.step(inputs[9]);
+            const players = prediction.snapshot().players;
+            for (let i = 0; i < players.length; i++)
+                for (let j = i + 1; j < players.length; j++) {
+                    const a = players[i],
+                        b = players[j];
+                    assert.ok(
+                        Math.hypot(a.x - b.x, a.y - b.y) >= RULES.playerRadius * 2 - 0.02,
+                        `Crowded players overlap: ${i}/${j}, tick ${tick}`,
+                    );
+                }
+        }
+    } finally {
+        game.dispose();
+    }
+});

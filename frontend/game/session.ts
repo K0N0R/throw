@@ -1,4 +1,4 @@
-import { Simulation, type GameSnapshot, type Input } from '../../shared/game/simulation';
+import { Simulation, RULES, type GameSnapshot, type Input } from '../../shared/game/simulation';
 import { WorldPrediction } from '../../shared/game/prediction';
 import {
     type ClientMessage,
@@ -79,13 +79,13 @@ export class OnlineSession implements GameSession {
         );
     }
     get label() {
-        return `ONLINE / DO 4 GRACZY / ${this.seat === null ? 'WIDZ' : `TY: ${'ABCD'[this.seat]} · ${this.seat % 2 === 0 ? 'NIEBIESCY' : 'POMARAŃCZOWI'}`}`;
+        return `ONLINE / DO ${RULES.maxPlayers} GRACZY / ${this.seat === null ? 'WIDZ' : `TY: ${String.fromCharCode(65 + this.seat)} · ${this.seat % 2 === 0 ? 'NIEBIESCY' : 'POMARAŃCZOWI'}`}`;
     }
     get status() {
         if (!this.connected) return 'Łączenie z serwerem…';
         if (!this.latest?.ready)
             return 'Czekamy na przeciwną drużynę — otwórz ten link w kolejnej przeglądarce';
-        if (this.seat === null) return 'Oglądasz mecz — cztery miejsca są zajęte';
+        if (this.seat === null) return 'Oglądasz mecz — wszystkie miejsca są zajęte';
         return null;
     }
     get debug() {

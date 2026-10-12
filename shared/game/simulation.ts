@@ -1,6 +1,7 @@
 import RAPIER from '@dimforge/rapier2d-compat';
 
 export const RULES = {
+    maxPlayers: 10,
     width: 24,
     height: 12,
     goalHeight: 3.6,
@@ -122,7 +123,7 @@ export class Simulation {
         this.players.push(this.player);
         const count =
             typeof multiplayer === 'number'
-                ? Math.max(1, Math.min(4, Math.floor(multiplayer)))
+                ? Math.max(1, Math.min(RULES.maxPlayers, Math.floor(multiplayer)))
                 : multiplayer
                   ? 2
                   : 1;

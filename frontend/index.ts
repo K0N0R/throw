@@ -1,12 +1,12 @@
 import { Application } from 'pixi.js';
-import { Simulation } from '../shared/game/simulation';
+import { Simulation, RULES } from '../shared/game/simulation';
 import { LocalSession, OnlineSession } from './game/session';
 import { GameView } from './game/gameView';
 
 async function init() {
     const params = new URLSearchParams(location.search);
     const local = params.has('local');
-    const simulation = await Simulation.create(local ? false : 4);
+    const simulation = await Simulation.create(local ? false : RULES.maxPlayers);
     if (!local) simulation.setConnectedSeats([]);
     const app = new Application();
     await app.init({

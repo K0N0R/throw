@@ -1,4 +1,4 @@
-# Throw — mecz online do 4 graczy
+# Throw — mecz online do 10 graczy
 
 PixiJS 8 + Rapier 2D, fizyka 60 Hz na serwerze Node, aktualizacje świata 20 Hz przez WebSocket.
 Parametry ruchu, strzałów, odbić i wymiary boiska pozostały takie jak w prototypie lokalnym.
@@ -10,13 +10,13 @@ npm install
 npm start
 ```
 
-Otwórz http://localhost:3000 w maksymalnie czterech przeglądarkach/kartach graczy.
-Socket zajmuje pierwsze wolne miejsce: A (niebiescy), B (pomarańczowi),
-C (niebiescy), D (pomarańczowi). Litery są widoczne na postaciach.
-Piąte i kolejne połączenia oglądają mecz. Widz zostaje widzem; żeby zająć
+Otwórz http://localhost:3000 w maksymalnie dziesięciu przeglądarkach/kartach graczy.
+Socket zajmuje pierwsze wolne miejsce od A do J. Niebiescy: A, C, E, G, I.
+Pomarańczowi: B, D, F, H, J. Litery są widoczne na postaciach.
+Jedenaste i kolejne połączenia oglądają mecz. Widz zostaje widzem; żeby zająć
 zwolnione miejsce, odśwież stronę. Pozycje pozostałych graczy zachowują swoje litery.
 
-Mecz rusza, gdy obie drużyny mają co najmniej jednego gracza: 1 na 1, 2 na 1 lub 2 na 2.
+Mecz rusza, gdy obie drużyny mają co najmniej jednego gracza: od 1 na 1 do 5 na 5, również przy nierównych składach.
 Na boisku są widoczne i biorą udział w kolizjach wyłącznie miejsca z podłączonym socketem.
 Rozłączenie usuwa postać z widoku i wyłącza jej ciało fizyczne.
 Zmiana składu resetuje akcję, zachowując wynik. Reset wyniku i R są dostępne
@@ -62,7 +62,7 @@ Symulator opóźnienia nie dodaje utraty pakietów ani zmiennego jittera.
 
 ## Architektura
 
-- `shared/game/simulation.ts`: wspólna fizyka, do czterech aktywnych ciał graczy, zasady, snapshoty i przywracanie stanu.
+- `shared/game/simulation.ts`: wspólna fizyka, do dziesięciu aktywnych ciał graczy, zasady, snapshoty i przywracanie stanu.
   Bez DOM, Pixi i transportu. Konfiguracja `RULES` zachowuje wartości z etapu 1.
 - `shared/game/protocol.ts`: typy komunikatów i walidacja wejścia.
 - `backend/game/match.ts`: jeden mecz, miejsca i widzowie, kolejki wejść,
@@ -87,7 +87,7 @@ Niepoprawne dane, wejścia od widzów i nadmierny backlog są odrzucane.
 Nieznane jeszcze wejścia przeciwnika są przewidywane z jego ostatniego sterowania. Przy zmianie
 kierunku lub strzale pod dużym opóźnieniem nadal możliwe są korekty; nie ma lag compensation.
 
-To pierwszy prototyp online: jeden wspólny mecz do 4 graczy, bez lobby, matchmakingu, rankingu i power-upów.
+To pierwszy prototyp online: jeden wspólny mecz do 10 graczy, bez lobby, matchmakingu, rankingu i power-upów.
 Dotychczasowe komponenty boilera w `frontend/core` pozostają dostępne.
 
 ## Weryfikacja i pomiary
@@ -106,7 +106,7 @@ ponowne zajęcie miejsca, błędne wejścia i komendy sprzed resetu.
 
 `/metrics` zwraca liczbę kroków, średni/maksymalny koszt fizyki, liczby graczy i widzów,
 łączny transfer oraz średni transfer wyjściowy od startu procesu.
-`npm run benchmark` mierzy 1, 10 i 50 symulacji na lokalnym CPU (300 kroków po rozgrzewce),
+`npm run benchmark` mierzy 1, 10 i 50 symulacji po 10 graczy na lokalnym CPU (300 kroków po rozgrzewce),
 średni koszt i p95. Nie obejmuje sieci, serializacji ani renderowania i nie jest prognozą pojemności VPS.
 
 ## Kontakty i regresje synchronizacji
@@ -121,3 +121,5 @@ przenikania w predykcji przy RTT 0, 50, 100 i 150 ms.
 Obramówka gracza jest czarna przy puszczonym klawiszu strzału i biała podczas jego
 przytrzymania. U własnego gracza reaguje natychmiast na klawiaturę; u przeciwnika
 stan jest synchronizowany przez serwer. Wskaźnik działa również po golu i poza zasięgiem piłki.
+
+Limit miejsc jest wspólny dla klienta i serwera: `RULES.maxPlayers` w `shared/game/simulation.ts`.

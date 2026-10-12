@@ -17,10 +17,10 @@ interface Client {
     lastReset: number;
 }
 export async function attachMatch(server: Server) {
-    const game = await Simulation.create(4);
+    const game = await Simulation.create(RULES.maxPlayers);
     const wss = new WebSocketServer({ server, path: '/game', maxPayload: 2048 });
     game.setConnectedSeats([]);
-    const slots = [0, 1, 2, 3];
+    const slots = Array.from({ length: RULES.maxPlayers }, (_, index) => index);
     const clients = new Set<Client>();
     const started = performance.now();
     let tick = 0,
