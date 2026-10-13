@@ -1,3 +1,4 @@
+import type { MatchProgress } from '../../shared/game/matchRules';
 import { Simulation, RULES, type GameSnapshot, type Input } from '../../shared/game/simulation';
 import { WorldPrediction } from '../../shared/game/prediction';
 import {
@@ -14,6 +15,7 @@ export interface GameSession {
     readonly multiplayer: boolean;
     readonly seat: number | null;
     readonly canReset: boolean;
+    readonly canResetMatch: boolean;
     step(input: Input): void;
     snapshot(): GameSnapshot;
     reset(match: boolean): void;
@@ -27,6 +29,7 @@ export class LocalSession implements GameSession {
     readonly multiplayer = false;
     readonly seat = 0;
     readonly canReset = true;
+    readonly canResetMatch = true;
     constructor(private readonly simulation: Simulation) {}
     step(input: Input) {
         this.simulation.step(input);
@@ -64,7 +67,11 @@ export class OnlineSession implements GameSession {
     constructor(
         private readonly simulation: Simulation,
         latency = 0,
-        private readonly membership?: { roomId: string; memberId: string },
+        private readonly membership?: {
+            roomId: string;
+            memberId: string;
+            progress?: () => MatchProgress | undefined;
+        },
     ) {
         this.prediction = new WorldPrediction(simulation);
         this.latency = Math.max(0, Math.min(500, latency));
@@ -74,8 +81,12 @@ export class OnlineSession implements GameSession {
             1000,
         );
     }
+    get canResetMatch() {
+        return !this.membership && this.canReset;
+    }
     get canReset() {
         return (
+            (!this.membership || !!this.latest?.ready) &&
             this.seat !== null &&
             (this.latest?.hostSeat ?? this.latest?.game.players.findIndex((p) => p.active)) ===
                 this.seat
@@ -86,6 +97,8 @@ export class OnlineSession implements GameSession {
     }
     get status() {
         if (!this.connected) return 'Łączenie z serwerem…';
+        if (this.membership?.progress?.()?.phase === 'finished')
+            return 'Mecz zakończony — rewanż uruchamia gospodarz w pokoju.';
         if (!this.latest?.ready)
             return this.membership
                 ? 'Czekamy na rozpoczęcie meczu przez gospodarza.'
@@ -194,7 +207,7 @@ export class OnlineSession implements GameSession {
         return this.prediction.snapshot();
     }
     reset(match: boolean) {
-        if (this.canReset) this.send({ type: 'reset', match });
+        if (this.canReset && (!match || this.canResetMatch)) this.send({ type: 'reset', match });
     }
     release() {
         this.batch = [];

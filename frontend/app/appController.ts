@@ -102,7 +102,11 @@ export class AppController {
                         if (generation !== this.generation) return;
                         await this.createGame(
                             false,
-                            { roomId: state.id, memberId: client.gameToken },
+                            {
+                                roomId: state.id,
+                                memberId: client.gameToken,
+                                progress: () => client.room?.match,
+                            },
                             generation,
                         );
                     })
@@ -137,7 +141,11 @@ export class AppController {
     }
     private async createGame(
         local: boolean,
-        membership?: { roomId: string; memberId: string },
+        membership?: {
+            roomId: string;
+            memberId: string;
+            progress?: () => import('../../shared/game/matchRules').MatchProgress | undefined;
+        },
         generation = this.generation,
     ) {
         const simulation = await Simulation.create(local ? false : RULES.maxPlayers);

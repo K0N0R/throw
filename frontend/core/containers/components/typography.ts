@@ -16,7 +16,7 @@ export interface ITypographyParams {
 }
 
 export class Typography extends PIXI.Container {
-    private text: PIXI.Text;
+    private textNode: PIXI.Text;
 
     private scaleRatio = 2;
 
@@ -36,7 +36,7 @@ export class Typography extends PIXI.Container {
             ...config,
         };
 
-        this.text = new PIXI.Text({
+        this.textNode = new PIXI.Text({
             text: config.text,
             style: {
                 fontFamily: this.config.fontFamily,
@@ -48,23 +48,39 @@ export class Typography extends PIXI.Container {
                 ...config.styleProps,
             },
         });
-        this.text.scale.set(1 / this.scaleRatio);
+        this.textNode.scale.set(1 / this.scaleRatio);
 
-        this.text.anchor.set(
+        this.textNode.anchor.set(
             this.getHorizontalAnchor(config.horizontalAlign),
             this.getVerticalAnchor(config.verticalAlign),
         );
 
-        this.addChild(this.text);
+        this.addChild(this.textNode);
+    }
+
+    get text() {
+        return this.textNode.text;
+    }
+
+    set text(value: string | number) {
+        this.setText(value);
+    }
+
+    get anchor() {
+        return this.textNode.anchor;
+    }
+
+    get style() {
+        return this.textNode.style;
     }
 
     setText(text: string | number) {
-        this.text.text = text;
+        this.textNode.text = text;
     }
 
     setColor(color: number) {
-        this.text.style.stroke = color;
-        this.text.style.fill = color;
+        this.textNode.style.stroke = color;
+        this.textNode.style.fill = color;
     }
 
     private getFontSize(size: number) {

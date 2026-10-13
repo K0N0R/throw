@@ -24,7 +24,12 @@ Build: `npm run build`. Build i uruchomienie: `npm run build-run`.
 1. W lobby wpisz nick (2–20 znaków), utwórz pokój albo dołącz do istniejącego.
 2. W pokoju wybierz niebieskich, pomarańczowych lub obserwatora. Pierwsze wolne
    miejsce jest przypisywane automatycznie; maksymalnie 5 osób na drużynę, 10 graczy.
-3. Gospodarz rozpoczyna mecz, gdy obie drużyny mają gracza. Może go zatrzymać i zacząć kolejny.
+3. Gospodarz ustawia nazwę, czas (10–3600 sekund lub 0) i limit goli (0–50).
+   Domyślnie 5 minut lub 5 goli; 0 wyłącza limit, przynajmniej jeden musi zostać aktywny.
+   Rozpoczyna mecz, gdy obie drużyny mają połączonego gracza.
+   Zegar mierzy czas symulacji, włącznie z oknem po golu; bez połączonych graczy jest wstrzymany.
+   Limit kończy mecz wynikiem lub remisem. Decydujący gol zachowuje 1,3 s dobicia piłki.
+   Rewanż zeruje wynik i zegar, zachowując pokój, składy i chat.
 4. Udostępnij link z panelu pokoju. Osoba z zapisanym nickiem dołączy automatycznie,
    nowa osoba wpisuje nick i klika Dołącz w lobby.
 5. Wyjście do lobby zwalnia miejsce. Ostatnia osoba opuszczająca pokój usuwa go
@@ -50,7 +55,7 @@ System informuje o dołączeniu, wyjściu, zmianie drużyny, gospodarzu, starcie
 - WASD / strzałki: ruch własnego gracza.
 - X / spacja: strzał od gracza przez piłkę. Przytrzymanie spowalnia ruch.
 - R: reset akcji (gospodarz, gdy gra w drużynie).
-- Reset wyniku na boisku: nowy wynik (gospodarz, gdy gra w drużynie).
+- Reset wyniku na boisku: dostępny w treningu i trybie quick. W pokojach wynik zeruje rewanż.
 - Obramówka czarna przy puszczonym strzale, biała przy przytrzymanym, również po golu.
 
 Gracze A, C, E, G, I są niebiescy; B, D, F, H, J są pomarańczowi. Limit pochodzi
@@ -69,6 +74,8 @@ kolejnych goli. Kickoff zeruje prędkości, siły, cooldowny i stare komendy.
 - `frontend/game/gameView.ts`: wyłącznie boisko, HUD i sterowanie.
 - `frontend/game/session.ts`: sesja lokalna/sieciowa, wejścia i potwierdzenia.
 - `shared/game/prediction.ts`: spójna predykcja świata, wygładzanie korekt i ograniczenia widoku.
+- `shared/game/matchRules.ts`: ustawienia, zegar, zakończenie i wynik meczu.
+- `frontend/lobby/matchPanel.ts`: ustawienia i podsumowanie, poza GameView.
 - `shared/game/simulation.ts`: fizyka oraz reguły, niezależne od DOM i Pixi.
 - `backend/lobby/directory.ts`: pokoje, członkostwo, drużyny, chat, komunikaty i lifecycle meczów.
 - `backend/game/match.ts`: jedna izolowana symulacja i synchronizacja uczestników.

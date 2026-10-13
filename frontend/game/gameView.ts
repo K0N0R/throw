@@ -1,4 +1,5 @@
-import { Application, Container, Graphics, Text } from 'pixi.js';
+import { Typography } from '../core/containers/components/typography';
+import { Application, Container, Graphics } from 'pixi.js';
 import { RULES, type GameSnapshot, type Position } from '../../shared/game/simulation';
 
 import type { GameSession } from './session';
@@ -10,13 +11,13 @@ const COLORS = { blue: 0x6bbcff, orange: 0xffaa69, ink: 0xe6eef4, muted: 0x8cabb
 export class GameView {
     private readonly scene = new Container();
     private readonly ball = new Graphics();
-    private subtitle!: Text;
-    private resetLabel!: Text;
+    private subtitle!: Typography;
+    private resetLabel!: Typography;
     private readonly avatars = new Map<
         number,
         { container: Container; body: Graphics; shooting?: boolean }
     >();
-    private diagnostics!: Text;
+    private diagnostics!: Typography;
     private readonly aim = new Graphics();
     private readonly keys = new Set<string>();
     private readonly scoreboard = this.text('', 42, COLORS.ink);
@@ -56,9 +57,14 @@ export class GameView {
     }
 
     private text(value: string, size: number, color: number) {
-        return new Text({
+        return new Typography({
             text: value,
-            style: { fontFamily: 'Arial, sans-serif', fontSize: size, fill: color },
+            size,
+            color,
+            fontFamily: 'Arial, sans-serif',
+            styleProps: { lineHeight: 0, padding: 4 },
+            horizontalAlign: 'left',
+            verticalAlign: 'top',
         });
     }
     private label(value: string, x: number, y: number, size = 16, color = COLORS.muted) {
@@ -277,7 +283,8 @@ export class GameView {
         });
         const own =
             this.session.seat === null ? undefined : this.avatars.get(this.session.seat)?.container;
-        this.resetLabel.text = this.session.canReset ? 'Reset wyniku' : 'Reset: gospodarz';
+        this.resetLabel.text = this.session.canResetMatch ? 'Reset wyniku' : 'Reset: pokój';
+        this.resetLabel.parent!.visible = this.session.canResetMatch;
         this.subtitle.text = this.session.label;
         this.diagnostics.text = new URLSearchParams(location.search).has('debug')
             ? this.session.debug

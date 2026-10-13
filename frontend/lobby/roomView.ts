@@ -1,5 +1,6 @@
 import type { RoomState } from '../../shared/game/lobbyProtocol';
 import { LobbyClient } from './client';
+import { MatchPanel } from './matchPanel';
 import { node, button } from './dom';
 
 export class RoomView {
@@ -16,6 +17,7 @@ export class RoomView {
     private stop: HTMLButtonElement;
     private link = node('input');
     private lastMessage = 0;
+    private matchPanel: MatchPanel;
     constructor(private readonly client: LobbyClient) {
         const header = node('header', 'room-heading');
         const title = node('div');
@@ -31,6 +33,7 @@ export class RoomView {
         );
         header.append(title, controls);
         const aside = node('aside', 'room-sidebar');
+        this.matchPanel = new MatchPanel(client);
         const teamLabel = node('label', 'field', 'Twoja drużyna');
         for (const [value, name] of [
             ['blue', 'Niebiescy'],
@@ -64,28 +67,26 @@ export class RoomView {
             client.send({ type: 'chat', text: this.text.value });
             this.text.value = '';
         };
-        aside.append(teamLabel, this.roster, share, node('h2', '', 'Chat'), this.chat, form);
+        const details = node('div', 'room-details');
+        details.append(header, this.notice, this.matchPanel.element, teamLabel, this.roster, share);
+        aside.append(details, node('h2', '', 'Chat'), this.chat, form);
         const body = node('section', 'room-body');
         body.append(this.gameHost, aside);
-        this.element.append(header, this.notice, body);
+        this.element.append(body);
     }
     render(room: RoomState) {
         this.title.textContent = room.name;
-        this.phase.textContent = `${room.running ? 'Mecz trwa' : 'Przed meczem'} · ${room.members.filter((m) => m.seat !== null).length}/10 graczy`;
+        this.matchPanel.render(room);
+        this.start.textContent =
+            room.match.phase === 'finished' ? 'Zagraj rewanż' : 'Rozpocznij mecz';
         const host = room.hostId === this.client.id;
+        this.phase.textContent = `${room.running ? 'Mecz trwa' : room.match.phase === 'finished' ? 'Mecz zakończony' : 'Przed meczem'} · ${room.members.filter((m) => m.seat !== null).length}/10 graczy (${host ? 'gospodarz' : 'uczestnik'})`;
         this.start.disabled = !this.client.connected || !host || room.running || !room.ready;
         this.stop.disabled = !this.client.connected || !host || !room.running;
         this.team.disabled = !this.client.connected;
         this.text.disabled = !this.client.connected;
-        this.notice.textContent =
-            this.client.error ||
-            (room.running
-                ? host
-                    ? 'Jesteś gospodarzem. Mecz trwa — możesz go zatrzymać.'
-                    : 'Mecz trwa. Możesz grać, obserwować i pisać na chacie.'
-                : host
-                  ? 'Jesteś gospodarzem. Wybierz składy i rozpocznij mecz.'
-                  : 'Czekamy na rozpoczęcie meczu przez gospodarza.');
+        this.notice.textContent = this.client.error;
+        this.notice.hidden = !this.client.error;
         this.notice.classList.toggle('error', !!this.client.error);
         const self = room.members.find((m) => m.id === this.client.id);
         this.team.value =

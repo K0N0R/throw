@@ -91,11 +91,44 @@ test('rooms isolate games/chat, enforce host actions and preserve running game o
         send(a, { type: 'chat', text: 'Tylko pierwszy pokój' });
         await until(() => b.room!.messages.some((m) => m.text === 'Tylko pierwszy pokój'));
         assert.ok(!c.room!.messages.some((m) => m.text === 'Tylko pierwszy pokój'));
+        send(b, {
+            type: 'settings',
+            name: 'Nieuprawniony',
+            settings: { durationSeconds: 10, goalLimit: 0 },
+        });
+        await wait(30);
+        assert.equal(a.room!.name, 'Pierwszy');
+        send(a, {
+            type: 'settings',
+            name: 'Pierwszy',
+            settings: { durationSeconds: 0, goalLimit: 0 },
+        });
+        await until(() => a.error.includes('Co najmniej'));
+        send(a, {
+            type: 'settings',
+            name: 'Mecz testowy',
+            settings: { durationSeconds: 10, goalLimit: 0 },
+        });
+        await until(() => a.room!.match.settings.durationSeconds === 10);
         send(a, { type: 'start' });
         await until(() => ga.state!.ready && gb.state!.ready);
         assert.equal(c.room!.running, false);
         assert.equal(gc.state!.ready, false);
+        send(a, {
+            type: 'settings',
+            name: 'W trakcie',
+            settings: { durationSeconds: 20, goalLimit: 0 },
+        });
+        await until(() => a.error.includes('przed meczem'));
+        assert.equal(a.room!.match.settings.durationSeconds, 10);
         const epoch = ga.state!.game.epoch;
+        ga.socket.send(JSON.stringify({ type: 'reset', match: true }));
+        await wait(30);
+        assert.equal(
+            ga.state!.game.epoch,
+            epoch,
+            'Score reset must not bypass room match lifecycle',
+        );
         for (let i = 0; i < 8; i++) {
             ga.socket.send(
                 JSON.stringify({
@@ -155,6 +188,22 @@ test('rooms isolate games/chat, enforce host actions and preserve running game o
         assert.equal(resumedGame.state!.game.epoch, epoch, 'Resume must not reset the match');
         const copiedSession = await peer('Nowa karta', a.resumeToken);
         assert.notEqual(copiedSession.id, resumed.id, 'Active session cannot be taken over');
+        await wait(10500);
+        await until(() => resumed.room!.match.phase === 'finished');
+        assert.equal(resumed.room!.running, false);
+        assert.deepEqual(resumed.room!.match.result, {
+            score: [0, 0],
+            winner: 'draw',
+            reason: 'time',
+        });
+        assert.equal(rejoined.state!.ready, false);
+        send(b, { type: 'chat', text: 'Chat po meczu' });
+        await until(() => resumed.room!.messages.some((m) => m.text === 'Chat po meczu'));
+        send(resumed, { type: 'start' });
+        await until(() => resumed.room!.running && resumedGame.state!.game.epoch !== epoch);
+        assert.equal(resumed.room!.match.result, null);
+        assert.equal(resumed.room!.match.remainingSeconds, 10);
+        assert.deepEqual(resumedGame.state!.game.score, [0, 0]);
         send(resumed, { type: 'leave' });
         await until(() => b.room!.hostId === b.id);
         send(b, { type: 'stop' });

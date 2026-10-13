@@ -23,6 +23,7 @@ body {
 }
 canvas {
     display: block;
+    outline: none;
 }
 button,
 input,
@@ -166,26 +167,33 @@ p {
 }
 .room-heading {
     display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    align-items: center;
-    padding: 14px 24px;
-    border-bottom: 1px solid #21424e;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 12px;
 }
 .room-heading h1 {
     font-size: 23px;
     margin: 0 0 5px;
+    overflow-wrap: anywhere;
 }
 .room-heading p {
     font-size: 13px;
 }
 .room-controls {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
 }
-.room-screen > .notice {
-    padding: 8px 24px;
-    background: #0c2430;
+.room-controls .primary {
+    grid-column: 1 / -1;
+}
+.room-controls .button {
+    min-width: 0;
+    padding: 10px;
+}
+.room-details > .notice {
+    padding: 0 0 12px;
+    font-size: 12px;
 }
 .room-body {
     display: flex;
@@ -199,12 +207,13 @@ p {
 }
 .room-sidebar {
     width: 320px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     padding: 18px;
     background: #102c36;
     border-left: 1px solid #21424e;
-    overflow-y: auto;
+    overflow: hidden;
 }
 .roster {
     display: grid;
@@ -229,7 +238,7 @@ p {
 }
 .chat-history {
     min-height: 100px;
-    flex: 1;
+    flex: 1 0 120px;
     overflow-y: auto;
     padding: 12px;
     background: #081b26;
@@ -274,14 +283,6 @@ p {
     .lobby-panels {
         grid-template-columns: 1fr;
     }
-    .room-heading {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 12px;
-    }
-    .room-controls {
-        flex-wrap: wrap;
-    }
     .room-body {
         flex-direction: column;
         overflow-y: auto;
@@ -295,4 +296,85 @@ p {
         min-height: 450px;
         border-left: 0;
     }
+}
+
+.match-panel {
+    margin-bottom: 18px;
+    border-bottom: 1px solid #294552;
+    padding-bottom: 16px;
+}
+.match-clock {
+    font-size: 20px;
+    font-weight: 700;
+    color: #b8dfff;
+}
+.match-result {
+    padding: 12px;
+    border-radius: 8px;
+    background: #193b48;
+    font-weight: 700;
+}
+.match-settings .field {
+    margin-bottom: 8px;
+}
+.match-settings .muted {
+    font-size: 12px;
+    margin: 8px 0;
+}
+
+.match-editor summary {
+    cursor: pointer;
+    color: #b8dfff;
+    padding: 8px 0;
+}
+
+.room-details {
+    min-height: 0;
+    flex: 0 1 auto;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+.chat-form {
+    flex-shrink: 0;
+}
+.match-panel h2 {
+    margin-bottom: 8px;
+}
+.match-clock {
+    margin-bottom: 10px;
+}
+
+.room-details .field {
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.room-details .roster {
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.room-details .team h3 {
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+.room-details .match-panel {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+}
+.room-details .match-panel h2 {
+    margin-bottom: 6px;
+}
+.room-details .match-clock {
+    margin: 0 0 6px;
+}
+.room-details input,
+.room-details select {
+    padding: 10px;
+}
+.room-heading {
+    gap: 8px;
+    padding-bottom: 8px;
+}
+.room-controls .button {
+    padding: 8px;
+    font-size: 13px;
 }

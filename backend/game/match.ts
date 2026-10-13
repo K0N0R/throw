@@ -9,9 +9,11 @@ export interface MatchOptions {
     noServer?: boolean;
     resolveMember?: (request: IncomingMessage) => { id: string; seat: number | null } | undefined;
     canPlay?: () => boolean;
+    allowKickoff?: () => boolean;
     mayReset?: (id: string) => boolean;
     onGoal?: (team: string) => void;
     onRosterChanged?: () => void;
+    onStep?: (seconds: number, score: [number, number], goal: boolean) => void;
 }
 interface Client {
     memberId?: string;
@@ -172,6 +174,8 @@ export async function attachMatch(server: Server, options: MatchOptions = {}) {
                 now - c.lastReset > 500
             ) {
                 c.lastReset = now;
+                if (options.resolveMember && message.match) return;
+                if (!ready() || (options.resolveMember && game.snapshot().phase === 'goal')) return;
                 reset(message.match);
                 return;
             }
@@ -243,12 +247,13 @@ export async function attachMatch(server: Server, options: MatchOptions = {}) {
                 });
                 const before = game.snapshot();
                 const start = performance.now();
-                game.step(inputs);
+                game.step(inputs, true, undefined, options.allowKickoff?.() ?? true);
                 const cost = performance.now() - start;
                 metrics.steps++;
                 metrics.physicsMs += cost;
                 metrics.maxPhysicsMs = Math.max(metrics.maxPhysicsMs, cost);
                 const after = game.snapshot();
+                options.onStep?.(RULES.timestep, after.score, after.phase === 'goal');
                 if (after.phase === 'goal' && before.phase !== 'goal')
                     options.onGoal?.(after.lastScorer === 'left' ? 'Niebiescy' : 'Pomarańczowi');
                 if (after.kickSerial !== before.kickSerial || after.phase !== before.phase)

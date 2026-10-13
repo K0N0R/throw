@@ -9,6 +9,7 @@ import type {
     RoomState,
     TeamChoice,
 } from '../../shared/game/lobbyProtocol';
+import { MatchFlow, validMatchSettings } from '../../shared/game/matchRules';
 import { RULES } from '../../shared/game/simulation';
 
 type Match = Awaited<ReturnType<typeof attachMatch>>;
@@ -31,6 +32,8 @@ interface Room {
     members: Set<Member>;
     messages: ChatEntry[];
     match: Match;
+    flow: MatchFlow;
+    lastClock: number | null;
 }
 export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) {
     const wss = new WebSocketServer({ noServer: true, maxPayload: 2048 });
@@ -60,6 +63,7 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
         hostId: r.hostId,
         running: r.running,
         ready: r.match.canStart(),
+        match: r.flow.snapshot(),
         members: [...r.members].map(({ id, nick, seat, socket }) => ({
             id,
             nick,
@@ -118,6 +122,7 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
         }
         if (![...r.members].some((p) => p.seat !== null) && r.running) {
             r.running = false;
+            r.flow.stop();
             r.match.stop();
             message(r, 'Mecz zatrzymany — brak graczy.');
         }
@@ -213,9 +218,33 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
                                         : undefined;
                                 },
                                 canPlay: () => r.running,
+                                allowKickoff: () => r.flow.canKickoff,
                                 mayReset: (id) => r.hostId === id,
                                 onRosterChanged: () => publish(r),
                                 onGoal: (team) => message(r, `Gol! ${team}.`),
+                                onStep: (seconds, score, goal) => {
+                                    if (r.flow.step(seconds, score, goal)) {
+                                        r.running = false;
+                                        const result = r.flow.snapshot().result!;
+                                        const winner =
+                                            result.winner === 'draw'
+                                                ? 'Remis'
+                                                : result.winner === 'blue'
+                                                  ? 'Wygrywają niebiescy'
+                                                  : 'Wygrywają pomarańczowi';
+                                        message(
+                                            r,
+                                            `Koniec meczu! ${winner}, ${result.score[0]} : ${result.score[1]}.`,
+                                        );
+                                    } else {
+                                        const clock = r.flow.snapshot().remainingSeconds;
+                                        if (clock !== r.lastClock) {
+                                            r.lastClock = clock;
+                                            for (const member of r.members)
+                                                send(member, { type: 'room', room: state(r) });
+                                        }
+                                    }
+                                },
                             });
                             r = {
                                 id,
@@ -225,6 +254,8 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
                                 members: new Set(),
                                 messages: [],
                                 match,
+                                flow: new MatchFlow(),
+                                lastClock: null,
                             };
                             if (socket.readyState !== WebSocket.OPEN) {
                                 match.dispose();
@@ -280,6 +311,21 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
                             );
                             return;
                         }
+                        if (data.type === 'settings') {
+                            if (r.hostId !== m.id)
+                                throw new Error('Tylko gospodarz może zmieniać ustawienia.');
+                            if (r.running)
+                                throw new Error('Ustawienia można zmieniać przed meczem.');
+                            const name = text(data.name, 40);
+                            if (!name || !validMatchSettings(data.settings))
+                                throw new Error(
+                                    'Podaj nazwę, czas 10–3600 sekund lub 0 i limit 0–50 goli. Co najmniej jeden limit musi być aktywny.',
+                                );
+                            r.name = name;
+                            r.flow.configure(data.settings);
+                            message(r, 'Gospodarz zmienił ustawienia meczu.');
+                            return;
+                        }
                         if (data.type === 'start' || data.type === 'stop') {
                             if (r.hostId !== m.id)
                                 throw new Error('Tylko gospodarz może zarządzać meczem.');
@@ -298,10 +344,13 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
                                         'Gracze jeszcze się łączą z meczem. Spróbuj za chwilę.',
                                     );
                                 r.running = true;
+                                r.flow.start();
+                                r.lastClock = r.flow.snapshot().remainingSeconds;
                                 r.match.restart();
                                 message(r, 'Mecz rozpoczęty!');
                             } else {
                                 r.running = false;
+                                r.flow.stop();
                                 r.match.stop();
                                 message(r, 'Gospodarz zatrzymał mecz.');
                             }

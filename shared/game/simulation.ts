@@ -217,13 +217,18 @@ export class Simulation {
         this.resetRound();
     }
 
-    step(inputs: Input | Input[], authoritative = true, predictedSeat?: number) {
+    step(
+        inputs: Input | Input[],
+        authoritative = true,
+        predictedSeat?: number,
+        allowKickoff = true,
+    ) {
         const dt = RULES.timestep;
         // The goal window delays kickoff only; physics, movement and kicks continue.
         // Clients keep simulating until the server publishes the new epoch.
         if (this.pause > 0 && authoritative) {
             this.pause -= dt;
-            if (this.pause <= 0) {
+            if (this.pause <= 0 && allowKickoff) {
                 this.resetRound();
                 return;
             }
