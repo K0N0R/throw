@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR, validAvatar, resolveAvatar } from '../../shared/game/avatars';
 import type {
     LobbyMessage,
     LobbyRequest,
@@ -12,6 +13,9 @@ export class LobbyClient {
     connected = false;
     error = '';
     nick = localStorage.getItem('throw.nick') ?? '';
+    avatar = validAvatar(localStorage.getItem('throw.avatar'))
+        ? localStorage.getItem('throw.avatar')!
+        : DEFAULT_AVATAR;
     onChange = () => {};
     private socket?: WebSocket;
     private retry?: ReturnType<typeof setTimeout>;
@@ -27,7 +31,8 @@ export class LobbyClient {
         ws.onopen = () => {
             this.connected = true;
             this.error = '';
-            if (this.nick.length >= 2) this.send({ type: 'hello', nick: this.nick });
+            if (this.nick.length >= 2)
+                this.send({ type: 'hello', nick: this.nick, avatar: this.avatar });
             this.onChange();
         };
         ws.onmessage = (event) => {
@@ -38,7 +43,24 @@ export class LobbyClient {
                 sessionStorage.setItem('throw.session', this.resumeToken);
             }
             if (message.type === 'rooms') this.rooms = message.rooms;
-            if (message.type === 'room') this.room = message.room;
+            if (message.type === 'room') {
+                if (message.room?.members.some((member) => member.avatar === undefined)) {
+                    this.error =
+                        'Serwer nie przesyła avatarów emoji. Zaktualizuj build backendu i uruchom ponownie proces serwera.';
+                }
+                this.room = message.room
+                    ? {
+                          ...message.room,
+                          members: message.room.members.map((member) => ({
+                              ...member,
+                              avatar: resolveAvatar(
+                                  member.avatar ??
+                                      (member.id === this.id ? this.avatar : undefined),
+                              ),
+                          })),
+                      }
+                    : null;
+            }
             if (message.type === 'error') this.error = message.message;
             this.onChange();
         };
@@ -55,10 +77,17 @@ export class LobbyClient {
     get gameToken() {
         return this.resumeToken;
     }
+    setAvatar(avatar: string) {
+        if (!validAvatar(avatar)) return false;
+        this.avatar = avatar;
+        localStorage.setItem('throw.avatar', avatar);
+        if (this.nick.length >= 2) this.send({ type: 'hello', nick: this.nick, avatar });
+        return true;
+    }
     setNick(nick: string) {
         this.nick = nick.trim().slice(0, 20);
         localStorage.setItem('throw.nick', this.nick);
-        this.send({ type: 'hello', nick: this.nick });
+        this.send({ type: 'hello', nick: this.nick, avatar: this.avatar });
     }
     send(message: LobbyRequest) {
         if (this.socket?.readyState !== WebSocket.OPEN) return;

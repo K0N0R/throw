@@ -1,4 +1,5 @@
-import { randomUUID } from 'node:crypto';
+import { DEFAULT_AVATAR, validAvatar } from '../../shared/game/avatars';
+import { randomUUID, createHash, timingSafeEqual } from 'node:crypto';
 import type { Server } from 'node:http';
 import { WebSocket, WebSocketServer } from 'ws';
 import { attachMatch } from '../game/match';
@@ -16,6 +17,7 @@ type Match = Awaited<ReturnType<typeof attachMatch>>;
 interface Member {
     id: string;
     nick: string;
+    avatar: string;
     socket: WebSocket;
     roomId?: string;
     seat: number | null;
@@ -23,6 +25,8 @@ interface Member {
     alive: boolean;
     resumeToken: string;
     expiry?: ReturnType<typeof setTimeout>;
+    joinBlockedUntil: Map<string, number>;
+    lastPasswordAttempt: number;
 }
 interface Room {
     id: string;
@@ -34,6 +38,8 @@ interface Room {
     match: Match;
     flow: MatchFlow;
     lastClock: number | null;
+    passwordSalt: string;
+    passwordHash: Buffer | null;
 }
 export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) {
     const wss = new WebSocketServer({ noServer: true, maxPayload: 2048 });
@@ -54,6 +60,7 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
         name: r.name,
         hostId: r.hostId,
         running: r.running,
+        locked: r.passwordHash !== null,
         players: [...r.members].filter((m) => m.seat !== null).length,
         members: r.members.size,
     });
@@ -62,11 +69,13 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
         name: r.name,
         hostId: r.hostId,
         running: r.running,
+        locked: r.passwordHash !== null,
         ready: r.match.canStart(),
         match: r.flow.snapshot(),
-        members: [...r.members].map(({ id, nick, seat, socket }) => ({
+        members: [...r.members].map(({ id, nick, avatar, seat, socket }) => ({
             id,
             nick,
+            avatar,
             seat,
             connected: socket.readyState === WebSocket.OPEN,
         })),
@@ -79,12 +88,13 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
         for (const m of r.members) send(m, { type: 'room', room: state(r) });
         publishList();
     };
-    const message = (r: Room, text: string, nick?: string) => {
+    const message = (r: Room, text: string, nick?: string, avatar?: string) => {
         r.messages.push({
             id: ++chatId,
             kind: nick ? 'chat' : 'system',
             text,
             nick,
+            avatar,
             time: Date.now(),
         });
         if (r.messages.length > 80) r.messages.shift();
@@ -100,6 +110,43 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
                     ![...r.members].some((m) => m.seat === i),
             ) ?? null
         );
+    };
+    const stopIfEmpty = (r: Room) => {
+        if (![...r.members].some((p) => p.seat !== null) && r.running) {
+            r.running = false;
+            r.flow.stop();
+            r.match.stop();
+            message(r, 'Mecz zatrzymany — brak graczy.');
+        }
+    };
+    const password = (value: unknown) => {
+        if (value === undefined) return '';
+        if (typeof value !== 'string' || value.length > 64)
+            throw new Error('Hasło może mieć maksymalnie 64 znaki.');
+        return value;
+    };
+    const hash = (r: Pick<Room, 'passwordSalt'>, value: string) =>
+        createHash('sha256').update(r.passwordSalt).update(value).digest();
+    const changeTeam = (r: Room, target: Member, team: TeamChoice) => {
+        if (!['blue', 'orange', 'spectator'].includes(team))
+            throw new Error('Nieprawidłowa drużyna.');
+        if (
+            (target.seat === null && team === 'spectator') ||
+            (target.seat !== null &&
+                team !== 'spectator' &&
+                target.seat % 2 === (team === 'blue' ? 0 : 1))
+        )
+            return;
+        const seat = chooseSeat(r, team);
+        if (team !== 'spectator' && seat === null)
+            throw new Error('Ta drużyna ma już pięciu graczy.');
+        target.seat = seat;
+        r.match.disconnectMember(target.id);
+        message(
+            r,
+            `${target.nick}: ${seat === null ? 'obserwator' : seat % 2 === 0 ? 'niebiescy' : 'pomarańczowi'}.`,
+        );
+        stopIfEmpty(r);
     };
     const leave = (m: Member) => {
         const r = roomFor(m);
@@ -120,12 +167,7 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
             r.hostId = [...r.members][0].id;
             message(r, `Nowy gospodarz: ${[...r.members][0].nick}.`);
         }
-        if (![...r.members].some((p) => p.seat !== null) && r.running) {
-            r.running = false;
-            r.flow.stop();
-            r.match.stop();
-            message(r, 'Mecz zatrzymany — brak graczy.');
-        }
+        stopIfEmpty(r);
         publish(r);
     };
     const join = (m: Member, r: Room) => {
@@ -151,11 +193,14 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
         const m: Member = previous ?? {
             id: randomUUID(),
             nick: '',
+            avatar: DEFAULT_AVATAR,
             socket,
             seat: null,
             lastChat: 0,
             alive: true,
             resumeToken: randomUUID(),
+            joinBlockedUntil: new Map(),
+            lastPasswordAttempt: 0,
         };
         clearTimeout(m.expiry);
         m.expiry = undefined;
@@ -191,7 +236,14 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
                             const nick = text(data.nick, 20);
                             if (nick.length < 2)
                                 throw new Error('Nick musi mieć od 2 do 20 znaków.');
+                            const avatar = data.avatar === undefined ? m.avatar : data.avatar;
+                            if (!validAvatar(avatar))
+                                throw new Error('Avatar musi być jednym emoji.');
+                            const changed = m.nick !== nick || m.avatar !== avatar;
                             m.nick = nick;
+                            m.avatar = avatar;
+                            const currentRoom = roomFor(m);
+                            if (changed && currentRoom) publish(currentRoom);
                             return;
                         }
                         if (!m.nick) throw new Error('Najpierw wpisz nick.');
@@ -199,6 +251,7 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
                             const name = text(data.name, 40);
                             if (!name) throw new Error('Wpisz nazwę pokoju.');
                             if (rooms.size >= 30) throw new Error('Limit pokoi został osiągnięty.');
+                            const roomPassword = password(data.password);
                             const id = randomUUID().slice(0, 8);
                             let r: Room;
                             const match = await attachMatch(server, {
@@ -256,11 +309,14 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
                                 match,
                                 flow: new MatchFlow(),
                                 lastClock: null,
+                                passwordSalt: randomUUID(),
+                                passwordHash: null,
                             };
                             if (socket.readyState !== WebSocket.OPEN) {
                                 match.dispose();
                                 return;
                             }
+                            if (roomPassword) r.passwordHash = hash(r, roomPassword);
                             rooms.set(id, r);
                             join(m, r);
                             return;
@@ -268,6 +324,22 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
                         if (data.type === 'join') {
                             const r = rooms.get(text(data.roomId, 64));
                             if (!r) throw new Error('Pokój już nie istnieje.');
+                            if ((m.joinBlockedUntil.get(r.id) ?? 0) > Date.now())
+                                throw new Error(
+                                    'Wyrzucono Cię z tego pokoju. Możesz wrócić po 30 sekundach.',
+                                );
+                            if (m.roomId !== r.id && r.passwordHash) {
+                                if (Date.now() - m.lastPasswordAttempt < 1000)
+                                    throw new Error('Spróbuj ponownie za sekundę.');
+                                m.lastPasswordAttempt = Date.now();
+                                if (
+                                    !timingSafeEqual(
+                                        hash(r, password(data.password)),
+                                        r.passwordHash,
+                                    )
+                                )
+                                    throw new Error('Nieprawidłowe hasło pokoju.');
+                            }
                             join(m, r);
                             return;
                         }
@@ -283,32 +355,50 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
                             if (Date.now() - m.lastChat < 500)
                                 throw new Error('Wysyłasz wiadomości zbyt szybko.');
                             m.lastChat = Date.now();
-                            message(r, value, m.nick);
+                            message(r, value, m.nick, m.avatar);
                             return;
                         }
                         if (data.type === 'team') {
-                            if (!['blue', 'orange', 'spectator'].includes(data.team)) return;
-                            if (
-                                m.seat !== null &&
-                                data.team !== 'spectator' &&
-                                m.seat % 2 === (data.team === 'blue' ? 0 : 1)
-                            )
+                            changeTeam(r, m, data.team);
+                            return;
+                        }
+                        if (['move', 'transfer', 'kick', 'access'].includes(data.type)) {
+                            if (r.hostId !== m.id)
+                                throw new Error('Tylko gospodarz może zarządzać pokojem.');
+                            if (data.type === 'access') {
+                                const value = password(data.password);
+                                r.passwordHash = value ? hash(r, value) : null;
+                                message(
+                                    r,
+                                    value
+                                        ? 'Gospodarz zabezpieczył pokój hasłem.'
+                                        : 'Gospodarz wyłączył hasło pokoju.',
+                                );
                                 return;
-                            const seat = chooseSeat(r, data.team);
-                            if (data.team !== 'spectator' && seat === null)
-                                throw new Error('Ta drużyna ma już pięciu graczy.');
-                            if (
-                                m.seat !== null &&
-                                data.team !== 'spectator' &&
-                                m.seat % 2 === (data.team === 'blue' ? 0 : 1)
-                            )
-                                return;
-                            m.seat = seat;
-                            r.match.disconnectMember(m.id);
-                            message(
-                                r,
-                                `${m.nick}: ${seat === null ? 'obserwator' : seat % 2 === 0 ? 'niebiescy' : 'pomarańczowi'}.`,
+                            }
+                            const target = [...r.members].find(
+                                (member) => member.id === data.memberId,
                             );
+                            if (!target) throw new Error('Ta osoba nie jest już w pokoju.');
+                            if (data.type === 'move') changeTeam(r, target, data.team);
+                            else if (data.type === 'transfer') {
+                                if (target === m) return;
+                                if (target.socket.readyState !== WebSocket.OPEN)
+                                    throw new Error('Przekaż rolę połączonej osobie.');
+                                r.hostId = target.id;
+                                message(r, `Nowy gospodarz: ${target.nick}.`);
+                            } else {
+                                if (target === m)
+                                    throw new Error('Aby wyjść, użyj przycisku Wyjdź do lobby.');
+                                target.joinBlockedUntil.set(r.id, Date.now() + 30000);
+                                leave(target);
+                                send(target, {
+                                    type: 'error',
+                                    message:
+                                        'Gospodarz wyrzucił Cię z pokoju. Możesz wrócić po 30 sekundach.',
+                                });
+                                message(r, `${m.nick} wyrzucił z pokoju: ${target.nick}.`);
+                            }
                             return;
                         }
                         if (data.type === 'settings') {

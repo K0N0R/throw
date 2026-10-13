@@ -1,5 +1,8 @@
+import { AvatarTextures } from './avatarImage';
+import { LEGENDARY_AVATARS, resolveAvatar } from '../../shared/game/avatars';
+import type { RoomMember } from '../../shared/game/lobbyProtocol';
 import { Typography } from '../core/containers/components/typography';
-import { Application, Container, Graphics } from 'pixi.js';
+import { Application, Container, Graphics, Sprite } from 'pixi.js';
 import { RULES, type GameSnapshot, type Position } from '../../shared/game/simulation';
 
 import type { GameSession } from './session';
@@ -10,12 +13,20 @@ const COLORS = { blue: 0x6bbcff, orange: 0xffaa69, ink: 0xe6eef4, muted: 0x8cabb
 
 export class GameView {
     private readonly scene = new Container();
+    private readonly avatarTextures = new AvatarTextures();
     private readonly ball = new Graphics();
     private subtitle!: Typography;
     private resetLabel!: Typography;
     private readonly avatars = new Map<
         number,
-        { container: Container; body: Graphics; shooting?: boolean }
+        {
+            container: Container;
+            body: Graphics;
+            image: Sprite;
+            nickname: Typography;
+            emoji?: string;
+            shooting?: boolean;
+        }
     >();
     private diagnostics!: Typography;
     private readonly aim = new Graphics();
@@ -45,6 +56,10 @@ export class GameView {
     constructor(
         private readonly app: Application,
         private readonly session: GameSession,
+        private readonly profiles: () => readonly Pick<
+            RoomMember,
+            'seat' | 'nick' | 'avatar'
+        >[] = () => [],
     ) {
         this.current = this.previous = session.snapshot();
         this.buildScene();
@@ -257,13 +272,37 @@ export class GameView {
             if (!avatar) {
                 const container = new Container();
                 const body = new Graphics();
-                const letter = this.text(String.fromCharCode(65 + index), 22, 0x0b2530);
-                letter.style.fontWeight = 'bold';
-                letter.anchor.set(0.5);
-                container.addChild(body, letter);
+                const image = new Sprite();
+                image.anchor.set(0.5);
+                image.visible = false;
+                const nickname = this.text('', 18, COLORS.ink);
+                nickname.anchor.set(0.5, 1);
+                nickname.position.set(0, -RULES.playerRadius * SCALE - 7);
+                nickname.style.stroke = { color: 0x081b26, width: 3 };
+                container.addChild(body, image, nickname);
                 this.scene.addChild(container);
-                avatar = { container, body };
+                avatar = { container, body, image, nickname };
                 this.avatars.set(index, avatar);
+            }
+            const profile = this.profiles().find((member) => member.seat === index);
+            const emoji = resolveAvatar(
+                profile?.avatar ?? LEGENDARY_AVATARS[index % LEGENDARY_AVATARS.length],
+            );
+            avatar.nickname.text = profile?.nick ?? '';
+            if (avatar.emoji !== emoji) {
+                avatar.emoji = emoji;
+                avatar.image.visible = false;
+                const target = avatar;
+                void this.avatarTextures
+                    .get(emoji)
+                    .then((texture) => {
+                        if (this.disposed || target.emoji !== emoji) return;
+                        target.image.texture = texture;
+                        target.image.width = target.image.height =
+                            RULES.playerRadius * SCALE * 1.55;
+                        target.image.visible = true;
+                    })
+                    .catch(() => {});
             }
             avatar.container.visible = true;
             const before = this.previous.players[index];
@@ -331,6 +370,7 @@ export class GameView {
         this.app.ticker.remove(this.update);
         this.app.renderer.off('resize', this.resize);
         this.scene.destroy({ children: true });
+        this.avatarTextures.dispose();
         this.session.dispose();
     }
 }

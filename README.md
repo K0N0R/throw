@@ -102,3 +102,33 @@ npm run benchmark
 Testy obejmują fizykę, predykcję, kolizje, 10 klientów, izolację dwóch pokoi i chatów,
 uprawnienia gospodarza, role, dołączenie bez resetu, sukcesję gospodarza i usuwanie pustego pokoju.
 Benchmark dotyczy samej fizyki na lokalnym CPU i nie jest prognozą pojemności VPS.
+
+## Zarządzanie pokojem
+
+Gospodarz ma zwijany panel po prawej: przenoszenie osób do drużyn i obserwatorów,
+przekazanie roli połączonej osobie oraz wyrzucanie. Przeniesienie nie resetuje meczu;
+po wyprowadzeniu ostatniego gracza na widownię mecz jest zatrzymywany.
+Wyrzucona sesja ma 30 sekund przerwy przed ponownym dołączeniem (to nie ban konta).
+
+Opcjonalne hasło można podać przy tworzeniu pokoju lub zmienić w panelu zarządzania.
+Puste hasło otwiera pokój. Pokoje z hasłem są oznaczone na liście i nadal mają link;
+wejście z linku wymaga hasła, a wznowienie istniejącej sesji w ciągu 15 sekund nie.
+Zmiana hasła nie wyrzuca obecnych uczestników. Hasło nie jest wysyłane w stanach pokoju,
+listach ani linkach; serwer przechowuje tylko skrót z osobną losową solą dla pokoju.
+
+`frontend/lobby/roomManagement.ts` obsługuje panel, a uprawnienia i limity są egzekwowane
+w `backend/lobby/directory.ts`. Testy sieciowe sprawdzają role, hasła, limit drużyn,
+przeniesienie bez resetu, przekazanie gospodarza i odcięcie wyrzuconego gracza.
+
+## Avatary emoji
+
+W lobby wybierz avatar z listy popularnych emoji, oryginalnej listy 20 legendarnych
+avatarów z throw_old albo wklej własne pojedyncze emoji. Obsługiwane są m.in. rodziny,
+modyfikatory koloru skóry i flagi. Wybór zapisuje się lokalnie razem z nickiem.
+Na boisku avatar zastępuje literkę, nick jest nad graczem, a kolor drużyny i wskaźnik
+strzału pozostają na obramowaniu. Emoji są również widoczne w składach i chacie.
+
+`frontend/game/avatarImage.ts` generuje przez Canvas przezroczysty PNG 128×128 jako
+base64 i buforuje obrazy. GameView używa Sprite; tekstury są zwalniane po opuszczeniu
+sesji. Serwer przesyła i sprawdza pojedynczy symbol emoji, bez obrazów w snapshotach
+fizyki. Wygląd glyphów może zależeć od fontów emoji dostępnych na urządzeniu.

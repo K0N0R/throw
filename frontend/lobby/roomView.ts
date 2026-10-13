@@ -1,5 +1,7 @@
+import { resolveAvatar } from '../../shared/game/avatars';
 import type { RoomState } from '../../shared/game/lobbyProtocol';
 import { LobbyClient } from './client';
+import { RoomManagement } from './roomManagement';
 import { MatchPanel } from './matchPanel';
 import { node, button } from './dom';
 
@@ -18,6 +20,7 @@ export class RoomView {
     private link = node('input');
     private lastMessage = 0;
     private matchPanel: MatchPanel;
+    private management: RoomManagement;
     constructor(private readonly client: LobbyClient) {
         const header = node('header', 'room-heading');
         const title = node('div');
@@ -34,6 +37,7 @@ export class RoomView {
         header.append(title, controls);
         const aside = node('aside', 'room-sidebar');
         this.matchPanel = new MatchPanel(client);
+        this.management = new RoomManagement(client);
         const teamLabel = node('label', 'field', 'Twoja drużyna');
         for (const [value, name] of [
             ['blue', 'Niebiescy'],
@@ -68,7 +72,15 @@ export class RoomView {
             this.text.value = '';
         };
         const details = node('div', 'room-details');
-        details.append(header, this.notice, this.matchPanel.element, teamLabel, this.roster, share);
+        details.append(
+            header,
+            this.notice,
+            this.matchPanel.element,
+            this.management.element,
+            teamLabel,
+            this.roster,
+            share,
+        );
         aside.append(details, node('h2', '', 'Chat'), this.chat, form);
         const body = node('section', 'room-body');
         body.append(this.gameHost, aside);
@@ -77,6 +89,7 @@ export class RoomView {
     render(room: RoomState) {
         this.title.textContent = room.name;
         this.matchPanel.render(room);
+        this.management.render(room);
         this.start.textContent =
             room.match.phase === 'finished' ? 'Zagraj rewanż' : 'Rozpocznij mecz';
         const host = room.hostId === this.client.id;
@@ -109,7 +122,7 @@ export class RoomView {
                     node(
                         'p',
                         m.id === this.client.id ? 'self' : '',
-                        `${m.seat === null ? '•' : String.fromCharCode(65 + m.seat)}  ${m.nick}${m.id === room.hostId ? ' · gospodarz' : ''}${m.connected ? '' : ' · łączy się…'}`,
+                        `${resolveAvatar(m.avatar)} ${m.nick}${m.id === room.hostId ? ' · gospodarz' : ''}${m.connected ? '' : ' · łączy się…'}`,
                     ),
                 );
             this.roster.append(group);
@@ -118,7 +131,8 @@ export class RoomView {
         this.chat.replaceChildren();
         for (const entry of room.messages) {
             const item = node('p', entry.kind === 'system' ? 'system-message' : 'chat-message');
-            if (entry.nick) item.append(node('strong', '', `${entry.nick}: `));
+            if (entry.nick)
+                item.append(node('strong', '', `${resolveAvatar(entry.avatar)} ${entry.nick}: `));
             item.append(document.createTextNode(entry.text));
             this.chat.append(item);
         }

@@ -3,6 +3,7 @@ export type TeamChoice = 'blue' | 'orange' | 'spectator';
 export interface RoomMember {
     id: string;
     nick: string;
+    avatar: string;
     connected: boolean;
     seat: number | null;
 }
@@ -11,6 +12,7 @@ export interface ChatEntry {
     kind: 'chat' | 'system';
     text: string;
     nick?: string;
+    avatar?: string;
     time: number;
 }
 export interface RoomInfo {
@@ -18,6 +20,7 @@ export interface RoomInfo {
     name: string;
     hostId: string;
     running: boolean;
+    locked: boolean;
     players: number;
     members: number;
 }
@@ -28,13 +31,17 @@ export interface RoomState extends Omit<RoomInfo, 'players' | 'members'> {
     messages: ChatEntry[];
 }
 export type LobbyRequest =
-    | { type: 'hello'; nick: string }
-    | { type: 'create'; name: string }
-    | { type: 'join'; roomId: string }
+    | { type: 'hello'; nick: string; avatar?: string }
+    | { type: 'create'; name: string; password?: string }
+    | { type: 'join'; roomId: string; password?: string }
     | { type: 'leave' }
     | { type: 'team'; team: TeamChoice }
     | { type: 'chat'; text: string }
     | { type: 'settings'; name: string; settings: MatchSettings }
+    | { type: 'access'; password: string }
+    | { type: 'move'; memberId: string; team: TeamChoice }
+    | { type: 'transfer'; memberId: string }
+    | { type: 'kick'; memberId: string }
     | { type: 'start' }
     | { type: 'stop' };
 export type LobbyMessage =

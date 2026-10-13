@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR, validAvatar } from '../../shared/game/avatars';
 import { Core } from '../core/core';
 import { GameSettings } from '../core/systems/gameSettings';
 import { GameState } from '../core/systems/gameState';
@@ -78,7 +79,7 @@ export class AppController {
                     client.id &&
                     client.connected &&
                     client.nick.length >= 2 &&
-                    client.rooms.some((r) => r.id === target) &&
+                    client.rooms.some((r) => r.id === target && !r.locked) &&
                     this.joining !== target
                 ) {
                     this.joining = target;
@@ -162,6 +163,20 @@ export class AppController {
                   membership,
               );
         this.core!.app.start();
-        this.game = new GameView(this.core!.app, session);
+        const storedAvatar = localStorage.getItem('throw.avatar');
+        const localAvatar = validAvatar(storedAvatar) ? storedAvatar : DEFAULT_AVATAR;
+        this.game = new GameView(this.core!.app, session, () =>
+            membership
+                ? (this.client?.room?.members ?? [])
+                : local
+                  ? [
+                        {
+                            seat: 0,
+                            nick: localStorage.getItem('throw.nick') ?? '',
+                            avatar: localAvatar,
+                        },
+                    ]
+                  : [],
+        );
     }
 }
