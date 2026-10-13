@@ -35,7 +35,9 @@ w trakcie meczu nie resetują akcji ani wyniku. Nowy gracz pojawia się przy swo
 boiska. Puste miejsca nie są rysowane i nie uczestniczą w kolizjach.
 
 Nick i pokoje nie są kontami użytkowników. Pokoje i ostatnie 80 wiadomości żyją w pamięci
-serwera i znikają po jego restarcie. Reconnect do lobby wymaga ponownego wejścia do pokoju.
+serwera i znikają po jego restarcie. Po odświeżeniu lub utracie połączenia masz 15 sekund na powrót do tej samej sesji.
+Pokój, miejsce, gospodarz i chat zostają zachowane. Rozłączony gracz znika z fizyki;
+po przekroczeniu limitu jego miejsce zostaje zwolnione. Wyjście do lobby działa od razu.
 
 ## Chat i system
 

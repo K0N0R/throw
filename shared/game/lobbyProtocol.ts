@@ -2,6 +2,7 @@ export type TeamChoice = 'blue' | 'orange' | 'spectator';
 export interface RoomMember {
     id: string;
     nick: string;
+    connected: boolean;
     seat: number | null;
 }
 export interface ChatEntry {
@@ -34,7 +35,7 @@ export type LobbyRequest =
     | { type: 'start' }
     | { type: 'stop' };
 export type LobbyMessage =
-    | { type: 'identity'; id: string }
+    | { type: 'identity'; id: string; resumeToken: string }
     | { type: 'rooms'; rooms: RoomInfo[] }
     | { type: 'room'; room: RoomState | null }
     | { type: 'error'; message: string };

@@ -20,6 +20,8 @@ interface Member {
     seat: number | null;
     lastChat: number;
     alive: boolean;
+    resumeToken: string;
+    expiry?: ReturnType<typeof setTimeout>;
 }
 interface Room {
     id: string;
@@ -30,7 +32,7 @@ interface Room {
     messages: ChatEntry[];
     match: Match;
 }
-export function attachLobby(server: Server, legacy: Match) {
+export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) {
     const wss = new WebSocketServer({ noServer: true, maxPayload: 2048 });
     const members = new Set<Member>(),
         rooms = new Map<string, Room>();
@@ -58,7 +60,12 @@ export function attachLobby(server: Server, legacy: Match) {
         hostId: r.hostId,
         running: r.running,
         ready: r.match.canStart(),
-        members: [...r.members].map(({ id, nick, seat }) => ({ id, nick, seat })),
+        members: [...r.members].map(({ id, nick, seat, socket }) => ({
+            id,
+            nick,
+            seat,
+            connected: socket.readyState === WebSocket.OPEN,
+        })),
         messages: r.messages,
     });
     const publishList = () => {
@@ -131,17 +138,29 @@ export function attachLobby(server: Server, legacy: Match) {
             `${m.nick} dołączył do pokoju${m.seat === null ? ' jako widz' : ` jako ${String.fromCharCode(65 + m.seat)}`}.`,
         );
     };
-    wss.on('connection', (socket) => {
-        const m: Member = {
+    wss.on('connection', (socket, request) => {
+        const token = new URL(request.url!, 'http://localhost').searchParams.get('resume');
+        const previous = [...members].find(
+            (member) => member.resumeToken === token && member.socket.readyState !== WebSocket.OPEN,
+        );
+        const m: Member = previous ?? {
             id: randomUUID(),
             nick: '',
             socket,
             seat: null,
             lastChat: 0,
             alive: true,
+            resumeToken: randomUUID(),
         };
+        clearTimeout(m.expiry);
+        m.expiry = undefined;
+        m.socket = socket;
+        m.alive = true;
         members.add(m);
-        send(m, { type: 'identity', id: m.id });
+        send(m, { type: 'identity', id: m.id, resumeToken: m.resumeToken });
+        const resumedRoom = roomFor(m);
+        if (resumedRoom) message(resumedRoom, `${m.nick} wrócił do pokoju.`);
+        else send(m, { type: 'room', room: null });
         publishList();
         socket.on('pong', () => {
             m.alive = true;
@@ -186,7 +205,7 @@ export function attachLobby(server: Server, legacy: Match) {
                                     ).searchParams.get('member');
                                     const member = [...r.members].find(
                                         (member) =>
-                                            member.id === token &&
+                                            member.resumeToken === token &&
                                             member.socket.readyState === WebSocket.OPEN,
                                     );
                                     return member
@@ -300,8 +319,16 @@ export function attachLobby(server: Server, legacy: Match) {
                 .catch((error) => console.error(error));
         });
         socket.on('close', () => {
-            members.delete(m);
-            if (!stopped) leave(m);
+            if (stopped || m.socket !== socket) return;
+            const r = roomFor(m);
+            if (r) {
+                r.match.disconnectMember(m.id);
+                message(r, `${m.nick} utracił połączenie — czekamy na powrót.`);
+            }
+            m.expiry = setTimeout(() => {
+                members.delete(m);
+                if (!stopped) leave(m);
+            }, reconnectMs);
         });
     });
     const upgrade = (
@@ -325,6 +352,7 @@ export function attachLobby(server: Server, legacy: Match) {
     server.on('upgrade', upgrade);
     const heartbeat = setInterval(() => {
         for (const m of members) {
+            if (m.socket.readyState !== WebSocket.OPEN) continue;
             if (!m.alive) m.socket.terminate();
             else {
                 m.alive = false;
@@ -339,7 +367,10 @@ export function attachLobby(server: Server, legacy: Match) {
             stopped = true;
             clearInterval(heartbeat);
             server.off('upgrade', upgrade);
-            for (const m of members) m.socket.terminate();
+            for (const m of members) {
+                clearTimeout(m.expiry);
+                m.socket.terminate();
+            }
             members.clear();
             for (const r of rooms.values()) r.match.dispose();
             rooms.clear();

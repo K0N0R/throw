@@ -60,7 +60,7 @@ export class RoomView {
         form.append(this.text, send);
         form.onsubmit = (event) => {
             event.preventDefault();
-            if (!this.text.value.trim()) return;
+            if (!client.connected || !this.text.value.trim()) return;
             client.send({ type: 'chat', text: this.text.value });
             this.text.value = '';
         };
@@ -73,8 +73,10 @@ export class RoomView {
         this.title.textContent = room.name;
         this.phase.textContent = `${room.running ? 'Mecz trwa' : 'Przed meczem'} · ${room.members.filter((m) => m.seat !== null).length}/10 graczy`;
         const host = room.hostId === this.client.id;
-        this.start.disabled = !host || room.running || !room.ready;
-        this.stop.disabled = !host || !room.running;
+        this.start.disabled = !this.client.connected || !host || room.running || !room.ready;
+        this.stop.disabled = !this.client.connected || !host || !room.running;
+        this.team.disabled = !this.client.connected;
+        this.text.disabled = !this.client.connected;
         this.notice.textContent =
             this.client.error ||
             (room.running
@@ -106,7 +108,7 @@ export class RoomView {
                     node(
                         'p',
                         m.id === this.client.id ? 'self' : '',
-                        `${m.seat === null ? '•' : String.fromCharCode(65 + m.seat)}  ${m.nick}${m.id === room.hostId ? ' · gospodarz' : ''}`,
+                        `${m.seat === null ? '•' : String.fromCharCode(65 + m.seat)}  ${m.nick}${m.id === room.hostId ? ' · gospodarz' : ''}${m.connected ? '' : ' · łączy się…'}`,
                     ),
                 );
             this.roster.append(group);

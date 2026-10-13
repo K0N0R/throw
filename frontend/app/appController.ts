@@ -45,6 +45,16 @@ export class AppController {
         this.root.append(lobby.element, room.element);
         room.element.hidden = true;
         client.onChange = () => {
+            if (!client.connected && client.room) {
+                this.generation++;
+                this.game?.dispose();
+                this.game = undefined;
+                this.roomId = undefined;
+                this.memberSeat = undefined;
+                this.core?.app.stop();
+                room.render(client.room);
+                return;
+            }
             if (!client.room) {
                 room.element.hidden = true;
                 lobby.element.hidden = false;
@@ -92,7 +102,7 @@ export class AppController {
                         if (generation !== this.generation) return;
                         await this.createGame(
                             false,
-                            { roomId: state.id, memberId: client.id },
+                            { roomId: state.id, memberId: client.gameToken },
                             generation,
                         );
                     })

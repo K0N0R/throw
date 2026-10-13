@@ -16,12 +16,13 @@ export class LobbyClient {
     private socket?: WebSocket;
     private retry?: ReturnType<typeof setTimeout>;
     private stopped = false;
+    private resumeToken = sessionStorage.getItem('throw.session') ?? '';
     constructor() {
         this.connect();
     }
     private connect() {
         const ws = (this.socket = new WebSocket(
-            `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/lobby`,
+            `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/lobby${this.resumeToken ? `?resume=${encodeURIComponent(this.resumeToken)}` : ''}`,
         ));
         ws.onopen = () => {
             this.connected = true;
@@ -31,7 +32,11 @@ export class LobbyClient {
         };
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data) as LobbyMessage;
-            if (message.type === 'identity') this.id = message.id;
+            if (message.type === 'identity') {
+                this.id = message.id;
+                this.resumeToken = message.resumeToken;
+                sessionStorage.setItem('throw.session', this.resumeToken);
+            }
             if (message.type === 'rooms') this.rooms = message.rooms;
             if (message.type === 'room') this.room = message.room;
             if (message.type === 'error') this.error = message.message;
@@ -41,12 +46,14 @@ export class LobbyClient {
         ws.onclose = () => {
             if (this.stopped) return;
             this.connected = false;
-            this.id = '';
-            this.room = null;
+
             this.error = 'Połączenie przerwane. Ponawiam…';
             this.onChange();
             this.retry = setTimeout(() => this.connect(), 1500);
         };
+    }
+    get gameToken() {
+        return this.resumeToken;
     }
     setNick(nick: string) {
         this.nick = nick.trim().slice(0, 20);
