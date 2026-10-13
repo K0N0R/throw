@@ -54,6 +54,7 @@ System informuje o dołączeniu, wyjściu, zmianie drużyny, gospodarzu, starcie
 
 - WASD / strzałki: ruch własnego gracza.
 - X / spacja: strzał od gracza przez piłkę. Przytrzymanie spowalnia ruch.
+- Shift + ruch: boost, jeśli masz energię.
 - R: reset akcji (gospodarz, gdy gra w drużynie).
 - Reset wyniku na boisku: dostępny w treningu i trybie quick. W pokojach wynik zeruje rewanż.
 - Obramówka czarna przy puszczonym strzale, biała przy przytrzymanym, również po golu.
@@ -132,3 +133,18 @@ strzału pozostają na obramowaniu. Emoji są również widoczne w składach i c
 base64 i buforuje obrazy. GameView używa Sprite; tekstury są zwalniane po opuszczeniu
 sesji. Serwer przesyła i sprawdza pojedynczy symbol emoji, bez obrazów w snapshotach
 fizyki. Wygląd glyphów może zależeć od fontów emoji dostępnych na urządzeniu.
+
+## Energia i boost
+
+Sześć symetrycznych punktów energii na boisku daje po 35 energii (maksymalnie 100).
+Zebrany punkt odradza się po 8 sekundach; przy pełnej energii nie jest zużywany.
+Shift podczas ruchu zwiększa prędkość z 6 do 9 i przyspieszenie z 32 do 48,
+zużywając 25 energii na sekundę. Samo przytrzymanie Shifta w miejscu nic nie zużywa.
+Strzelanie wyłącza boost i zachowuje poprzednią prędkość podczas strzału.
+
+Pasek własnej energii jest na boisku; aktywny boost ma złotą poświatę.
+Serwer rozstrzyga podniesienia i energię, a klient przewiduje własne podniesienia
+oraz boost i uzgadnia je z autorytatywnym stanem. Punkty nie blokują fizyki piłki.
+Po golu energia działa w oknie swobodnej gry, a kickoff zeruje energię i odradza punkty.
+Dołączający gracz zaczyna bez energii. Zegar i punkty są wstrzymane poza rozgrywką.
+Parametry: `shared/game/energy.ts`; rysowanie: `frontend/game/energyView.ts`.

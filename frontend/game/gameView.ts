@@ -1,3 +1,4 @@
+import { EnergyView } from './energyView';
 import { AvatarTextures } from './avatarImage';
 import { LEGENDARY_AVATARS, resolveAvatar } from '../../shared/game/avatars';
 import type { RoomMember } from '../../shared/game/lobbyProtocol';
@@ -12,6 +13,7 @@ const OFFSET = { x: 200, y: 205 };
 const COLORS = { blue: 0x6bbcff, orange: 0xffaa69, ink: 0xe6eef4, muted: 0x8cabbc };
 
 export class GameView {
+    private readonly energyView = new EnergyView(SCALE, OFFSET);
     private readonly scene = new Container();
     private readonly avatarTextures = new AvatarTextures();
     private readonly ball = new Graphics();
@@ -26,6 +28,7 @@ export class GameView {
             nickname: Typography;
             emoji?: string;
             shooting?: boolean;
+            boosting?: boolean;
         }
     >();
     private diagnostics!: Typography;
@@ -51,6 +54,8 @@ export class GameView {
         'KeyX',
         'Space',
         'KeyR',
+        'ShiftLeft',
+        'ShiftRight',
     ]);
 
     constructor(
@@ -89,11 +94,14 @@ export class GameView {
         return label;
     }
 
-    private drawPlayer(graphics: Graphics, color: number, shooting = false) {
-        graphics
-            .clear()
-            .circle(2, 5, RULES.playerRadius * SCALE)
-            .fill({ color: 0x000000, alpha: 0.22 });
+    private drawPlayer(graphics: Graphics, color: number, shooting = false, boosting = false) {
+        graphics.clear();
+        if (boosting)
+            graphics
+                .circle(0, 0, RULES.playerRadius * SCALE + 6)
+                .fill({ color: 0xffd16b, alpha: 0.22 })
+                .stroke({ color: 0xffd16b, width: 2, alpha: 0.65 });
+        graphics.circle(2, 5, RULES.playerRadius * SCALE).fill({ color: 0x000000, alpha: 0.22 });
         graphics
             .circle(0, 0, RULES.playerRadius * SCALE)
             .fill(color)
@@ -128,7 +136,7 @@ export class GameView {
                     .lineTo(x + 70, gy + (j * gh) / 9)
                     .stroke({ color, alpha: 0.2, width: 1 });
         }
-        this.scene.addChild(field);
+        this.scene.addChild(field, this.energyView.pads, this.energyView.hud);
         this.label('THROW', 100, 50, 38, COLORS.ink);
         this.subtitle = this.label(this.session.label, 103, 98, 14);
         this.diagnostics = this.label('', 110, 885, 12);
@@ -141,7 +149,7 @@ export class GameView {
         this.status.position.set(800, 140);
         this.scene.addChild(this.status);
         this.label(
-            'WASD / STRZAŁKI   ruch     ·     X / SPACJA   strzał     ·     R   reset akcji',
+            'WASD / STRZAŁKI   ruch     ·     X / SPACJA   strzał     ·     SHIFT   boost     ·     R   reset akcji',
             110,
             857,
             18,
@@ -247,6 +255,7 @@ export class GameView {
             x: pressed('ArrowRight', 'KeyD') - pressed('ArrowLeft', 'KeyA'),
             y: pressed('ArrowDown', 'KeyS') - pressed('ArrowUp', 'KeyW'),
             shoot: Boolean(pressed('KeyX', 'Space')),
+            boost: Boolean(pressed('ShiftLeft', 'ShiftRight')),
         };
         while (this.accumulator >= RULES.timestep) {
             this.previous = this.current;
@@ -258,6 +267,7 @@ export class GameView {
         this.render(this.accumulator / RULES.timestep);
     };
     private render(alpha: number) {
+        this.energyView.render(this.current, this.session.seat);
         const position = (object: Container, before: Position, after: Position) =>
             object.position.set(
                 OFFSET.x + (before.x + (after.x - before.x) * alpha) * SCALE,
@@ -311,12 +321,15 @@ export class GameView {
                 index === this.session.seat
                     ? this.keys.has('KeyX') || this.keys.has('Space')
                     : player.shooting;
-            if (avatar.shooting !== shooting) {
+            const boosting = this.current.boosting?.[index] ?? false;
+            if (avatar.shooting !== shooting || avatar.boosting !== boosting) {
+                avatar.boosting = boosting;
                 avatar.shooting = shooting;
                 this.drawPlayer(
                     avatar.body,
                     index % 2 === 0 ? COLORS.blue : COLORS.orange,
                     shooting,
+                    boosting,
                 );
             }
         });

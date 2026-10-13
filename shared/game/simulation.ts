@@ -1,3 +1,4 @@
+import { EnergySystem, ENERGY_RULES, ENERGY_PADS } from './energy';
 import RAPIER from '@dimforge/rapier2d-compat';
 
 export const RULES = {
@@ -21,6 +22,7 @@ export interface Input {
     x: number;
     y: number;
     shoot: boolean;
+    boost?: boolean;
 }
 export interface Position {
     x: number;
@@ -35,6 +37,9 @@ export interface GameSnapshot {
     players: BodyState[];
     ballState: BodyState;
     cooldowns: number[];
+    energy: number[];
+    boosting: boolean[];
+    padCooldowns: number[];
     pause: number;
     epoch: number;
     player: Position;
@@ -52,6 +57,7 @@ export class Simulation {
     readonly player: RAPIER.RigidBody;
     readonly ball: RAPIER.RigidBody;
     readonly players: RAPIER.RigidBody[] = [];
+    private readonly energySystem = new EnergySystem();
     private epoch = 0;
     private kickSerial = 0;
     private score: [number, number] = [0, 0];
@@ -181,6 +187,8 @@ export class Simulation {
         body.resetTorques(true);
         this.cooldowns[seat] = 0;
         this.shooting[seat] = false;
+        this.energySystem.energy[seat] = 0;
+        this.energySystem.boosting[seat] = false;
     }
 
     resetRound() {
@@ -207,6 +215,7 @@ export class Simulation {
             body.setAngvel(0, true);
         }
         this.pause = 0;
+        this.energySystem.reset(this.players.length);
         this.cooldowns = this.players.map(() => 0);
         this.shooting = this.players.map(() => false);
         this.epoch++;
@@ -233,6 +242,7 @@ export class Simulation {
                 return;
             }
         }
+        this.energySystem.tick(dt);
         this.players.forEach((player, index) => {
             if (!this.activePlayers[index]) return;
             const input = Array.isArray(inputs)
@@ -243,7 +253,16 @@ export class Simulation {
             this.shooting[index] = input.shoot;
             this.cooldowns[index] = Math.max(0, this.cooldowns[index] - dt);
             const length = Math.hypot(input.x, input.y);
-            const speed = input.shoot ? RULES.shootingSpeed : RULES.speed;
+            const boosting = this.energySystem.boost(
+                index,
+                !!input.boost && length > 0 && !input.shoot,
+                dt,
+            );
+            const speed = input.shoot
+                ? RULES.shootingSpeed
+                : boosting
+                  ? ENERGY_RULES.speed
+                  : RULES.speed;
             const v = player.linvel();
             const target = {
                 x: length ? (input.x / length) * speed : 0,
@@ -264,7 +283,11 @@ export class Simulation {
                         RULES.playerRadius * 2 + 0.05,
             );
             const acceleration =
-                !length && touchingPlayer ? RULES.acceleration * 0.12 : RULES.acceleration;
+                !length && touchingPlayer
+                    ? RULES.acceleration * 0.12
+                    : boosting
+                      ? ENERGY_RULES.acceleration
+                      : RULES.acceleration;
             const factor = change ? Math.min(1, (acceleration * dt) / change) : 0;
             player.setLinvel({ x: v.x + dxv * factor, y: v.y + dyv * factor }, true);
             if (
@@ -299,6 +322,13 @@ export class Simulation {
             }
         });
         this.world.step();
+        this.players.forEach((player, index) => {
+            if (
+                this.activePlayers[index] &&
+                (authoritative || predictedSeat === undefined || predictedSeat === index)
+            )
+                this.energySystem.collect(index, player.translation(), RULES.playerRadius);
+        });
         const b = this.ball.translation();
         const inGoal =
             b.y > (RULES.height - RULES.goalHeight) / 2 &&
@@ -325,6 +355,9 @@ export class Simulation {
             players: this.players.map(bodyState),
             ballState: bodyState(this.ball, this.players.length),
             cooldowns: [...this.cooldowns],
+            energy: [...this.energySystem.energy],
+            boosting: [...this.energySystem.boosting],
+            padCooldowns: [...this.energySystem.padCooldowns],
             pause: this.pause,
             epoch: this.epoch,
             player: { ...this.player.translation() },
@@ -347,6 +380,13 @@ export class Simulation {
             state.players.flatMap((player, index) => (player.active ? [index] : [])),
         );
         this.cooldowns = [...state.cooldowns];
+        this.energySystem.energy = this.players.map((_, index) => state.energy?.[index] ?? 0);
+        this.energySystem.boosting = this.players.map(
+            (_, index) => state.boosting?.[index] ?? false,
+        );
+        this.energySystem.padCooldowns = ENERGY_PADS.map(
+            (_, index) => state.padCooldowns?.[index] ?? 0,
+        );
         this.shooting = state.players.map((player) => player.shooting);
         this.pause = state.pause;
         this.score = [...state.score];

@@ -33,6 +33,7 @@ export function validCommand(value: unknown): value is Command {
         Number.isFinite(v.y) &&
         Math.abs(v.x) <= 1 &&
         Math.abs(v.y) <= 1 &&
-        typeof v.shoot === 'boolean'
+        typeof v.shoot === 'boolean' &&
+        (v.boost === undefined || typeof v.boost === 'boolean')
     );
 }

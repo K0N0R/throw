@@ -240,7 +240,8 @@ export async function attachMatch(server: Server, options: MatchOptions = {}) {
                     if (
                         previous.x !== c.input.x ||
                         previous.y !== c.input.y ||
-                        previous.shoot !== c.input.shoot
+                        previous.shoot !== c.input.shoot ||
+                        !!previous.boost !== !!c.input.boost
                     )
                         urgent = true;
                     return c.input;
@@ -256,7 +257,13 @@ export async function attachMatch(server: Server, options: MatchOptions = {}) {
                 options.onStep?.(RULES.timestep, after.score, after.phase === 'goal');
                 if (after.phase === 'goal' && before.phase !== 'goal')
                     options.onGoal?.(after.lastScorer === 'left' ? 'Niebiescy' : 'Pomarańczowi');
-                if (after.kickSerial !== before.kickSerial || after.phase !== before.phase)
+                if (
+                    after.kickSerial !== before.kickSerial ||
+                    after.phase !== before.phase ||
+                    after.padCooldowns.some(
+                        (value, index) => value > 0 !== before.padCooldowns[index] > 0,
+                    )
+                )
                     urgent = true;
                 if (after.epoch !== before.epoch)
                     for (const c of clients) {
