@@ -1,3 +1,4 @@
+import { arenaEnergyPads, DEFAULT_ARENA, type ArenaSettings } from './arenas';
 export const ENERGY_RULES = {
     maximum: 100,
     pickup: 35,
@@ -16,13 +17,15 @@ export const ENERGY_PADS = [
     { x: 20, y: 10 },
 ] as const;
 export class EnergySystem {
+    private pads = arenaEnergyPads(DEFAULT_ARENA);
     energy: number[] = [];
     boosting: boolean[] = [];
     padCooldowns: number[] = [];
-    reset(players: number) {
+    reset(players: number, arena: ArenaSettings = DEFAULT_ARENA) {
+        this.pads = arenaEnergyPads(arena);
         this.energy = Array.from({ length: players }, () => 0);
         this.boosting = this.energy.map(() => false);
-        this.padCooldowns = ENERGY_PADS.map(() => 0);
+        this.padCooldowns = this.pads.map(() => 0);
     }
     tick(dt: number) {
         this.padCooldowns = this.padCooldowns.map((value) => Math.max(0, value - dt));
@@ -37,7 +40,7 @@ export class EnergySystem {
     }
     collect(seat: number, position: { x: number; y: number }, playerRadius: number) {
         if (this.energy[seat] >= ENERGY_RULES.maximum) return;
-        ENERGY_PADS.forEach((pad, index) => {
+        this.pads.forEach((pad, index) => {
             if (
                 this.padCooldowns[index] > 0 ||
                 Math.hypot(position.x - pad.x, position.y - pad.y) >

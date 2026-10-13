@@ -1,3 +1,4 @@
+import type { ArenaSettings } from '../../shared/game/arenas';
 import type { Duplex } from 'node:stream';
 import type { IncomingMessage } from 'node:http';
 import type { Server } from 'node:http';
@@ -91,10 +92,12 @@ export async function attachMatch(server: Server, options: MatchOptions = {}) {
         for (const c of clients) send(c, data);
     };
     let disposed = false;
-    const reset = (match: boolean) => {
+    const reset = (match: boolean, alreadyReset = false) => {
         if (disposed) return;
-        if (match) game.resetMatch();
-        else game.resetRound();
+        if (!alreadyReset) {
+            if (match) game.resetMatch();
+            else game.resetRound();
+        }
         for (const c of clients) {
             c.queue = [];
             c.ack = c.accepted;
@@ -287,6 +290,11 @@ export async function attachMatch(server: Server, options: MatchOptions = {}) {
         }
     }, 5000);
     return {
+        arena: () => ({ ...game.arena }),
+        configureArena(settings: ArenaSettings) {
+            game.configureArena(settings);
+            reset(false, true);
+        },
         canStart: () =>
             [0, 1].every((team) =>
                 [...clients].some((c) => c.seat !== null && c.seat % 2 === team),

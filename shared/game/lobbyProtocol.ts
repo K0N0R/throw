@@ -1,3 +1,4 @@
+import type { ArenaSettings } from './arenas';
 import type { MatchSettings, MatchProgress } from './matchRules';
 export type TeamChoice = 'blue' | 'orange' | 'spectator';
 export interface RoomMember {
@@ -26,6 +27,7 @@ export interface RoomInfo {
 }
 export interface RoomState extends Omit<RoomInfo, 'players' | 'members'> {
     ready: boolean;
+    arena: ArenaSettings;
     match: MatchProgress;
     members: RoomMember[];
     messages: ChatEntry[];
@@ -38,6 +40,7 @@ export type LobbyRequest =
     | { type: 'team'; team: TeamChoice }
     | { type: 'chat'; text: string }
     | { type: 'settings'; name: string; settings: MatchSettings }
+    | { type: 'arena'; arena: ArenaSettings }
     | { type: 'access'; password: string }
     | { type: 'move'; memberId: string; team: TeamChoice }
     | { type: 'transfer'; memberId: string }

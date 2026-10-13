@@ -1,3 +1,6 @@
+import { ArenaView } from './arenaView';
+import { GameCamera, GAME_VIEWPORT } from './camera';
+import { OffscreenPlayers } from './offscreenPlayers';
 import { EnergyView } from './energyView';
 import { AvatarTextures } from './avatarImage';
 import { LEGENDARY_AVATARS, resolveAvatar } from '../../shared/game/avatars';
@@ -9,11 +12,15 @@ import { RULES, type GameSnapshot, type Position } from '../../shared/game/simul
 import type { GameSession } from './session';
 
 const SCALE = 50;
-const OFFSET = { x: 200, y: 205 };
+const OFFSET = { x: 0, y: 0 };
 const COLORS = { blue: 0x6bbcff, orange: 0xffaa69, ink: 0xe6eef4, muted: 0x8cabbc };
 
 export class GameView {
     private readonly energyView = new EnergyView(SCALE, OFFSET);
+    private readonly world = new Container();
+    private readonly arenaView = new ArenaView();
+    private readonly camera = new GameCamera();
+    private readonly offscreen = new OffscreenPlayers();
     private readonly scene = new Container();
     private readonly avatarTextures = new AvatarTextures();
     private readonly ball = new Graphics();
@@ -109,34 +116,15 @@ export class GameView {
         graphics.circle(-7, -7, 6).fill({ color: 0xffffff, alpha: 0.4 });
     }
     private buildScene() {
-        const field = new Graphics();
-        field.roundRect(100, 175, 1400, 660, 24).fill(0x102c36);
-        field.rect(200, 205, 1200, 600).fill(0x183d43);
-        for (let i = 0; i < 12; i += 2)
-            field.rect(200 + i * 100, 205, 100, 600).fill({ color: 0x234d50, alpha: 0.42 });
-        field.rect(200, 205, 1200, 600).stroke({ color: 0x8cbbb8, width: 2, alpha: 0.7 });
-        field.moveTo(800, 205).lineTo(800, 805).stroke({ color: 0x8cbbb8, width: 2, alpha: 0.4 });
-        field.circle(800, 505, 95).stroke({ color: 0x8cbbb8, width: 2, alpha: 0.4 });
-        field.circle(800, 505, 4).fill(0x8cbbb8);
-        const gh = RULES.goalHeight * SCALE,
-            gy = OFFSET.y + (RULES.height * SCALE - gh) / 2;
-        for (const [x, color] of [
-            [130, COLORS.blue],
-            [1400, COLORS.orange],
-        ] as const) {
-            field.rect(x, gy, 70, gh).fill({ color, alpha: 0.12 }).stroke({ color, width: 3 });
-            for (let j = 1; j < 5; j++)
-                field
-                    .moveTo(x + j * 14, gy)
-                    .lineTo(x + j * 14, gy + gh)
-                    .stroke({ color, alpha: 0.2, width: 1 });
-            for (let j = 1; j < 9; j++)
-                field
-                    .moveTo(x, gy + (j * gh) / 9)
-                    .lineTo(x + 70, gy + (j * gh) / 9)
-                    .stroke({ color, alpha: 0.2, width: 1 });
-        }
-        this.scene.addChild(field, this.energyView.pads, this.energyView.hud);
+        this.arenaView.configure(this.current.arena);
+        const viewport = new Container();
+        const mask = new Graphics()
+            .rect(GAME_VIEWPORT.x, GAME_VIEWPORT.y, GAME_VIEWPORT.width, GAME_VIEWPORT.height)
+            .fill(0xffffff);
+        viewport.addChild(this.world);
+        viewport.mask = mask;
+        this.world.addChild(this.arenaView.element, this.energyView.pads);
+        this.scene.addChild(viewport, mask, this.energyView.hud, this.offscreen.element);
         this.label('THROW', 100, 50, 38, COLORS.ink);
         this.subtitle = this.label(this.session.label, 103, 98, 14);
         this.diagnostics = this.label('', 110, 885, 12);
@@ -177,7 +165,8 @@ export class GameView {
             .fill(0xfff5df)
             .stroke({ color: 0x162a35, width: 2 });
         this.ball.circle(0, 0, 5).fill(0x425963);
-        this.scene.addChild(this.aim, this.ball, this.announcement);
+        this.world.addChild(this.aim, this.ball);
+        this.scene.addChild(this.announcement);
     }
 
     private bindInput() {
@@ -267,6 +256,7 @@ export class GameView {
         this.render(this.accumulator / RULES.timestep);
     };
     private render(alpha: number) {
+        this.arenaView.configure(this.current.arena);
         this.energyView.render(this.current, this.session.seat);
         const position = (object: Container, before: Position, after: Position) =>
             object.position.set(
@@ -290,7 +280,7 @@ export class GameView {
                 nickname.position.set(0, -RULES.playerRadius * SCALE - 7);
                 nickname.style.stroke = { color: 0x081b26, width: 3 };
                 container.addChild(body, image, nickname);
-                this.scene.addChild(container);
+                this.world.addChild(container);
                 avatar = { container, body, image, nickname };
                 this.avatars.set(index, avatar);
             }
@@ -335,6 +325,17 @@ export class GameView {
         });
         const own =
             this.session.seat === null ? undefined : this.avatars.get(this.session.seat)?.container;
+        const follow = this.session.seat === null ? null : this.current.players[this.session.seat];
+        this.camera.update(
+            this.current.arena,
+            follow ?? null,
+            this.current.ball,
+            this.app.ticker.deltaMS / 1000,
+        );
+        const transform = this.camera.transform(SCALE);
+        this.world.position.set(transform.x, transform.y);
+        this.world.scale.set(transform.zoom);
+        this.offscreen.render(this.current, this.camera, this.session.seat, this.profiles());
         this.resetLabel.text = this.session.canResetMatch ? 'Reset wyniku' : 'Reset: pokój';
         this.resetLabel.parent!.visible = this.session.canResetMatch;
         this.subtitle.text = this.session.label;

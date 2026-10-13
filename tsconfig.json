@@ -19,5 +19,5 @@
             "@common": ["frontend/common/index.ts"]
         }
     },
-    "include": ["backend", "frontend", "shared", "tests"]
+    "include": ["backend", "frontend", "shared", "tests", "scripts"]
 }

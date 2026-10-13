@@ -476,3 +476,30 @@ p {
     font-size: 12px;
     margin-top: 8px;
 }
+
+.arena-panel {
+    margin-bottom: 12px;
+    border-bottom: 1px solid #294552;
+    padding-bottom: 10px;
+}
+.arena-panel > .muted {
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+.arena-settings {
+    padding-top: 6px;
+}
+.training-arena-controls {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 8px;
+    max-width: calc(100% - 24px);
+}
+.training-arena-controls select {
+    width: auto;
+    max-width: 48%;
+    padding: 8px;
+    font-size: 13px;
+}

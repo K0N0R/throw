@@ -1,4 +1,12 @@
-import { EnergySystem, ENERGY_RULES, ENERGY_PADS } from './energy';
+import {
+    arenaSettings,
+    arenaShape,
+    cornerWalls,
+    arenaEnergyPads,
+    DEFAULT_ARENA,
+    type ArenaSettings,
+} from './arenas';
+import { EnergySystem, ENERGY_RULES } from './energy';
 import RAPIER from '@dimforge/rapier2d-compat';
 
 export const RULES = {
@@ -34,6 +42,7 @@ export interface BodyState extends Position {
     active: boolean;
 }
 export interface GameSnapshot {
+    arena: ArenaSettings;
     players: BodyState[];
     ballState: BodyState;
     cooldowns: number[];
@@ -57,6 +66,11 @@ export class Simulation {
     readonly player: RAPIER.RigidBody;
     readonly ball: RAPIER.RigidBody;
     readonly players: RAPIER.RigidBody[] = [];
+    arena: ArenaSettings = { ...DEFAULT_ARENA };
+    private walls: RAPIER.Collider[] = [];
+    get field() {
+        return arenaShape(this.arena);
+    }
     private readonly energySystem = new EnergySystem();
     private epoch = 0;
     private kickSerial = 0;
@@ -67,40 +81,21 @@ export class Simulation {
     private activePlayers: boolean[] = [];
     private lastScorer: 'left' | 'right' | null = null;
 
-    static async create(multiplayer: boolean | number = false) {
+    static async create(
+        multiplayer: boolean | number = false,
+        arena: ArenaSettings = DEFAULT_ARENA,
+    ) {
         await RAPIER.init();
-        return new Simulation(multiplayer);
+        return new Simulation(multiplayer, arena);
     }
 
-    private constructor(multiplayer: boolean | number) {
+    private constructor(multiplayer: boolean | number, arena: ArenaSettings) {
         this.world = new RAPIER.World({ x: 0, y: 0 });
         this.world.timestep = RULES.timestep;
         this.world.integrationParameters.numSolverIterations = 8;
         this.world.integrationParameters.normalizedPredictionDistance = 0.1;
-        // Membership: ball = 1, player = 2, walls = 4.
-        const wall = (x: number, y: number, hx: number, hy: number, filter = 3) => {
-            this.world.createCollider(
-                RAPIER.ColliderDesc.cuboid(hx, hy)
-                    .setTranslation(x, y)
-                    .setFriction(0)
-                    .setRestitution(0.75)
-                    .setCollisionGroups((4 << 16) | filter),
-            );
-        };
-        const { width: w, height: h, goalHeight: gh, goalDepth: gd } = RULES;
-        wall(w / 2, -0.2, w / 2 + gd, 0.2);
-        wall(w / 2, h + 0.2, w / 2 + gd, 0.2);
-        for (const x of [-0.2, w + 0.2]) {
-            wall(x, (h - gh) / 4, 0.2, (h - gh) / 4, 1);
-            wall(x, h - (h - gh) / 4, 0.2, (h - gh) / 4, 1);
-            wall(x, h / 2, 0.2, h / 2, 2);
-        }
-        for (const x of [-gd / 2, w + gd / 2]) {
-            wall(x, (h - gh) / 2 - 0.1, gd / 2, 0.1, 1);
-            wall(x, (h + gh) / 2 + 0.1, gd / 2, 0.1, 1);
-        }
-        wall(-gd - 0.2, h / 2, 0.2, gh / 2, 1);
-        wall(w + gd + 0.2, h / 2, 0.2, gh / 2, 1);
+        this.arena = arenaSettings(arena);
+        this.buildWalls();
         this.player = this.world.createRigidBody(
             RAPIER.RigidBodyDesc.dynamic().lockRotations().setLinearDamping(0).setCcdEnabled(true),
         );
@@ -154,6 +149,57 @@ export class Simulation {
         this.resetRound();
     }
 
+    private buildWalls() {
+        for (const collider of this.walls) this.world.removeCollider(collider, true);
+        this.walls = [];
+        const wall = (x: number, y: number, hx: number, hy: number, filter = 3, rotation = 0) => {
+            if (hx <= 0 || hy <= 0) return;
+            this.walls.push(
+                this.world.createCollider(
+                    RAPIER.ColliderDesc.cuboid(hx, hy)
+                        .setTranslation(x, y)
+                        .setRotation(rotation)
+                        .setFriction(0)
+                        .setRestitution(0.75)
+                        .setCollisionGroups((4 << 16) | filter),
+                ),
+            );
+        };
+        const { width: w, height: h, goalHeight: gh, goalDepth: gd, cornerRadius: r } = this.field;
+        wall(w / 2, -0.2, w / 2 - r, 0.2);
+        wall(w / 2, h + 0.2, w / 2 - r, 0.2);
+        const top = (h - gh) / 2,
+            bottom = (h + gh) / 2;
+        for (const x of [-0.2, w + 0.2]) {
+            wall(x, (r + top) / 2, 0.2, (top - r) / 2, 1);
+            wall(x, (bottom + h - r) / 2, 0.2, (h - r - bottom) / 2, 1);
+            wall(x, h / 2, 0.2, h / 2 - r, 2);
+        }
+        for (const segment of cornerWalls(this.arena)) {
+            const dx = segment.b.x - segment.a.x,
+                dy = segment.b.y - segment.a.y;
+            wall(
+                (segment.a.x + segment.b.x) / 2 + segment.outward.x * 0.2,
+                (segment.a.y + segment.b.y) / 2 + segment.outward.y * 0.2,
+                Math.hypot(dx, dy) / 2 + 0.015,
+                0.2,
+                3,
+                Math.atan2(dy, dx),
+            );
+        }
+        for (const x of [-gd / 2, w + gd / 2]) {
+            wall(x, top - 0.1, gd / 2, 0.1, 1);
+            wall(x, bottom + 0.1, gd / 2, 0.1, 1);
+        }
+        wall(-gd - 0.2, h / 2, 0.2, gh / 2, 1);
+        wall(w + gd + 0.2, h / 2, 0.2, gh / 2, 1);
+    }
+    configureArena(settings: ArenaSettings) {
+        this.arena = arenaSettings(settings);
+        this.buildWalls();
+        this.resetRound();
+    }
+
     setConnectedSeats(seats: number[]) {
         this.activePlayers = this.players.map((body, index) => {
             const active = seats.includes(index);
@@ -164,9 +210,9 @@ export class Simulation {
 
     spawnSeat(seat: number) {
         const body = this.players[seat];
-        const x = seat % 2 === 0 ? 3 : RULES.width - 3;
-        let y = RULES.height / 2;
-        for (let candidate = 1; candidate <= RULES.height - 1; candidate += 1.25) {
+        const x = seat % 2 === 0 ? 3 : this.field.width - 3;
+        let y = this.field.height / 2;
+        for (let candidate = 1; candidate <= this.field.height - 1; candidate += 1.25) {
             if (
                 this.players.every(
                     (other, index) =>
@@ -202,11 +248,11 @@ export class Simulation {
                     : 0;
                 return [
                     body,
-                    RULES.width / 2 + (index % 2 === 0 ? -2 : 2),
-                    RULES.height / 2 + row * 1.6,
+                    this.field.width / 2 + (index % 2 === 0 ? -2 : 2),
+                    this.field.height / 2 + row * 1.6,
                 ] as const;
             }),
-            [this.ball, RULES.width / 2, RULES.height / 2],
+            [this.ball, this.field.width / 2, this.field.height / 2],
         ] as const) {
             body.setTranslation({ x, y }, true);
             body.setLinvel({ x: 0, y: 0 }, true);
@@ -215,7 +261,7 @@ export class Simulation {
             body.setAngvel(0, true);
         }
         this.pause = 0;
-        this.energySystem.reset(this.players.length);
+        this.energySystem.reset(this.players.length, this.arena);
         this.cooldowns = this.players.map(() => 0);
         this.shooting = this.players.map(() => false);
         this.epoch++;
@@ -331,13 +377,13 @@ export class Simulation {
         });
         const b = this.ball.translation();
         const inGoal =
-            b.y > (RULES.height - RULES.goalHeight) / 2 &&
-            b.y < (RULES.height + RULES.goalHeight) / 2;
+            b.y > (this.field.height - this.field.goalHeight) / 2 &&
+            b.y < (this.field.height + this.field.goalHeight) / 2;
         if (
             authoritative &&
             this.lastScorer === null &&
             inGoal &&
-            (b.x < -RULES.ballRadius || b.x > RULES.width + RULES.ballRadius)
+            (b.x < -RULES.ballRadius || b.x > this.field.width + RULES.ballRadius)
         ) {
             this.lastScorer = b.x < 0 ? 'right' : 'left';
             this.score[this.lastScorer === 'left' ? 0 : 1]++;
@@ -352,6 +398,7 @@ export class Simulation {
             active: this.activePlayers[index] ?? true,
         });
         return {
+            arena: { ...this.arena },
             players: this.players.map(bodyState),
             ballState: bodyState(this.ball, this.players.length),
             cooldowns: [...this.cooldowns],
@@ -370,6 +417,9 @@ export class Simulation {
         };
     }
     restore(state: GameSnapshot) {
+        const arena = arenaSettings(state.arena);
+        if (arena.id !== this.arena.id) this.configureArena(arena);
+        else this.arena = arena;
         [...this.players, this.ball].forEach((body, index) => {
             const value = index < this.players.length ? state.players[index] : state.ballState;
             body.setTranslation({ x: value.x, y: value.y }, true);
@@ -384,7 +434,7 @@ export class Simulation {
         this.energySystem.boosting = this.players.map(
             (_, index) => state.boosting?.[index] ?? false,
         );
-        this.energySystem.padCooldowns = ENERGY_PADS.map(
+        this.energySystem.padCooldowns = arenaEnergyPads(this.arena).map(
             (_, index) => state.padCooldowns?.[index] ?? 0,
         );
         this.shooting = state.players.map((player) => player.shooting);

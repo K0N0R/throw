@@ -1,3 +1,4 @@
+import { ARENAS, ARENA_SKINS, arenaSettings } from '../../shared/game/arenas';
 import { DEFAULT_AVATAR, validAvatar } from '../../shared/game/avatars';
 import { Core } from '../core/core';
 import { GameSettings } from '../core/systems/gameSettings';
@@ -35,6 +36,35 @@ export class AppController {
             const host = document.createElement('div');
             host.className = 'standalone-game';
             this.root.append(host);
+            if (params.has('local')) {
+                const controls = document.createElement('div');
+                controls.className = 'training-arena-controls';
+                const selected = arenaSettings({
+                    id: params.get('arena') ?? 'classic',
+                    skin: params.get('skin') ?? 'grass',
+                });
+                for (const [key, label, choices] of [
+                    ['arena', 'Wariant boiska', ARENAS],
+                    ['skin', 'Wygląd boiska', ARENA_SKINS],
+                ] as const) {
+                    const select = document.createElement('select');
+                    select.setAttribute('aria-label', label);
+                    for (const [value, choice] of Object.entries(choices)) {
+                        const option = document.createElement('option');
+                        option.value = value;
+                        option.textContent = choice.name;
+                        select.append(option);
+                    }
+                    select.value = key === 'arena' ? selected.id : selected.skin;
+                    select.onchange = () => {
+                        const query = new URLSearchParams(location.search);
+                        query.set(key, select.value);
+                        location.search = query.toString();
+                    };
+                    controls.append(select);
+                }
+                this.root.append(controls);
+            }
             await this.initCore(host);
             await this.createGame(params.has('local'));
             GameState.goToGameplay();
@@ -149,7 +179,15 @@ export class AppController {
         },
         generation = this.generation,
     ) {
-        const simulation = await Simulation.create(local ? false : RULES.maxPlayers);
+        const params = new URLSearchParams(location.search);
+        const arena = arenaSettings({
+            id: params.get('arena') ?? 'classic',
+            skin: params.get('skin') ?? 'grass',
+        });
+        const simulation = await Simulation.create(
+            local ? false : RULES.maxPlayers,
+            local ? arena : undefined,
+        );
         if (generation !== this.generation) {
             simulation.dispose();
             return;

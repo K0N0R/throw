@@ -1,3 +1,4 @@
+import { ArenaPanel } from './arenaPanel';
 import { resolveAvatar } from '../../shared/game/avatars';
 import type { RoomState } from '../../shared/game/lobbyProtocol';
 import { LobbyClient } from './client';
@@ -21,6 +22,7 @@ export class RoomView {
     private lastMessage = 0;
     private matchPanel: MatchPanel;
     private management: RoomManagement;
+    private arenaPanel: ArenaPanel;
     constructor(private readonly client: LobbyClient) {
         const header = node('header', 'room-heading');
         const title = node('div');
@@ -38,6 +40,7 @@ export class RoomView {
         const aside = node('aside', 'room-sidebar');
         this.matchPanel = new MatchPanel(client);
         this.management = new RoomManagement(client);
+        this.arenaPanel = new ArenaPanel(client);
         const teamLabel = node('label', 'field', 'Twoja drużyna');
         for (const [value, name] of [
             ['blue', 'Niebiescy'],
@@ -76,6 +79,7 @@ export class RoomView {
             header,
             this.notice,
             this.matchPanel.element,
+            this.arenaPanel.element,
             this.management.element,
             teamLabel,
             this.roster,
@@ -90,6 +94,7 @@ export class RoomView {
         this.title.textContent = room.name;
         this.matchPanel.render(room);
         this.management.render(room);
+        this.arenaPanel.render(room);
         this.start.textContent =
             room.match.phase === 'finished' ? 'Zagraj rewanż' : 'Rozpocznij mecz';
         const host = room.hostId === this.client.id;

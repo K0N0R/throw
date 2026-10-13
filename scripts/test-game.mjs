@@ -12,6 +12,9 @@ for (const name of [
     'avatars',
     'lobbyClient',
     'energy',
+    'loadReport',
+    'arenas',
+    'camera',
 ]) {
     await build({
         entryPoints: [`tests/${name}.test.ts`],
@@ -34,6 +37,9 @@ const result = spawnSync(
         'dist/tests/avatars.test.cjs',
         'dist/tests/lobbyClient.test.cjs',
         'dist/tests/energy.test.cjs',
+        'dist/tests/loadReport.test.cjs',
+        'dist/tests/arenas.test.cjs',
+        'dist/tests/camera.test.cjs',
     ],
     { stdio: 'inherit' },
 );

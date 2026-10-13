@@ -86,6 +86,7 @@ test('room passwords, host moderation, team capacity and transfer are enforced b
             { type: 'transfer', memberId: b.id },
             { type: 'kick', memberId: a.id },
             { type: 'access', password: '' },
+            { type: 'arena', arena: { id: 'large-rounded', skin: 'night' } },
         ] as LobbyRequest[])
             await error(b, action, 'Tylko gospodarz');
         send(c, { type: 'create', name: 'Inny' });
@@ -96,11 +97,22 @@ test('room passwords, host moderation, team capacity and transfer are enforced b
         await error(a, { type: 'hello', nick: 'Broken', avatar: '🐻🐻' }, 'jednym emoji');
         assert.equal(a.room!.members.find((m) => m.id === a.id)!.nick, 'Ania');
         assert.equal(a.room!.members.find((m) => m.id === a.id)!.avatar, '👮🏻');
+        await error(
+            a,
+            { type: 'arena', arena: { id: 'invalid', skin: 'grass' } as never },
+            'Nieprawidłowe boisko',
+        );
+        send(a, { type: 'arena', arena: { id: 'large-rounded', skin: 'night' } });
+        await until(() => a.room!.arena.id === 'large-rounded' && b.room!.arena.skin === 'night');
+        assert.equal(c.room!.arena.id, 'classic', 'Arena choice is isolated per room');
         const ga = await game(a),
             gb = await game(b);
         send(a, { type: 'start' });
         await until(() => ga.state!.ready);
         const epoch = ga.state!.game.epoch;
+        assert.deepEqual(ga.state!.game.arena, { id: 'large-rounded', skin: 'night' });
+        await error(a, { type: 'arena', arena: { id: 'classic', skin: 'grass' } }, 'przed meczem');
+        assert.equal(ga.state!.game.arena.id, 'large-rounded');
         send(b, { type: 'chat', text: 'Avatar w chacie' });
         await until(() =>
             a.room!.messages.some((m) => m.text === 'Avatar w chacie' && m.avatar === '👨‍👩‍👧‍👦'),

@@ -148,3 +148,70 @@ oraz boost i uzgadnia je z autorytatywnym stanem. Punkty nie blokują fizyki pi�
 Po golu energia działa w oknie swobodnej gry, a kickoff zeruje energię i odradza punkty.
 Dołączający gracz zaczyna bez energii. Zegar i punkty są wstrzymane poza rozgrywką.
 Parametry: `shared/game/energy.ts`; rysowanie: `frontend/game/energyView.ts`.
+
+## Test obciążeniowy wielu pokojów
+
+```sh
+npm run load-test -- --rooms 5 --players 10 --duration 30 --output dist/reports/load.json
+npm run load-test -- --rooms 3 --duration 60 --latency 100 --jitter 35 --churn --output dist/reports/delayed.json
+npm run load-test -- --rooms 5 --duration 600 --churn --output dist/reports/long-run.json
+```
+
+Bez `--url` test uruchamia osobny proces serwera na losowym porcie localhost;
+nie korzysta z otwartego podglądu gry. Boty mają prawdziwe połączenia lobby i gry,
+sterują z 60 komendami/s, strzelają, zbierają energię, używają boostu i piszą na chacie.
+`--churn` co 5 sekund rozłącza jednego uczestnika i wznawia jego sesję.
+Na końcu test opuszcza tylko utworzone przez siebie pokoje i sprawdza ich usunięcie.
+
+`--latency` oznacza opóźnienie W JEDNĄ STRONĘ, a `--jitter` losowe ±ms.
+Wiadomości zachowują kolejność WebSocket; strat pakietów nie symulujemy.
+Boty nie renderują Pixi. Lokalnie boty i serwer są osobnymi procesami, ale dzielą sprzęt.
+Raport obejmuje CPU (procent jednego rdzenia), RSS/heap, p95/p99 RTT i odstępów snapshotów,
+częstotliwość symulacji, transfer gry (bez lobby/HTTP), reconnecty i nieoczekiwane rozłączenia.
+Sam wzrost pamięci w krótkim teście nie dowodzi wycieku.
+
+Test kończy się kodem 1 przy nieoczekiwanym rozłączeniu, błędzie protokołu,
+niepoprawnym stanie, symulacji poniżej 57 kroków/s, utracie ponad 100 ms czasu,
+p99 pętli zdarzeń ponad 100 ms lub pozostawieniu testowych pokojów.
+Histogram pętli obejmuje czas działania serwera, a średnia i maksimum fizyki czas życia pokoju.
+Krótki pomiar lokalny nie określa pojemności VPS.
+
+Na wdrożonym serwerze, w kontrolowanym terminie i z aktualnym backendem:
+
+```sh
+npm run load-test -- --url https://adres-twojego-serwera --rooms 3 --duration 60 --output dist/reports/vps.json
+```
+
+Ten wariant tworzy prawdziwe pokoje i ruch na wskazanym serwerze. Metryki CPU obejmują
+cały proces, także pozostałych użytkowników. `/metrics` ma teraz `schemaVersion: 2`
+i sekcję `runtime`; dotychczasowe pola fizyki oraz lista pokojów pozostają dostępne.
+
+Wyniki wykonanych lokalnych przebiegów: [docs/load-test-results.md](docs/load-test-results.md).
+
+## Boiska i kamera
+
+Gospodarz wybiera boisko i kolorystykę w panelu „Boisko i wygląd” przed meczem.
+Warianty: klasyczne 24×12, zaokrąglone 24×12, duże 40×22 i duże zaokrąglone 40×22.
+Kolorystyki: trawa, noc, lód — są wizualne, bez zmian tarcia i sterowania.
+Zaokrąglone rogi mają rzeczywiste segmenty kolizji w Rapierze, zgodne z obrysem boiska.
+Bramki, spawny, punkty energii i ograniczenia predykcji korzystają z tej samej geometrii.
+Ustawienie jest wspólne dla całego pokoju i nie może być zmienione podczas meczu.
+
+Na małych boiskach kamera obejmuje całe boisko. Na dużych podąża za własnym graczem,
+uwzględnia piłkę i płynnie zmienia zbliżenie. Własny gracz ma priorytet, więc bardzo
+odległa piłka może zostać poza kadrem — wtedy również ma wskaźnik na krawędzi.
+Gracze poza widokiem mają strzałki w kolorach drużyn, emoji i nicki. Znaczniki bliskie
+sobie są rozsuwane, a obserwator widzi całą planszę. Kamera nie zmienia fizyki.
+
+W treningu dropdowny w lewym górnym rogu zmieniają boisko i rozpoczynają świeżą sesję.
+Przykład: `/?local=1&arena=large-rounded&skin=night`.
+
+- `shared/game/arenas.ts`: warianty, obrys, punkty energii i projekcja do legalnego obszaru.
+- `frontend/game/arenaView.ts`: renderowanie boiska; `camera.ts`: śledzenie i łagodzenie.
+- `frontend/game/offscreenPlayers.ts`: wskaźniki; `frontend/lobby/arenaPanel.ts`: wybór gospodarza.
+
+Test nowej geometrii z klientami WebSocket:
+
+```sh
+npm run load-test -- --rooms 1 --players 10 --duration 10 --arena large-rounded --skin night --output dist/reports/large-rounded.json
+```

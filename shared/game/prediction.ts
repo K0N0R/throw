@@ -1,3 +1,4 @@
+import { projectToArena } from './arenas';
 import { Simulation, RULES, type GameSnapshot, type Input, type Position } from './simulation';
 import type { Command, ServerState } from './protocol';
 
@@ -117,29 +118,10 @@ export class WorldPrediction {
                 }
             bodies.forEach((body, i) => {
                 const r = radius(i);
-                const clamp = (value: number, min: number, max: number) =>
-                    Math.max(min, Math.min(max, value));
-                const pitch = {
-                    x: clamp(body.x, r, RULES.width - r),
-                    y: clamp(body.y, r, RULES.height - r),
-                };
-                if (i < state.players.length) {
-                    Object.assign(body, pitch);
-                    return;
-                }
-                // The ball's legal space is the union of the pitch and the goal corridor.
-                // Choose the nearest projection, never change the entire X boundary when
-                // a tiny roof/floor penetration or smoothing offset changes Y.
-                const corridor = {
-                    x: clamp(body.x, -RULES.goalDepth + r, RULES.width + RULES.goalDepth - r),
-                    y: clamp(
-                        body.y,
-                        (RULES.height - RULES.goalHeight) / 2 + r,
-                        (RULES.height + RULES.goalHeight) / 2 - r,
-                    ),
-                };
-                const distance = (p: Position) => (p.x - body.x) ** 2 + (p.y - body.y) ** 2;
-                Object.assign(body, distance(pitch) < distance(corridor) ? pitch : corridor);
+                Object.assign(
+                    body,
+                    projectToArena(body, r, state.arena, i === state.players.length),
+                );
             });
         }
         return bodies;

@@ -1,3 +1,4 @@
+import { validArena, ARENAS, ARENA_SKINS } from '../../shared/game/arenas';
 import { DEFAULT_AVATAR, validAvatar } from '../../shared/game/avatars';
 import { randomUUID, createHash, timingSafeEqual } from 'node:crypto';
 import type { Server } from 'node:http';
@@ -71,6 +72,7 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
         running: r.running,
         locked: r.passwordHash !== null,
         ready: r.match.canStart(),
+        arena: r.match.arena(),
         match: r.flow.snapshot(),
         members: [...r.members].map(({ id, nick, avatar, seat, socket }) => ({
             id,
@@ -399,6 +401,19 @@ export function attachLobby(server: Server, legacy: Match, reconnectMs = 15000) 
                                 });
                                 message(r, `${m.nick} wyrzucił z pokoju: ${target.nick}.`);
                             }
+                            return;
+                        }
+                        if (data.type === 'arena') {
+                            if (r.hostId !== m.id)
+                                throw new Error('Tylko gospodarz może zmieniać boisko.');
+                            if (r.running) throw new Error('Boisko można zmienić przed meczem.');
+                            if (!validArena(data.arena))
+                                throw new Error('Nieprawidłowe boisko lub wygląd.');
+                            r.match.configureArena(data.arena);
+                            message(
+                                r,
+                                `Boisko: ${ARENAS[data.arena.id as keyof typeof ARENAS].name}, ${ARENA_SKINS[data.arena.skin as keyof typeof ARENA_SKINS].name}.`,
+                            );
                             return;
                         }
                         if (data.type === 'settings') {

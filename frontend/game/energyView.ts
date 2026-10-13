@@ -1,6 +1,7 @@
+import { arenaEnergyPads, DEFAULT_ARENA, arenaSettings } from '../../shared/game/arenas';
 import { Container, Graphics } from 'pixi.js';
 import { Typography } from '../core/containers/components/typography';
-import { ENERGY_PADS, ENERGY_RULES } from '../../shared/game/energy';
+import { ENERGY_RULES } from '../../shared/game/energy';
 import type { GameSnapshot } from '../../shared/game/simulation';
 
 export class EnergyView {
@@ -17,10 +18,29 @@ export class EnergyView {
     });
     private bar = new Graphics();
     private lastEnergy = -1;
+    private arenaId = '';
+    private scale: number;
+    private offset: { x: number; y: number };
     constructor(scale: number, offset: { x: number; y: number }) {
-        for (const pad of ENERGY_PADS) {
+        this.scale = scale;
+        this.offset = offset;
+        this.configure(DEFAULT_ARENA);
+        this.hud.position.set(1240, 108);
+        this.bar.position.set(0, 27);
+        this.hud.addChild(this.label, this.bar);
+    }
+    private configure(value: unknown) {
+        const id = arenaSettings(value).id;
+        if (id === this.arenaId) return;
+        this.arenaId = id;
+        for (const child of this.pads.removeChildren()) child.destroy({ children: true });
+        this.markers = [];
+        for (const pad of arenaEnergyPads(value)) {
             const marker = new Container();
-            marker.position.set(offset.x + pad.x * scale, offset.y + pad.y * scale);
+            marker.position.set(
+                this.offset.x + pad.x * this.scale,
+                this.offset.y + pad.y * this.scale,
+            );
             const graphic = new Graphics();
             const timer = new Typography({
                 text: '',
@@ -32,11 +52,9 @@ export class EnergyView {
             this.pads.addChild(marker);
             this.markers.push({ graphic, timer });
         }
-        this.hud.position.set(1240, 108);
-        this.bar.position.set(0, 27);
-        this.hud.addChild(this.label, this.bar);
     }
     render(state: GameSnapshot, seat: number | null) {
+        this.configure(state.arena);
         this.markers.forEach((marker, index) => {
             const cooldown = Math.ceil(state.padCooldowns?.[index] ?? 0);
             if (marker.last === cooldown) return;

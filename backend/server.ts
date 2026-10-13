@@ -1,3 +1,4 @@
+import { monitorRuntime } from './game/runtimeMetrics';
 import express from 'express';
 import http from 'http';
 import path from 'path';
@@ -9,11 +10,18 @@ export async function createGameServer(publicPath = path.resolve(__dirname, 'pub
     const server = http.createServer(app);
     const match = await attachMatch(server, { noServer: true });
     const lobby = attachLobby(server, match);
+    const runtime = monitorRuntime();
     app.use(express.static(publicPath));
     app.get('/metrics', (_request, response) =>
-        response.json({ ...match.metrics(), rooms: lobby.metrics() }),
+        response.json({
+            schemaVersion: 2,
+            runtime: runtime.snapshot(),
+            ...match.metrics(),
+            rooms: lobby.metrics(),
+        }),
     );
     server.on('close', () => {
+        runtime.dispose();
         lobby.dispose();
         match.dispose();
     });
