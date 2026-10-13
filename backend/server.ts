@@ -1,14 +1,21 @@
 import express from 'express';
 import http from 'http';
 import path from 'path';
+import { attachLobby } from './lobby/directory';
 import { attachMatch } from './game/match';
 
 export async function createGameServer(publicPath = path.resolve(__dirname, 'public')) {
     const app = express();
     const server = http.createServer(app);
-    const match = await attachMatch(server);
+    const match = await attachMatch(server, { noServer: true });
+    const lobby = attachLobby(server, match);
     app.use(express.static(publicPath));
-    app.get('/metrics', (_request, response) => response.json(match.metrics()));
-    server.on('close', () => match.dispose());
-    return { server, match };
+    app.get('/metrics', (_request, response) =>
+        response.json({ ...match.metrics(), rooms: lobby.metrics() }),
+    );
+    server.on('close', () => {
+        lobby.dispose();
+        match.dispose();
+    });
+    return { server, match, lobby };
 }

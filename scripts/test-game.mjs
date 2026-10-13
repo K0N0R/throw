@@ -2,7 +2,7 @@ import { build } from 'esbuild';
 import { spawnSync } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 await mkdir('dist/tests', { recursive: true });
-for (const name of ['simulation', 'network', 'prediction']) {
+for (const name of ['simulation', 'network', 'prediction', 'lobby']) {
     await build({
         entryPoints: [`tests/${name}.test.ts`],
         outfile: `dist/tests/${name}.test.cjs`,
@@ -18,6 +18,7 @@ const result = spawnSync(
         'dist/tests/simulation.test.cjs',
         'dist/tests/network.test.cjs',
         'dist/tests/prediction.test.cjs',
+        'dist/tests/lobby.test.cjs',
     ],
     { stdio: 'inherit' },
 );

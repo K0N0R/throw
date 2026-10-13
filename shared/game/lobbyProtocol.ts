@@ -1,0 +1,40 @@
+export type TeamChoice = 'blue' | 'orange' | 'spectator';
+export interface RoomMember {
+    id: string;
+    nick: string;
+    seat: number | null;
+}
+export interface ChatEntry {
+    id: number;
+    kind: 'chat' | 'system';
+    text: string;
+    nick?: string;
+    time: number;
+}
+export interface RoomInfo {
+    id: string;
+    name: string;
+    hostId: string;
+    running: boolean;
+    players: number;
+    members: number;
+}
+export interface RoomState extends Omit<RoomInfo, 'players' | 'members'> {
+    ready: boolean;
+    members: RoomMember[];
+    messages: ChatEntry[];
+}
+export type LobbyRequest =
+    | { type: 'hello'; nick: string }
+    | { type: 'create'; name: string }
+    | { type: 'join'; roomId: string }
+    | { type: 'leave' }
+    | { type: 'team'; team: TeamChoice }
+    | { type: 'chat'; text: string }
+    | { type: 'start' }
+    | { type: 'stop' };
+export type LobbyMessage =
+    | { type: 'identity'; id: string }
+    | { type: 'rooms'; rooms: RoomInfo[] }
+    | { type: 'room'; room: RoomState | null }
+    | { type: 'error'; message: string };

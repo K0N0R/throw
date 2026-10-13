@@ -156,6 +156,11 @@ export class GameView {
         window.addEventListener(
             'keydown',
             (event) => {
+                if (
+                    event.target instanceof HTMLElement &&
+                    event.target.closest('input, textarea, select, [contenteditable]')
+                )
+                    return;
                 if (!GameView.controls.has(event.code)) return;
                 event.preventDefault();
                 this.keys.add(event.code);
@@ -166,8 +171,26 @@ export class GameView {
         window.addEventListener(
             'keyup',
             (event) => {
-                if (GameView.controls.has(event.code)) event.preventDefault();
+                if (
+                    GameView.controls.has(event.code) &&
+                    !(
+                        event.target instanceof HTMLElement &&
+                        event.target.closest('input, textarea, select, [contenteditable]')
+                    )
+                )
+                    event.preventDefault();
                 this.keys.delete(event.code);
+            },
+            options,
+        );
+        window.addEventListener(
+            'focusin',
+            (event) => {
+                if (
+                    event.target instanceof HTMLElement &&
+                    event.target.closest('input, textarea, select, [contenteditable]')
+                )
+                    this.clearInput();
             },
             options,
         );

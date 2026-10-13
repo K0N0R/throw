@@ -1,11 +1,298 @@
 @import url('./styles/reset.css');
+:root {
+    color-scheme: dark;
+    font-family: Arial, sans-serif;
+    color: #e6eef4;
+    background: #081b26;
+}
+* {
+    box-sizing: border-box;
+}
 html,
-body {
+body,
+#throw-app {
     width: 100%;
     height: 100%;
-    overflow: hidden;
-    background: #081b26;
+    margin: 0;
+}
+[hidden] {
+    display: none !important;
+}
+body {
+    overflow: auto;
 }
 canvas {
     display: block;
+}
+button,
+input,
+select {
+    font: inherit;
+}
+button,
+a {
+    -webkit-tap-highlight-color: transparent;
+}
+input,
+select {
+    width: 100%;
+    padding: 12px;
+    background: #081b26;
+    color: #e6eef4;
+    border: 1px solid #385566;
+    border-radius: 9px;
+    outline: none;
+}
+input:focus,
+select:focus {
+    border-color: #6bbcff;
+    box-shadow: 0 0 0 2px #6bbcff33;
+}
+.button {
+    padding: 11px 16px;
+    border: 1px solid #385566;
+    border-radius: 9px;
+    color: #e6eef4;
+    background: #183541;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.button:hover:not(:disabled) {
+    background: #244b59;
+}
+.button.primary {
+    color: #071923;
+    background: #6bbcff;
+    border-color: #6bbcff;
+    font-weight: bold;
+}
+.button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+h1 {
+    font-size: 38px;
+    font-weight: bold;
+    line-height: 1.2;
+    margin: 14px 0;
+}
+h2 {
+    font-size: 20px;
+    margin: 0 0 20px;
+    font-weight: bold;
+}
+h3 {
+    font-size: 17px;
+    margin: 0 0 8px;
+    font-weight: bold;
+}
+p {
+    line-height: 1.5;
+}
+.muted,
+.empty {
+    color: #8cabbc;
+}
+.eyebrow {
+    color: #6bbcff;
+    font-size: 13px;
+    letter-spacing: 0.16em;
+}
+.lobby-screen {
+    max-width: 1120px;
+    padding: 64px 32px;
+    margin: auto;
+}
+.lobby-heading {
+    margin-bottom: 24px;
+}
+.lobby-panels {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
+    margin-top: 24px;
+}
+.panel {
+    background: #102c36;
+    padding: 24px;
+    border: 1px solid #21424e;
+    border-radius: 18px;
+}
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    color: #a9c1cf;
+    font-size: 14px;
+    margin-bottom: 18px;
+}
+.create-room {
+    margin-top: 24px;
+}
+.create-room .button {
+    width: 100%;
+}
+.room-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.room-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 16px;
+    border: 1px solid #2b4b58;
+    border-radius: 12px;
+}
+.notice {
+    color: #8cabbc;
+    font-size: 14px;
+    min-height: 22px;
+}
+.notice.error {
+    color: #ffb189;
+}
+.training-link {
+    display: inline-block;
+    margin-top: 24px;
+    color: #6bbcff;
+}
+.room-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.room-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    padding: 14px 24px;
+    border-bottom: 1px solid #21424e;
+}
+.room-heading h1 {
+    font-size: 23px;
+    margin: 0 0 5px;
+}
+.room-heading p {
+    font-size: 13px;
+}
+.room-controls {
+    display: flex;
+    gap: 8px;
+}
+.room-screen > .notice {
+    padding: 8px 24px;
+    background: #0c2430;
+}
+.room-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+.game-host {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+.room-sidebar {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    background: #102c36;
+    border-left: 1px solid #21424e;
+    overflow-y: auto;
+}
+.roster {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.team-2 {
+    grid-column: 1 / -1;
+}
+.team-0 h3 {
+    color: #6bbcff;
+}
+.team-1 h3 {
+    color: #ffaa69;
+}
+.team p {
+    font-size: 13px;
+}
+.team .self {
+    font-weight: bold;
+}
+.chat-history {
+    min-height: 100px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    background: #081b26;
+    border-radius: 9px;
+}
+.chat-history p {
+    margin-bottom: 8px;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+.chat-message strong {
+    color: #b8dfff;
+}
+.system-message {
+    color: #8cabbc;
+    font-style: italic;
+}
+.chat-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+.chat-form input {
+    min-width: 0;
+}
+.room-sidebar h2 {
+    margin: 0 0 12px;
+    font-size: 16px;
+}
+.standalone-game {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.fatal-error {
+    padding: 32px;
+}
+@media (max-width: 800px) {
+    .lobby-screen {
+        padding: 32px 20px;
+    }
+    .lobby-panels {
+        grid-template-columns: 1fr;
+    }
+    .room-heading {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 12px;
+    }
+    .room-controls {
+        flex-wrap: wrap;
+    }
+    .room-body {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .game-host {
+        flex: none;
+        height: 50vh;
+    }
+    .room-sidebar {
+        width: 100%;
+        min-height: 450px;
+        border-left: 0;
+    }
 }

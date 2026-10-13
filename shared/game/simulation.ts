@@ -156,6 +156,33 @@ export class Simulation {
         });
     }
 
+    spawnSeat(seat: number) {
+        const body = this.players[seat];
+        const x = seat % 2 === 0 ? 3 : RULES.width - 3;
+        let y = RULES.height / 2;
+        for (let candidate = 1; candidate <= RULES.height - 1; candidate += 1.25) {
+            if (
+                this.players.every(
+                    (other, index) =>
+                        index === seat ||
+                        !this.activePlayers[index] ||
+                        Math.hypot(other.translation().x - x, other.translation().y - candidate) >
+                            RULES.playerRadius * 2 + 0.1,
+                )
+            ) {
+                y = candidate;
+                break;
+            }
+        }
+        body.setTranslation({ x, y }, true);
+        body.setLinvel({ x: 0, y: 0 }, true);
+        body.setAngvel(0, true);
+        body.resetForces(true);
+        body.resetTorques(true);
+        this.cooldowns[seat] = 0;
+        this.shooting[seat] = false;
+    }
+
     resetRound() {
         for (const [body, x, y] of [
             ...this.players.map((body, index) => {

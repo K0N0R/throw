@@ -27,8 +27,8 @@ export class Core {
         UiTime.update(ticker.deltaMS);
         EffectsManager.updateUi(ticker.deltaMS);
         this.uiContainer?.update(ticker.deltaMS);
-        this.popupContainer.update(ticker.deltaMS);
-        this.background.update(ticker.deltaMS);
+        this.popupContainer?.update(ticker.deltaMS);
+        this.background?.update(ticker.deltaMS);
 
         if (GameState.state === 'initialization') {
         } else {
@@ -40,24 +40,29 @@ export class Core {
         }
     }
 
-    async init() {
-        await this.instantiateApp();
+    async init(options: { host?: HTMLElement; minimal?: boolean } = {}) {
+        await this.instantiateApp(options.host);
         this.watchContainersForResize();
-        this.instantiateInitialComponents();
+        if (!options.minimal) this.instantiateInitialComponents();
         this.app.ticker.add(this.update.bind(this));
-        this.bindEvents();
+        if (!options.minimal) this.bindEvents();
     }
 
-    async instantiateApp() {
+    async instantiateApp(host?: HTMLElement) {
         this.app = new PIXI.Application();
         await this.app.init({
-            resizeTo: window,
-            backgroundColor: 0x000000,
-            antialias: false,
+            resizeTo: host ?? window,
+            backgroundColor: 0x081b26,
+            antialias: true,
+            resolution: Math.min(window.devicePixelRatio || 1, 2),
+            autoDensity: true,
         });
 
+        this.app.canvas.tabIndex = 0;
+        this.app.canvas.setAttribute('aria-label', 'Boisko gry');
+        this.app.canvas.addEventListener('pointerdown', () => this.app.canvas.focus());
         this.app.canvas.addEventListener('contextmenu', (evt) => evt.preventDefault());
-        document.body.appendChild(this.app.canvas);
+        (host ?? document.body).appendChild(this.app.canvas);
     }
 
     private instantiateInitialComponents() {

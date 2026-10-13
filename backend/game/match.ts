@@ -1,9 +1,20 @@
+import type { Duplex } from 'node:stream';
+import type { IncomingMessage } from 'node:http';
 import type { Server } from 'node:http';
 import { WebSocket, WebSocketServer } from 'ws';
 import { Simulation, RULES, type Input } from '../../shared/game/simulation';
 import { NEUTRAL, validCommand, type Command, type ServerState } from '../../shared/game/protocol';
 
+export interface MatchOptions {
+    noServer?: boolean;
+    resolveMember?: (request: IncomingMessage) => { id: string; seat: number | null } | undefined;
+    canPlay?: () => boolean;
+    mayReset?: (id: string) => boolean;
+    onGoal?: (team: string) => void;
+    onRosterChanged?: () => void;
+}
 interface Client {
+    memberId?: string;
     socket: WebSocket;
     seat: number | null;
     queue: Command[];
@@ -16,9 +27,13 @@ interface Client {
     received: number;
     lastReset: number;
 }
-export async function attachMatch(server: Server) {
+export async function attachMatch(server: Server, options: MatchOptions = {}) {
     const game = await Simulation.create(RULES.maxPlayers);
-    const wss = new WebSocketServer({ server, path: '/game', maxPayload: 2048 });
+    const wss = new WebSocketServer(
+        options.noServer
+            ? { noServer: true, maxPayload: 2048 }
+            : { server, path: '/game', maxPayload: 2048 },
+    );
     game.setConnectedSeats([]);
     const slots = Array.from({ length: RULES.maxPlayers }, (_, index) => index);
     const clients = new Set<Client>();
@@ -35,7 +50,11 @@ export async function attachMatch(server: Server) {
         droppedSeconds: 0,
     };
     const ready = () =>
-        [0, 1].every((team) => [...clients].some((c) => c.seat !== null && c.seat % 2 === team));
+        options.canPlay
+            ? options.canPlay() && [...clients].some((c) => c.seat !== null)
+            : [0, 1].every((team) =>
+                  [...clients].some((c) => c.seat !== null && c.seat % 2 === team),
+              );
     const syncRoster = () =>
         game.setConnectedSeats([...clients].flatMap((c) => (c.seat !== null ? [c.seat] : [])));
     const hostSeat = () =>
@@ -59,6 +78,10 @@ export async function attachMatch(server: Server) {
             ack: seats.map((c) => c?.ack ?? 0),
             inputs: seats.map((c) => c?.input ?? NEUTRAL),
             game: game.snapshot(),
+            hostSeat: options.resolveMember
+                ? ([...clients].find((c) => c.memberId && options.mayReset?.(c.memberId))?.seat ??
+                  -1)
+                : hostSeat(),
         };
     };
     const broadcast = () => {
@@ -77,10 +100,24 @@ export async function attachMatch(server: Server) {
         }
         broadcast();
     };
-    wss.on('connection', (socket) => {
-        const seat = slots.find((seat) => ![...clients].some((c) => c.seat === seat)) ?? null;
+    wss.on('connection', (socket, request) => {
+        const member = options.resolveMember?.(request);
+        if (options.resolveMember && !member) {
+            socket.close(1008, 'Room membership required');
+            return;
+        }
+        if (member)
+            for (const existing of clients)
+                if (existing.memberId === member.id) {
+                    clients.delete(existing);
+                    existing.socket.terminate();
+                }
+        const seat = member
+            ? member.seat
+            : (slots.find((seat) => ![...clients].some((c) => c.seat === seat)) ?? null);
         const c: Client = {
             socket,
+            memberId: member?.id,
             seat,
             queue: [],
             accepted: 0,
@@ -96,8 +133,12 @@ export async function attachMatch(server: Server) {
         send(c, JSON.stringify({ type: 'welcome', seat }));
         if (seat !== null) {
             syncRoster();
-            reset(false);
+            if (options.resolveMember) {
+                game.spawnSeat(seat);
+                broadcast();
+            } else reset(false);
         } else send(c, JSON.stringify(state()));
+        options.onRosterChanged?.();
         socket.on('pong', () => {
             c.alive = true;
         });
@@ -127,7 +168,7 @@ export async function attachMatch(server: Server) {
             if (
                 message.type === 'reset' &&
                 typeof message.match === 'boolean' &&
-                c.seat === hostSeat() &&
+                (c.memberId ? options.mayReset?.(c.memberId) : c.seat === hostSeat()) &&
                 now - c.lastReset > 500
             ) {
                 c.lastReset = now;
@@ -167,7 +208,9 @@ export async function attachMatch(server: Server) {
             clients.delete(c);
             if (c.seat !== null && !disposed) {
                 syncRoster();
-                reset(false);
+                if (options.resolveMember) broadcast();
+                else reset(false);
+                options.onRosterChanged?.();
             }
         });
     });
@@ -206,6 +249,8 @@ export async function attachMatch(server: Server) {
                 metrics.physicsMs += cost;
                 metrics.maxPhysicsMs = Math.max(metrics.maxPhysicsMs, cost);
                 const after = game.snapshot();
+                if (after.phase === 'goal' && before.phase !== 'goal')
+                    options.onGoal?.(after.lastScorer === 'left' ? 'Niebiescy' : 'Pomarańczowi');
                 if (after.kickSerial !== before.kickSerial || after.phase !== before.phase)
                     urgent = true;
                 if (after.epoch !== before.epoch)
@@ -230,6 +275,29 @@ export async function attachMatch(server: Server) {
         }
     }, 5000);
     return {
+        canStart: () =>
+            [0, 1].every((team) =>
+                [...clients].some((c) => c.seat !== null && c.seat % 2 === team),
+            ),
+        upgrade(request: IncomingMessage, socket: Duplex, head: Buffer) {
+            wss.handleUpgrade(request, socket, head, (ws) => wss.emit('connection', ws, request));
+        },
+        restart() {
+            reset(true);
+        },
+        stop() {
+            reset(false);
+        },
+        disconnectMember(id: string) {
+            for (const c of clients)
+                if (c.memberId === id) {
+                    clients.delete(c);
+                    c.socket.close(4001, 'Membership changed');
+                }
+            syncRoster();
+            broadcast();
+            options.onRosterChanged?.();
+        },
         metrics: () => ({
             ...metrics,
             elapsedSeconds: (performance.now() - started) / 1000,

@@ -64,6 +64,7 @@ export class OnlineSession implements GameSession {
     constructor(
         private readonly simulation: Simulation,
         latency = 0,
+        private readonly membership?: { roomId: string; memberId: string },
     ) {
         this.prediction = new WorldPrediction(simulation);
         this.latency = Math.max(0, Math.min(500, latency));
@@ -75,7 +76,9 @@ export class OnlineSession implements GameSession {
     }
     get canReset() {
         return (
-            this.seat !== null && this.latest?.game.players.findIndex((p) => p.active) === this.seat
+            this.seat !== null &&
+            (this.latest?.hostSeat ?? this.latest?.game.players.findIndex((p) => p.active)) ===
+                this.seat
         );
     }
     get label() {
@@ -84,8 +87,13 @@ export class OnlineSession implements GameSession {
     get status() {
         if (!this.connected) return 'Łączenie z serwerem…';
         if (!this.latest?.ready)
-            return 'Czekamy na przeciwną drużynę — otwórz ten link w kolejnej przeglądarce';
-        if (this.seat === null) return 'Oglądasz mecz — wszystkie miejsca są zajęte';
+            return this.membership
+                ? 'Czekamy na rozpoczęcie meczu przez gospodarza.'
+                : 'Czekamy na przeciwną drużynę — otwórz ten link w kolejnej przeglądarce';
+        if (this.seat === null)
+            return this.membership
+                ? 'Obserwujesz mecz.'
+                : 'Oglądasz mecz — wszystkie miejsca są zajęte';
         return null;
     }
     get debug() {
@@ -101,8 +109,11 @@ export class OnlineSession implements GameSession {
     }
     private connect() {
         if (this.stopped) return;
+        const query = this.membership
+            ? `?room=${encodeURIComponent(this.membership.roomId)}&member=${encodeURIComponent(this.membership.memberId)}`
+            : '';
         const socket = new WebSocket(
-            `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/game`,
+            `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/game${query}`,
         );
         this.socket = socket;
         socket.onmessage = (event) => {
@@ -137,6 +148,7 @@ export class OnlineSession implements GameSession {
     }
     private receive(message: ServerMessage) {
         if (message.type === 'welcome') {
+            this.latest = undefined;
             this.seat = message.seat;
             this.seq = 0;
             this.pending = [];

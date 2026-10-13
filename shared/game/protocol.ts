@@ -11,6 +11,7 @@ export interface ServerState {
     ack: number[];
     inputs: Input[];
     game: GameSnapshot;
+    hostSeat?: number;
 }
 export type ServerMessage =
     | ServerState
