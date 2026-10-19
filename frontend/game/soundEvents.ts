@@ -50,7 +50,8 @@ export class GameSoundEvents {
                 this.lastImpact = now;
             }
         }
-        if (seat !== null && state.energy[seat] > (before.energy[seat] ?? 0)) sounds.push('booster');
+        if (seat !== null && state.energy[seat] > (before.energy[seat] ?? 0))
+            sounds.push('booster');
         return sounds;
     }
 }

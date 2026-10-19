@@ -49,7 +49,12 @@ test('joining or reconnecting to a running game does not replay historical event
         const audio = new GameSoundEvents();
         const state = simulation.snapshot();
         audio.update(state, 0, false, 0);
-        const live = { ...state, epoch: state.epoch + 3, kickSerial: 20, score: [2, 1] as [number, number] };
+        const live = {
+            ...state,
+            epoch: state.epoch + 3,
+            kickSerial: 20,
+            score: [2, 1] as [number, number],
+        };
         assert.deepEqual(audio.update(live, 0, true, 100), []);
         assert.deepEqual(audio.update(live, 0, false, 200), []);
         assert.deepEqual(audio.update({ ...live, kickSerial: 25 }, 0, true, 300), []);

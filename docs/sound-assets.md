@@ -4,21 +4,21 @@ Lista bazuje na obecnych mechanikach gry: strzałach, kolizjach, golach, energii
 
 ## Podpięte pliki
 
-| Plik MP3 | Zastosowanie |
-| --- | --- |
-| `soccer-kick`, `soccer-strong-kick` | Strzał; wariant zależy od prędkości piłki po kopnięciu, nie od osobnego trybu strzału. |
+| Plik MP3                            | Zastosowanie                                                                                   |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `soccer-kick`, `soccer-strong-kick` | Strzał; wariant zależy od prędkości piłki po kopnięciu, nie od osobnego trybu strzału.         |
 | `ball-bounce-1` do `ball-bounce-10` | Naprzemienne warianty odbić wykrywanych po zmianie prędkości piłki, maksymalnie raz na 100 ms. |
-| `goal-celebration` | Zwiększenie wyniku, bez powtórzeń dla kolejnych snapshotów. |
-| `start` | Start meczu, wznowienie po golu lub reset akcji. |
-| `end` | Zakończenie meczu w pokoju. |
-| `ping` | Ostatnie 5 sekund meczu w pokoju. |
-| `booster` | Jednorazowy dźwięk podniesienia energii przez własnego gracza. |
-| `speeding` | Pętla podczas aktywnego przyspieszenia własnego gracza. |
-| `match-ambient` | Zapętlone tło meczu, wyłączane po jego zakończeniu lub wyjściu do lobby. |
-| `message-notification-1` | Nowa wiadomość innego nicku, bez odtwarzania historii przy wejściu. |
-| `ui-confirm` | Kliknięcia przycisków i dołączenie uczestnika do pokoju. |
-| `ui-open`, `ui-close` | Wejście/wyjście z pokoju i otwieranie/zamykanie paneli. |
-| `ui-hide` | Zatrzymanie meczu lub opuszczenie pokoju przez uczestnika. |
+| `goal-celebration`                  | Zwiększenie wyniku, bez powtórzeń dla kolejnych snapshotów.                                    |
+| `start`                             | Start meczu, wznowienie po golu lub reset akcji.                                               |
+| `end`                               | Zakończenie meczu w pokoju.                                                                    |
+| `ping`                              | Ostatnie 5 sekund meczu w pokoju.                                                              |
+| `booster`                           | Jednorazowy dźwięk podniesienia energii przez własnego gracza.                                 |
+| `speeding`                          | Pętla podczas aktywnego przyspieszenia własnego gracza.                                        |
+| `match-ambient`                     | Zapętlone tło meczu, wyłączane po jego zakończeniu lub wyjściu do lobby.                       |
+| `message-notification-1`            | Nowa wiadomość innego nicku, bez odtwarzania historii przy wejściu.                            |
+| `ui-confirm`                        | Kliknięcia przycisków i dołączenie uczestnika do pokoju.                                       |
+| `ui-open`, `ui-close`               | Wejście/wyjście z pokoju i otwieranie/zamykanie paneli.                                        |
+| `ui-hide`                           | Zatrzymanie meczu lub opuszczenie pokoju przez uczestnika.                                     |
 
 Ikona dźwięku w prawym dolnym rogu otwiera osobne suwaki efektów i ambientu. Wartość 0 wycisza daną kategorię; ustawienia są zapisywane lokalnie. Nowe instalacje zaczynają z efektami na 65% i ambientem na 20%; wcześniejsze zapisane ustawienia pozostają zachowane. Przeglądarka może wymagać pierwszego kliknięcia przed odtworzeniem audio. Ukrycie karty wstrzymuje dźwięki.
 
