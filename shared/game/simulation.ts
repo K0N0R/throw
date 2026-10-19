@@ -76,7 +76,19 @@ export function projectKickoffPlayer(
         side < 0
             ? Math.min(position.x, center.x - RULES.playerRadius)
             : Math.max(position.x, center.x + RULES.playerRadius);
-    if (seat % 2 === (team === 'left' ? 0 : 1)) return { x, y: position.y };
+    if (seat % 2 === (team === 'left' ? 0 : 1)) {
+        const dx = position.x - center.x;
+        const dy = position.y - center.y;
+        const distance = Math.hypot(dx, dy);
+        const radius = RULES.centerCircleRadius - RULES.playerRadius;
+        if (x === position.x || distance <= radius) return position;
+        if (distance - radius < Math.abs(x - position.x))
+            return {
+                x: center.x + (dx * radius) / distance,
+                y: center.y + (dy * radius) / distance,
+            };
+        return { x, y: position.y };
+    }
     const dx = x - center.x;
     const dy = position.y - center.y;
     const distance = Math.hypot(dx, dy);

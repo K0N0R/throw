@@ -40,13 +40,34 @@ for (const scoringSeat of [0, 1]) {
                     const view = prediction.snapshot();
                     assert.equal(view.kickoffTeam, team);
                     const player = view.players[opponentSeat];
-                    assert.ok(side * (player.x - 12) >= RULES.playerRadius - 0.001);
+                    assert.ok(
+                        side * (player.x - 12) >= RULES.playerRadius - 0.001 ||
+                            (controlledSeat === scoringSeat &&
+                                Math.hypot(player.x - 12, player.y - 6) <=
+                                    RULES.centerCircleRadius - RULES.playerRadius + 0.001),
+                    );
                     if (controlledSeat !== scoringSeat)
                         assert.ok(
                             Math.hypot(player.x - 12, player.y - 6) >=
                                 RULES.centerCircleRadius + RULES.playerRadius - 0.001,
                         );
                     assert.equal(view.kickSerial, 0);
+                }
+                if (controlledSeat === scoringSeat) {
+                    server.players[controlledSeat].setTranslation(
+                        { x: 12 + side * 0.6, y: 5 },
+                        true,
+                    );
+                    prediction.reconcile(frame(server, 121), controlledSeat, []);
+                    for (let tick = 0; tick < 90; tick++)
+                        prediction.step({ x: -side, y: 0, shoot: false });
+                    const inside = prediction.snapshot().players[controlledSeat];
+                    assert.ok(side * (inside.x - 12) < -0.25);
+                    assert.ok(
+                        Math.hypot(inside.x - 12, inside.y - 6) <=
+                            RULES.centerCircleRadius - RULES.playerRadius + 0.001,
+                    );
+                    assert.equal(prediction.snapshot().kickoffTeam, team);
                 }
                 server.players[scoringSeat].setTranslation(
                     { x: scoringSeat === 0 ? 11.21 : 12.79, y: 6 },

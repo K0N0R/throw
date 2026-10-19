@@ -70,15 +70,6 @@ export class ArenaView {
                     alpha: 0.85,
                 });
             this.element.addChild(barrier);
-            const midfield = new Graphics()
-                .moveTo(w / 2, h / 2 - radius)
-                .lineTo(w / 2, h / 2 + radius)
-                .stroke({
-                    color: kickoffTeam === 'left' ? 0x6bbcff : 0xffaa69,
-                    width: 3,
-                    alpha: 0.85,
-                });
-            this.element.addChild(midfield);
         }
     }
 }

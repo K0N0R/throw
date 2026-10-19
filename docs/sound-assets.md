@@ -20,7 +20,7 @@ Lista bazuje na obecnych mechanikach gry: strzałach, kolizjach, golach, energii
 | `ui-open`, `ui-close`               | Wejście/wyjście z pokoju i otwieranie/zamykanie paneli.                                        |
 | `ui-hide`                           | Zatrzymanie meczu lub opuszczenie pokoju przez uczestnika.                                     |
 
-Ikona dźwięku w prawym dolnym rogu otwiera osobne suwaki efektów i ambientu. Wartość 0 wycisza daną kategorię; ustawienia są zapisywane lokalnie. Nowe instalacje zaczynają z efektami na 65% i ambientem na 20%; wcześniejsze zapisane ustawienia pozostają zachowane. Przeglądarka może wymagać pierwszego kliknięcia przed odtworzeniem audio. Ukrycie karty wstrzymuje dźwięki.
+Ikona dźwięku w lewym górnym rogu otwiera osobne suwaki efektów i ambientu w panelu rozwijanym poniżej przycisku. Wartość 0 wycisza daną kategorię; ustawienia są zapisywane lokalnie. Nowe instalacje zaczynają z efektami na 65% i ambientem na 20%; wcześniejsze zapisane ustawienia pozostają zachowane. Przeglądarka może wymagać pierwszego kliknięcia przed odtworzeniem audio. Ukrycie karty wstrzymuje dźwięki.
 
 ## Priorytet 1: podstawowa rozgrywka
 

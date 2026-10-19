@@ -146,7 +146,7 @@ scenario('shooting indicator follows the key rather than kick range or cooldown'
 });
 
 for (const scoringSeat of [0, 1]) {
-    test(`restarting team ${scoringSeat} can enter the circle but cannot cross midfield`, async () => {
+    test(`restarting team ${scoringSeat} can use the full circle but cannot cross midfield outside it`, async () => {
         const game = await Simulation.create(true);
         try {
             const team = scoringSeat === 0 ? 'left' : 'right';
@@ -158,7 +158,7 @@ for (const scoringSeat of [0, 1]) {
                 team,
                 game.arena,
             );
-            assert.equal(projected.x, 12 + side * RULES.playerRadius);
+            assert.equal(projected.x, 12 - side);
             assert.ok(Math.hypot(projected.x - 12, projected.y - 6) < RULES.centerCircleRadius);
             game.players[scoringSeat].setTranslation({ x: 12 + side, y: 2 }, true);
             for (let tick = 0; tick < 120; tick++) {
@@ -174,6 +174,28 @@ for (const scoringSeat of [0, 1]) {
                 );
                 assert.equal(game.snapshot().kickoffTeam, team);
             }
+            game.players[scoringSeat].setTranslation({ x: 12 + side * 0.6, y: 5 }, true);
+            for (let tick = 0; tick < 90; tick++)
+                game.step(
+                    game.players.map((_, seat) => ({
+                        ...idle,
+                        x: seat === scoringSeat ? -side : 0,
+                    })),
+                );
+            const inside = game.players[scoringSeat].translation();
+            assert.ok(
+                side * (inside.x - 12) < -0.25,
+                'Restarting player can cross midfield inside the circle',
+            );
+            assert.ok(
+                Math.hypot(inside.x - 12, inside.y - 6) <=
+                    RULES.centerCircleRadius - RULES.playerRadius + 0.001,
+            );
+            assert.equal(
+                game.snapshot().kickoffTeam,
+                team,
+                'Walking around the ball does not restart play',
+            );
         } finally {
             game.dispose();
         }
