@@ -30,6 +30,7 @@ export class LobbyView {
         profile.append(this.nick);
         const form = node('form', 'create-room');
         const name = node('label', 'field', 'Nazwa pokoju');
+        this.roomName.value = client.roomName;
         this.roomName.placeholder = 'Wieczorny mecz';
         this.roomName.maxLength = 40;
         this.roomName.required = true;

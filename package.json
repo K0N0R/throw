@@ -17,9 +17,9 @@
         "@pixi/layers": "^2.1.0",
         "@pixi/sound": "^6.0.1",
         "@tweenjs/tween.js": "^25.0.0",
-        "express": "^4.18.2",
+        "express": "^4.22.3",
         "pixi.js": "^8.11.0",
-        "ws": "^8.13.0"
+        "ws": "^8.22.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.31.0",
@@ -29,9 +29,9 @@
         "@types/ws": "^8.18.1",
         "@typescript-eslint/eslint-plugin": "^8.36.0",
         "@typescript-eslint/parser": "^8.36.0",
-        "chokidar": "^3.5.3",
+        "chokidar": "^4.0.3",
         "cross-env": "^7.0.3",
-        "esbuild": "^0.20.0",
+        "esbuild": "^0.28.2",
         "eslint": "^9.31.0",
         "eslint-config-prettier": "^10.1.5",
         "eslint-plugin-prettier": "^5.5.1",
