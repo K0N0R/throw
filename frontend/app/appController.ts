@@ -11,6 +11,8 @@ import { LocalSession, OnlineSession } from '../game/session';
 import { LobbyClient } from '../lobby/client';
 import { LobbyView } from '../lobby/lobbyView';
 import { RoomView } from '../lobby/roomView';
+import { AudioController } from './audioController';
+import { SoundManager } from '../core/systems/soundManager';
 
 export class AppController {
     private readonly root = document.createElement('div');
@@ -30,7 +32,10 @@ export class AppController {
             if (event.persisted) location.reload();
         });
         GameSettings.init();
+        SoundManager.init();
         await prepreload();
+        await preload();
+        const audio = new AudioController(this.root);
         const params = new URLSearchParams(location.search);
         if (params.has('local') || params.has('quick')) {
             const host = document.createElement('div');
@@ -67,6 +72,8 @@ export class AppController {
             }
             await this.initCore(host);
             await this.createGame(params.has('local'));
+            audio.playing(true);
+            SoundManager.effect('start');
             GameState.goToGameplay();
             return;
         }
@@ -76,6 +83,7 @@ export class AppController {
         this.root.append(lobby.element, room.element);
         room.element.hidden = true;
         client.onChange = () => {
+            audio.room(client.room, client.nick, client.connected);
             if (!client.connected && client.room) {
                 this.generation++;
                 this.game?.dispose();
@@ -165,7 +173,6 @@ export class AppController {
                 const core = (this.core = new Core());
                 await core.init({ host, minimal: true });
                 globalThis.__PIXI_APP__ = core.app;
-                await preload();
             })();
         await this.corePromise;
         this.core!.app.resize();

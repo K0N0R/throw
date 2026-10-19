@@ -10,6 +10,8 @@ import { Application, Container, Graphics, Sprite } from 'pixi.js';
 import { RULES, type GameSnapshot, type Position } from '../../shared/game/simulation';
 
 import type { GameSession } from './session';
+import { GameSoundEvents } from './soundEvents';
+import { SoundManager, type TSound } from '../core/systems/soundManager';
 
 const SCALE = 50;
 const OFFSET = { x: 0, y: 0 };
@@ -49,6 +51,8 @@ export class GameView {
     private accumulator = 0;
     private readonly listeners = new AbortController();
     private disposed = false;
+    private readonly soundEvents = new GameSoundEvents();
+    private boostSound?: TSound;
     private static readonly controls = new Set([
         'ArrowUp',
         'ArrowDown',
@@ -74,6 +78,7 @@ export class GameView {
         >[] = () => [],
     ) {
         this.current = this.previous = session.snapshot();
+        this.soundEvents.update(this.current, session.seat, false, performance.now());
         this.buildScene();
         this.app.stage.addChild(this.scene);
         this.bindInput();
@@ -116,7 +121,7 @@ export class GameView {
         graphics.circle(-7, -7, 6).fill({ color: 0xffffff, alpha: 0.4 });
     }
     private buildScene() {
-        this.arenaView.configure(this.current.arena);
+        this.arenaView.configure(this.current.arena, SCALE, this.current.kickoffTeam);
         const viewport = new Container();
         const mask = new Graphics()
             .rect(GAME_VIEWPORT.x, GAME_VIEWPORT.y, GAME_VIEWPORT.width, GAME_VIEWPORT.height)
@@ -218,6 +223,7 @@ export class GameView {
     }
     private clearInput() {
         this.keys.clear();
+        this.stopBoost();
         this.session.release();
         this.accumulator = 0;
         this.previous = this.current;
@@ -225,6 +231,7 @@ export class GameView {
     private reset(match: boolean) {
         this.session.reset(match);
         this.current = this.previous = this.session.snapshot();
+        this.updateSounds();
         this.accumulator = 0;
         this.render(0);
     }
@@ -250,13 +257,33 @@ export class GameView {
             this.previous = this.current;
             this.session.step(input);
             this.current = this.session.snapshot();
+            this.updateSounds();
             if (this.previous.epoch !== this.current.epoch) this.previous = this.current;
             this.accumulator -= RULES.timestep;
         }
         this.render(this.accumulator / RULES.timestep);
     };
+    private updateSounds() {
+        const seat = this.session.seat;
+        this.soundEvents
+            .update(this.current, seat, this.session.playing, performance.now())
+            .forEach((name) => SoundManager.effect(name));
+        const boosting = this.session.playing && seat !== null && this.current.boosting[seat];
+        if (boosting && !this.boostSound) {
+            this.boostSound = SoundManager.play({
+                soundName: 'sounds/speeding.mp3',
+                group: 'effects',
+                loop: true,
+                volume: 0.25,
+            });
+        } else if (!boosting) this.stopBoost();
+    }
+    private stopBoost() {
+        if (this.boostSound) SoundManager.stop(this.boostSound);
+        this.boostSound = undefined;
+    }
     private render(alpha: number) {
-        this.arenaView.configure(this.current.arena);
+        this.arenaView.configure(this.current.arena, SCALE, this.current.kickoffTeam);
         this.energyView.render(this.current, this.session.seat);
         const position = (object: Container, before: Position, after: Position) =>
             object.position.set(
@@ -353,9 +380,11 @@ export class GameView {
             this.session.status ??
             (this.current.phase === 'goal'
                 ? 'Nowa akcja za chwilę — graj dalej!'
-                : inRange
-                  ? 'Piłka w zasięgu — X / SPACJA'
-                  : 'Podejdź do piłki i strzel w kierunku bramki');
+                : this.current.kickoffTeam
+                  ? `Wznawiają: ${this.current.kickoffTeam === 'left' ? 'NIEBIESCY' : 'POMARAŃCZOWI'}`
+                  : inRange
+                    ? 'Piłka w zasięgu — X / SPACJA'
+                    : 'Podejdź do piłki i strzel w kierunku bramki');
         this.announcement.text =
             this.current.phase === 'goal'
                 ? `GOL!  ${this.current.lastScorer === 'left' ? 'NIEBIESCY' : 'POMARAŃCZOWI'}`
@@ -380,6 +409,7 @@ export class GameView {
     dispose() {
         if (this.disposed) return;
         this.disposed = true;
+        this.stopBoost();
         this.listeners.abort();
         this.app.ticker.remove(this.update);
         this.app.renderer.off('resize', this.resize);

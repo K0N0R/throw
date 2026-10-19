@@ -54,10 +54,11 @@ export class SoundManagerBase {
 
     play(config: TPlaySoundConfig) {
         if (!GameSettings.soundEnabled) return;
-        if (this.extension !== '.ogg') return; // disables other extensions for time beeing
         const fullConfig = { loop: false, volume: 1, ...config };
 
-        let assetPath = `${config.soundName}${this.extension}`;
+        const assetPath = /\.(ogg|m4a|mp3|wav)$/.test(config.soundName)
+            ? config.soundName
+            : `${config.soundName}${this.extension}`;
 
         const pixiSound = PIXI.Assets.get(assetPath) as PIXI_SOUND.Sound;
         if (!pixiSound) {
@@ -65,7 +66,17 @@ export class SoundManagerBase {
             return;
         }
         let instance = pixiSound.play({
-            volume: fullConfig.volume,
+            volume:
+                fullConfig.volume *
+                (fullConfig.group === 'music'
+                    ? GameSettings.musicEnabled
+                        ? GameSettings.musicVolume
+                        : 0
+                    : fullConfig.group === 'effects'
+                      ? GameSettings.effectsEnabled
+                          ? GameSettings.effectsVolume
+                          : 0
+                      : 1),
             loop: fullConfig.loop,
         });
 
@@ -89,7 +100,7 @@ export class SoundManagerBase {
 
         this.manageMusicSoundVolume();
         this.manageEffectsSoundVolume();
-        if (sound.group === 'music') {
+        if (sound.group === 'music' && !fullConfig.loop) {
             instance.on('progress', (progress: number, duration: number) => {
                 if (
                     !sound.isFading &&
@@ -107,7 +118,7 @@ export class SoundManagerBase {
         }
         instance.on('end', async () => {
             const index = this.currentSounds.findIndex((s) => s === sound);
-            this.currentSounds.splice(index, 1);
+            if (index !== -1) this.currentSounds.splice(index, 1);
             if (sound?.onEnd && sound.triggerOnEnd) {
                 sound.onEnd();
             }
@@ -115,14 +126,20 @@ export class SoundManagerBase {
         return sound;
     }
 
+    effect(name: string, volume = 0.5) {
+        return this.play({ soundName: `sounds/${name}.mp3`, group: 'effects', volume });
+    }
+
     stop(sound: TSound) {
         sound.instance.stop();
+        const index = this.currentSounds.indexOf(sound);
+        if (index !== -1) this.currentSounds.splice(index, 1);
     }
 
     stopGroup(group: string) {
         this.currentSounds
             .filter((sound) => sound.group === group)
-            .forEach((sound) => sound.instance.stop());
+            .forEach((sound) => this.stop(sound));
     }
 
     async fadeOut(sound: TSound, durationMS: number) {

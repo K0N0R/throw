@@ -25,6 +25,7 @@ export const RULES = {
     kickRange: 0.32,
     kickCooldown: 0.22,
     goalPause: 1.3,
+    centerCircleRadius: 1.9,
 };
 export interface Input {
     x: number;
@@ -58,6 +59,30 @@ export interface GameSnapshot {
     lastScorer: 'left' | 'right' | null;
     kickReady: boolean;
     kickSerial: number;
+    kickoffTeam: 'left' | 'right' | null;
+}
+
+export function projectKickoffPlayer(
+    position: Position,
+    seat: number,
+    team: GameSnapshot['kickoffTeam'],
+    arena: ArenaSettings,
+): Position {
+    if (team === null) return position;
+    const { width, height } = arenaShape(arena);
+    const side = seat % 2 === 0 ? -1 : 1;
+    const center = { x: width / 2, y: height / 2 };
+    const x =
+        side < 0
+            ? Math.min(position.x, center.x - RULES.playerRadius)
+            : Math.max(position.x, center.x + RULES.playerRadius);
+    if (seat % 2 === (team === 'left' ? 0 : 1)) return { x, y: position.y };
+    const dx = x - center.x;
+    const dy = position.y - center.y;
+    const distance = Math.hypot(dx, dy);
+    const radius = RULES.centerCircleRadius + RULES.playerRadius;
+    if (distance >= radius) return { x, y: position.y };
+    return { x: center.x + (dx * radius) / distance, y: center.y + (dy * radius) / distance };
 }
 
 // Independent of Pixi, DOM and networking; also runnable in Node.
@@ -80,6 +105,7 @@ export class Simulation {
     private shooting: boolean[] = [];
     private activePlayers: boolean[] = [];
     private lastScorer: 'left' | 'right' | null = null;
+    private kickoffTeam: GameSnapshot['kickoffTeam'] = null;
 
     static async create(
         multiplayer: boolean | number = false,
@@ -197,7 +223,7 @@ export class Simulation {
     configureArena(settings: ArenaSettings) {
         this.arena = arenaSettings(settings);
         this.buildWalls();
-        this.resetRound();
+        this.resetRound(null);
     }
 
     setConnectedSeats(seats: number[]) {
@@ -237,7 +263,14 @@ export class Simulation {
         this.energySystem.boosting[seat] = false;
     }
 
-    resetRound() {
+    resetRound(
+        kickoffTeam = this.lastScorer === null
+            ? this.kickoffTeam
+            : this.lastScorer === 'left'
+              ? 'right'
+              : 'left',
+    ) {
+        this.kickoffTeam = kickoffTeam;
         for (const [body, x, y] of [
             ...this.players.map((body, index) => {
                 const team = this.players
@@ -266,10 +299,34 @@ export class Simulation {
         this.shooting = this.players.map(() => false);
         this.epoch++;
         this.lastScorer = null;
+        this.enforceKickoff();
     }
     resetMatch() {
         this.score = [0, 0];
-        this.resetRound();
+        this.resetRound(null);
+    }
+
+    private enforceKickoff() {
+        if (this.kickoffTeam === null) return;
+        this.players.forEach((body, seat) => {
+            if (!this.activePlayers[seat]) return;
+            const position = body.translation();
+            const allowed = projectKickoffPlayer(position, seat, this.kickoffTeam, this.arena);
+            const dx = allowed.x - position.x;
+            const dy = allowed.y - position.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance < 0.000001) return;
+            body.setTranslation(allowed, true);
+            const velocity = body.linvel();
+            const inward = Math.min(0, (velocity.x * dx + velocity.y * dy) / distance);
+            body.setLinvel(
+                {
+                    x: velocity.x - (inward * dx) / distance,
+                    y: velocity.y - (inward * dy) / distance,
+                },
+                true,
+            );
+        });
     }
 
     step(
@@ -288,6 +345,7 @@ export class Simulation {
                 return;
             }
         }
+        this.enforceKickoff();
         this.energySystem.tick(dt);
         this.players.forEach((player, index) => {
             if (!this.activePlayers[index]) return;
@@ -339,6 +397,8 @@ export class Simulation {
             if (
                 input.shoot &&
                 this.cooldowns[index] === 0 &&
+                (this.kickoffTeam === null ||
+                    index % 2 === (this.kickoffTeam === 'left' ? 0 : 1)) &&
                 (authoritative || predictedSeat === undefined || predictedSeat === index)
             ) {
                 const p = player.translation(),
@@ -364,10 +424,26 @@ export class Simulation {
                     );
                     this.cooldowns[index] = RULES.kickCooldown;
                     this.kickSerial++;
+                    this.kickoffTeam = null;
                 }
             }
         });
         this.world.step();
+        if (this.kickoffTeam !== null) {
+            const team = this.kickoffTeam === 'left' ? 0 : 1;
+            this.players.forEach((player, seat) => {
+                if (!this.activePlayers[seat] || seat % 2 !== team) return;
+                this.world.contactPair(player.collider(0), this.ball.collider(0), (manifold) => {
+                    for (let contact = 0; contact < manifold.numContacts(); contact++)
+                        if (
+                            (manifold.contactDist(contact) ?? Infinity) <= 0.001 ||
+                            manifold.contactImpulse(contact) > 0.000001
+                        )
+                            this.kickoffTeam = null;
+                });
+            });
+        }
+        this.enforceKickoff();
         this.players.forEach((player, index) => {
             if (
                 this.activePlayers[index] &&
@@ -414,6 +490,7 @@ export class Simulation {
             lastScorer: this.lastScorer,
             kickReady: this.cooldowns[0] === 0,
             kickSerial: this.kickSerial,
+            kickoffTeam: this.kickoffTeam,
         };
     }
     restore(state: GameSnapshot) {
@@ -443,6 +520,8 @@ export class Simulation {
         this.lastScorer = state.lastScorer;
         this.epoch = state.epoch;
         this.kickSerial = state.kickSerial;
+        this.kickoffTeam = state.kickoffTeam ?? null;
+        this.enforceKickoff();
     }
     dispose() {
         this.world.free();

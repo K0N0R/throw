@@ -64,6 +64,14 @@ ze wspólnego `RULES.maxPlayers`. Wynik jest zawsze rozstrzygany przez serwer.
 Po golu fizyka i sterowanie działają przez 1,3 sekundy; można dobijać piłkę bez naliczania
 kolejnych goli. Kickoff zeruje prędkości, siły, cooldowny i stare komendy.
 
+Po golu wznawia drużyna, która straciła bramkę. Do pierwszego dotknięcia piłki przez
+jej aktywnego gracza obie drużyny muszą pozostać na własnych połowach. Tylko
+wznawiający mogą wejść do koła środkowego; przeciwnicy pozostają poza nim.
+Granica uwzględnia cały promień gracza i jest oznaczona na boisku.
+Dotknięcie ciałem lub skuteczne kopnięcie zwalnia blokadę; samo przytrzymanie
+strzału jej nie zwalnia. Ograniczenie obowiązuje na serwerze i w predykcji klienta.
+Nowy mecz i trening bez wcześniejszego gola zaczynają się bez tej blokady.
+
 ## Architektura
 
 - `frontend/core/core.ts`: właściciel aplikacji Pixi, renderer, resize i zegary UI.

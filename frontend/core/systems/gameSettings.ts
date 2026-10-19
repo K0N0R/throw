@@ -6,7 +6,7 @@ export class GameSettings {
 
     static soundEnabled = true;
 
-    static _musicEnabled = false;
+    static _musicEnabled = true;
     static get musicEnabled() {
         return this._musicEnabled;
     }
@@ -17,7 +17,7 @@ export class GameSettings {
         this.saveSettings();
     }
 
-    static _musicVolume = 0;
+    static _musicVolume = 0.2;
     static get musicVolume() {
         return this._musicVolume;
     }
@@ -29,7 +29,7 @@ export class GameSettings {
         this.saveSettings();
     }
 
-    static _effectsEnabled = false;
+    static _effectsEnabled = true;
     static get effectsEnabled() {
         return this._effectsEnabled;
     }
@@ -40,7 +40,7 @@ export class GameSettings {
         this.saveSettings();
     }
 
-    static _effectsVolume = 0;
+    static _effectsVolume = 0.65;
     static get effectsVolume() {
         return this._effectsVolume;
     }

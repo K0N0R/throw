@@ -1,12 +1,13 @@
 import { Container, Graphics } from 'pixi.js';
 import { ARENA_SKINS, arenaSettings, arenaShape } from '../../shared/game/arenas';
+import { RULES, type GameSnapshot } from '../../shared/game/simulation';
 
 export class ArenaView {
     readonly element = new Container();
     private key = '';
-    configure(value: unknown, scale = 50) {
+    configure(value: unknown, scale = 50, kickoffTeam: GameSnapshot['kickoffTeam'] = null) {
         const settings = arenaSettings(value),
-            key = JSON.stringify(settings);
+            key = JSON.stringify([settings, scale, kickoffTeam]);
         if (key === this.key) return;
         this.key = key;
         for (const child of this.element.removeChildren()) child.destroy({ children: true });
@@ -31,7 +32,9 @@ export class ArenaView {
             .moveTo(w / 2, 0)
             .lineTo(w / 2, h)
             .stroke({ color: skin.line, width: 2, alpha: 0.4 });
-        lines.circle(w / 2, h / 2, 95).stroke({ color: skin.line, width: 2, alpha: 0.4 });
+        lines
+            .circle(w / 2, h / 2, RULES.centerCircleRadius * scale)
+            .stroke({ color: skin.line, width: 2, alpha: 0.4 });
         lines.circle(w / 2, h / 2, 4).fill(skin.line);
         const goals = new Graphics(),
             gh = goalHeight * scale,
@@ -54,5 +57,28 @@ export class ArenaView {
                     .stroke({ color, alpha: 0.2, width: 1 });
         }
         this.element.addChild(surround, ground, stripes, clip, lines, goals);
+        if (kickoffTeam !== null) {
+            const radius = RULES.centerCircleRadius * scale;
+            const barrier = new Graphics()
+                .moveTo(w / 2, 0)
+                .lineTo(w / 2, h / 2 - radius)
+                .arc(w / 2, h / 2, radius, -Math.PI / 2, Math.PI / 2, kickoffTeam === 'right')
+                .lineTo(w / 2, h)
+                .stroke({
+                    color: kickoffTeam === 'left' ? 0xffaa69 : 0x6bbcff,
+                    width: 3,
+                    alpha: 0.85,
+                });
+            this.element.addChild(barrier);
+            const midfield = new Graphics()
+                .moveTo(w / 2, h / 2 - radius)
+                .lineTo(w / 2, h / 2 + radius)
+                .stroke({
+                    color: kickoffTeam === 'left' ? 0x6bbcff : 0xffaa69,
+                    width: 3,
+                    alpha: 0.85,
+                });
+            this.element.addChild(midfield);
+        }
     }
 }

@@ -13,6 +13,57 @@ const frame = (game: Simulation, tick: number, ack = 0, input: Input = NEUTRAL):
     inputs: [input, NEUTRAL],
     game: game.snapshot(),
 });
+for (const scoringSeat of [0, 1]) {
+    for (const controlledSeat of [scoringSeat, 1 - scoringSeat]) {
+        test(`kickoff team ${scoringSeat} restricts seat ${controlledSeat} through restore and prediction smoothing`, async () => {
+            const server = await Simulation.create(true);
+            const client = await Simulation.create(true);
+            try {
+                const team = scoringSeat === 0 ? 'left' : 'right';
+                const opponentSeat = controlledSeat;
+                const side = opponentSeat === 0 ? -1 : 1;
+                server.resetRound(team);
+                server.players[opponentSeat].setTranslation(
+                    { x: 12 + side * RULES.playerRadius, y: 3 },
+                    true,
+                );
+                const prediction = new WorldPrediction(client);
+                prediction.reconcile(frame(server, 0), opponentSeat, []);
+                server.players[opponentSeat].setTranslation(
+                    { x: 12 + side * RULES.playerRadius, y: 9 },
+                    true,
+                );
+                const input = { x: -side, y: 0, shoot: true };
+                prediction.reconcile(frame(server, 1), opponentSeat, [{ ...input, seq: 1 }]);
+                for (let tick = 0; tick < 120; tick++) {
+                    prediction.step(input);
+                    const view = prediction.snapshot();
+                    assert.equal(view.kickoffTeam, team);
+                    const player = view.players[opponentSeat];
+                    assert.ok(side * (player.x - 12) >= RULES.playerRadius - 0.001);
+                    if (controlledSeat !== scoringSeat)
+                        assert.ok(
+                            Math.hypot(player.x - 12, player.y - 6) >=
+                                RULES.centerCircleRadius + RULES.playerRadius - 0.001,
+                        );
+                    assert.equal(view.kickSerial, 0);
+                }
+                server.players[scoringSeat].setTranslation(
+                    { x: scoringSeat === 0 ? 11.21 : 12.79, y: 6 },
+                    true,
+                );
+                server.step(NEUTRAL);
+                assert.equal(server.snapshot().kickSerial, 0);
+                prediction.reconcile(frame(server, 121), opponentSeat, []);
+                assert.equal(prediction.snapshot().kickoffTeam, null);
+                assert.equal(client.snapshot().kickoffTeam, null);
+            } finally {
+                server.dispose();
+                client.dispose();
+            }
+        });
+    }
+}
 test('a moving player can push an idle player without crossing through them', async () => {
     const game = await Simulation.create(true);
     try {
@@ -308,7 +359,12 @@ test('goal prediction remains active, restores shooting and waits for authoritat
         );
         server.resetRound();
         prediction.reconcile(frame(server, 101), 0, []);
-        assert.equal(prediction.snapshot().player.x, 10);
+        assert.ok(
+            Math.abs(
+                prediction.snapshot().player.x -
+                    (12 - RULES.centerCircleRadius - RULES.playerRadius),
+            ) < 0.001,
+        );
         assert.equal(prediction.snapshot().player.y, 6);
         assert.deepEqual(prediction.snapshot().players[0].velocity, { x: 0, y: 0 });
         assert.equal(prediction.snapshot().players[0].shooting, false);

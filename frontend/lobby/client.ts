@@ -37,10 +37,7 @@ export class LobbyClient {
         return null;
     }
     private restoreRoomSettings() {
-        for (const [key, valid] of [
-            ['matchSettings', validMatchSettings],
-            ['arena', validArena],
-        ] as const) {
+        for (const key of ['matchSettings', 'arena'] as const) {
             let value: unknown;
             try {
                 value = JSON.parse(this.preference(key) ?? 'null');
@@ -49,8 +46,7 @@ export class LobbyClient {
             }
             if (key === 'matchSettings' && validMatchSettings(value))
                 this.send({ type: 'settings', name: this.room!.name, settings: value });
-            if (key === 'arena' && valid(value) && validArena(value))
-                this.send({ type: 'arena', arena: value });
+            if (key === 'arena' && validArena(value)) this.send({ type: 'arena', arena: value });
         }
     }
     constructor() {
@@ -139,7 +135,11 @@ export class LobbyClient {
         }
         if (message.type === 'join' || message.type === 'leave') this.creating = false;
         if (this.room?.hostId === this.id && !this.room.running) {
-            if (message.type === 'settings' && validMatchSettings(message.settings)) {
+            if (
+                message.type === 'settings' &&
+                message.name.trim() &&
+                validMatchSettings(message.settings)
+            ) {
                 this.preference('roomName', message.name);
                 this.preference('matchSettings', JSON.stringify(message.settings));
             }

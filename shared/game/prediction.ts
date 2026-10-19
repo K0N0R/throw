@@ -1,5 +1,12 @@
 import { projectToArena } from './arenas';
-import { Simulation, RULES, type GameSnapshot, type Input, type Position } from './simulation';
+import {
+    Simulation,
+    RULES,
+    projectKickoffPlayer,
+    type GameSnapshot,
+    type Input,
+    type Position,
+} from './simulation';
 import type { Command, ServerState } from './protocol';
 
 // All interacting bodies are predicted and displayed at the same simulation time.
@@ -122,6 +129,11 @@ export class WorldPrediction {
                     body,
                     projectToArena(body, r, state.arena, i === state.players.length),
                 );
+                if (i < state.players.length && state.players[i].active)
+                    Object.assign(
+                        body,
+                        projectKickoffPlayer(body, i, state.kickoffTeam, state.arena),
+                    );
             });
         }
         return bodies;

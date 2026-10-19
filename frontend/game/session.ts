@@ -16,6 +16,7 @@ export interface GameSession {
     readonly seat: number | null;
     readonly canReset: boolean;
     readonly canResetMatch: boolean;
+    readonly playing: boolean;
     step(input: Input): void;
     snapshot(): GameSnapshot;
     reset(match: boolean): void;
@@ -30,6 +31,7 @@ export class LocalSession implements GameSession {
     readonly seat = 0;
     readonly canReset = true;
     readonly canResetMatch = true;
+    readonly playing = true;
     constructor(private readonly simulation: Simulation) {}
     step(input: Input) {
         this.simulation.step(input);
@@ -83,6 +85,9 @@ export class OnlineSession implements GameSession {
     }
     get canResetMatch() {
         return !this.membership && this.canReset;
+    }
+    get playing() {
+        return this.connected && !!this.latest?.ready;
     }
     get canReset() {
         return (
